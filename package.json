@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "cross-env NODE_ENV=production ts-node src/index.ts",
-    "dev": "cross-env NODE_ENV=development nodemon src/app.ts",
+    "dev": "npm run typeorm && cross-env NODE_ENV=development nodemon src/app.ts",
     "build": "rm -rf dist && npx tsc -p .",
-    "typeorm": "typeorm-ts-node-commonjs"
+    "typeorm": "typeorm-ts-node-commonjs schema:sync -d src/data-source"
   },
   "author": "seungwon.code@gmail.com",
   "license": "ISC",
