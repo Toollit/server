@@ -8,7 +8,9 @@ dotenv.config();
 const app: Application = express();
 const port = 4000;
 
-// typeorm initialize
+app.use(express.json());
+
+// typeorm connection with database
 AppDataSource.initialize()
   .then(() => {
     console.log('Data Source has been initialized!');

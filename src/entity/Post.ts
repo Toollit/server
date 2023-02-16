@@ -1,19 +1,26 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { User } from './User';
 
-@Entity({ name: 'post' })
+@Entity()
 export class Post {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  userId: string;
+  @Column({ length: 1000 })
+  content: string;
 
   @Column()
-  createdAt: Date;
+  views: number;
 
   @Column()
   edit: boolean;
 
-  @Column()
-  updateAt: string;
+  @Column({ default: null })
+  updatedAt?: Date;
+
+  @Column({ default: () => 'NOW()' })
+  createdAt: Date;
+
+  @ManyToOne(() => User, (user) => user.posts)
+  user: User;
 }

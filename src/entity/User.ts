@@ -1,16 +1,26 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Post } from './Post';
 
-@Entity({ name: 'user' })
+@Entity()
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  userId: string;
+  @Column({ unique: true, length: 50 })
+  email: string;
 
-  @Column()
+  @Column({ unique: true, nullable: true })
+  google?: string;
+
+  @Column({ length: 10 })
+  nickname: string;
+
+  @Column({ length: 200 })
   password: string;
 
-  @Column()
+  @Column({ default: () => 'NOW()' })
   createdAt: Date;
+
+  @OneToMany(() => Post, (post) => post.user)
+  posts: Post[];
 }
