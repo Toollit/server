@@ -1,14 +1,23 @@
 import 'reflect-metadata';
 import express, { Application, Request, Response, NextFunction } from 'express';
 import postRouter from './routes/post';
+import userRouter from './routes/user';
 import { AppDataSource } from './data-source';
 import dotenv from 'dotenv';
+import cors from 'cors';
 dotenv.config();
 
 const app: Application = express();
 const port = 4000;
 
+app.use(
+  cors({
+    origin: '*',
+    credentials: true,
+  })
+);
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // typeorm connection with database
 AppDataSource.initialize()
@@ -24,6 +33,7 @@ app.get('/', (req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use('/post', postRouter);
+app.use('/user', userRouter);
 
 app.listen(port, () => {
   console.log(
