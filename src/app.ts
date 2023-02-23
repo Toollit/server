@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import express, { Application, Request, Response, NextFunction } from 'express';
 import postRouter from './routes/post';
 import userRouter from './routes/user';
+import authRouter from './routes/auth';
 import { AppDataSource } from './data-source';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -34,6 +35,7 @@ app.get('/', (req: Request, res: Response, next: NextFunction) => {
 
 app.use('/post', postRouter);
 app.use('/user', userRouter);
+app.use('/auth', authRouter);
 
 app.listen(port, () => {
   console.log(
