@@ -5,15 +5,15 @@ import path from 'path';
 
 const router = express.Router();
 
-router.post('/mail', async (req: Request, res: Response) => {
-  let authNum = Math.random().toString().slice(2, 8);
+router.post('/email', async (req: Request, res: Response) => {
+  let authNums = Math.random().toString().slice(2, 8);
   let emailTemplete;
 
   let appDir = path
     .resolve(__dirname)
     .replace('routes', '/template/authMail.ejs');
 
-  ejs.renderFile(appDir, { authCode: authNum }, function (err, data) {
+  ejs.renderFile(appDir, { authCode: authNums }, function (err, data) {
     if (err) {
       console.log(err);
     }
@@ -31,7 +31,7 @@ router.post('/mail', async (req: Request, res: Response) => {
     },
   });
 
-  let userMail = req.body.mail;
+  let userMail = req.body.email;
 
   let mailOptions = {
     from: `Getit <${process.env.NODEMAILER_USER}>`,
@@ -45,7 +45,11 @@ router.post('/mail', async (req: Request, res: Response) => {
       console.log('send mail error');
     }
     console.log('finish sending email : ' + info.response);
-    res.send(authNum);
+    res.status(200).json({
+      success: true,
+      message: 'sending email success',
+      authNums,
+    });
     transporter.close();
   });
 });
