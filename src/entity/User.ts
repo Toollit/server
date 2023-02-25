@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
 import { Post } from './Post';
 
 @Entity()
@@ -21,14 +28,10 @@ export class User {
   @Column({ nullable: true, length: 20 })
   username: string;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @Column({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
+  @UpdateDateColumn()
   updatedAt: Date;
 
   @Column({ type: 'timestamp', nullable: true })
