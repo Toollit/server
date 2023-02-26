@@ -24,14 +24,14 @@ router.post('/login', (req: Request, res: Response, next: NextFunction) => {
     ) => {
       // console.log({ err, user, info });
 
-      if (typeof user === 'object' && user !== null) {
-        if (!user) {
-          return res.status(401).json({
-            success: false,
-            message: info?.message,
-          });
-        }
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: info?.message,
+        });
+      }
 
+      if (typeof user === 'object' && user !== null) {
         if (user) {
           return res.status(200).json({
             success: true,
@@ -39,10 +39,10 @@ router.post('/login', (req: Request, res: Response, next: NextFunction) => {
             user: { email: user.email, nickname: user.nickname },
           });
         }
+      }
 
-        if (err) {
-          return console.error(err);
-        }
+      if (err) {
+        return console.error(err);
       }
     }
   )(req, res, next);
