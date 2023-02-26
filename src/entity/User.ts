@@ -16,8 +16,11 @@ export class User {
   @Column({ unique: true, length: 200 })
   email: string;
 
-  @Column({ nullable: true, length: 100 })
+  @Column()
   password: string;
+
+  @Column()
+  salt: string;
 
   @Column()
   signupType: 'google' | 'github' | 'email';
