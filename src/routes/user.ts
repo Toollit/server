@@ -2,33 +2,50 @@ import express, { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '../data-source';
 import { User } from '../entity/User';
 import crypto from 'crypto';
+import passport from 'passport';
+import passportLocal from '../passport/local';
+import {
+  PassportLocalError,
+  PassportLocalInfo,
+  PassportLocalUser,
+} from './types';
 
 const router = express.Router();
 
-router.post('/login', async (req: Request, res: Response) => {
-  console.log(req.body);
+passportLocal();
 
-  const { email, password, channel } = req.body;
+router.post('/login', (req: Request, res: Response, next: NextFunction) => {
+  passport.authenticate(
+    'local',
+    (
+      err: PassportLocalError,
+      user: PassportLocalUser,
+      info: PassportLocalInfo
+    ) => {
+      // console.log({ err, user, info });
 
-  const user = new User();
-  user.email = email;
+      if (typeof user === 'object' && user !== null) {
+        if (!user) {
+          return res.status(401).json({
+            success: false,
+            message: info?.message,
+          });
+        }
 
-  const userRepository = AppDataSource.getRepository(User);
+        if (user) {
+          return res.status(200).json({
+            success: true,
+            message: 'login success',
+            user: { email: user.email, nickname: user.nickname },
+          });
+        }
 
-  const result = await userRepository.findOne({
-    where: {
-      email,
-      password,
-    },
-  });
-
-  if (!result) {
-    return res
-      .status(401)
-      .json({ success: false, message: 'invalid email or password' });
-  }
-
-  res.status(200).json({ success: true, message: null });
+        if (err) {
+          return console.error(err);
+        }
+      }
+    }
+  )(req, res, next);
 });
 
 router.post('/signup', function (req, res, next) {
@@ -60,11 +77,13 @@ router.post('/signup', function (req, res, next) {
         });
       }
 
+      const saltString = salt.toString('hex');
       const hashedString = hashedPassword.toString('hex');
 
       const user = new User();
       user.email = email;
       user.password = hashedString;
+      user.salt = saltString;
       user.signupType = signupType;
 
       try {
