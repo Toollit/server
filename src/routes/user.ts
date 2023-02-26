@@ -2,7 +2,6 @@ import express, { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '../data-source';
 import { User } from '../entity/User';
 import crypto from 'crypto';
-import { Buffer } from 'buffer';
 
 const router = express.Router();
 
@@ -35,7 +34,7 @@ router.post('/login', async (req: Request, res: Response) => {
 router.post('/signup', function (req, res, next) {
   const { email, password, signupType } = req.body;
 
-  let salt = crypto.randomBytes(16);
+  const salt = crypto.randomBytes(16);
   crypto.pbkdf2(
     password,
     salt,
@@ -61,8 +60,7 @@ router.post('/signup', function (req, res, next) {
         });
       }
 
-      const hashedBuffer = Buffer.from(hashedPassword);
-      const hashedString = hashedBuffer.toString('hex');
+      const hashedString = hashedPassword.toString('hex');
 
       const user = new User();
       user.email = email;
