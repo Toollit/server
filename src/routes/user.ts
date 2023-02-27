@@ -53,6 +53,16 @@ router.post('/login', (req: Request, res: Response, next: NextFunction) => {
   )(req, res, next);
 });
 
+router.post('/logout', function (req, res, next) {
+  req.logout(function (err) {
+    if (err) {
+      return next(err);
+    }
+
+    return res.status(200).json({ success: true, message: 'logout success' });
+  });
+});
+
 router.post('/signup', function (req, res, next) {
   const { email, password, signupType } = req.body;
 
