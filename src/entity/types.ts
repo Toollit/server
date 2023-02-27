@@ -1,4 +1,4 @@
-interface UserData {
+export interface UserData {
   id: number;
   email: string;
   password: string;
@@ -12,7 +12,7 @@ interface UserData {
 }
 type PassportLocalError = Error | null;
 
-type PassportLocalUser = UserData | boolean;
+type PassportLocalUser = UserData | false;
 
 type PassportLocalInfo = { message: string } | null;
 

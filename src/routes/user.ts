@@ -3,16 +3,13 @@ import { AppDataSource } from '../data-source';
 import { User } from '../entity/User';
 import crypto from 'crypto';
 import passport from 'passport';
-import passportLocal from '../passport/local';
 import {
   PassportLocalError,
   PassportLocalInfo,
   PassportLocalUser,
-} from './types';
+} from '../entity/types';
 
 const router = express.Router();
-
-passportLocal();
 
 router.post('/login', (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate(
@@ -24,6 +21,11 @@ router.post('/login', (req: Request, res: Response, next: NextFunction) => {
     ) => {
       // console.log({ err, user, info });
 
+      if (err) {
+        console.error(err);
+        return next(err);
+      }
+
       if (!user) {
         return res.status(401).json({
           success: false,
@@ -31,19 +33,22 @@ router.post('/login', (req: Request, res: Response, next: NextFunction) => {
         });
       }
 
-      if (typeof user === 'object' && user !== null) {
-        if (user) {
-          return res.status(200).json({
-            success: true,
-            message: 'login success',
-            user: { email: user.email, nickname: user.nickname },
-          });
+      return req.login(user, async (err) => {
+        if (err) {
+          console.error(err);
+          return next(err);
         }
-      }
 
-      if (err) {
-        return console.error(err);
-      }
+        if (typeof user === 'object' && user !== null) {
+          if (user) {
+            return res.status(200).json({
+              success: true,
+              message: 'login success',
+              user: { email: user.email, nickname: user.nickname },
+            });
+          }
+        }
+      });
     }
   )(req, res, next);
 });

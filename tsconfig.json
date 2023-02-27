@@ -16,5 +16,6 @@
     "strictPropertyInitialization": false,
     "skipLibCheck": true
   },
+  "ts-node": { "files": true },
   "exclude": ["node_modules"]
 }
