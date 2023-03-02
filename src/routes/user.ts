@@ -11,6 +11,23 @@ import {
 
 const router = express.Router();
 
+router.get('/', (req: Request, res: Response, next: NextFunction) => {
+  if (req.user) {
+    const { email, nickname } = req.user;
+
+    res.status(200).json({
+      success: true,
+      message: null,
+      data: {
+        email,
+        nickname,
+      },
+    });
+  } else {
+    res.status(500).json({ success: false, message: 'Not logged in' });
+  }
+});
+
 router.post('/login', (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate(
     'local',
