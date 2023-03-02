@@ -8,6 +8,7 @@ import {
   PassportLocalInfo,
   PassportLocalUser,
 } from '../entity/types';
+import axios from 'axios';
 
 const router = express.Router();
 
@@ -154,5 +155,94 @@ router.get(
     failureRedirect: `${process.env.ORIGIN_URL}/login`,
   })
 );
+
+// 임시 중단
+// router.get('/login/github', passport.authenticate('github'));
+
+router.get('/auth/github/callback', async (req, res, next) => {
+  const userCode = req.query.code;
+
+  const userIdentity = await axios.post(
+    `https://github.com/login/oauth/access_token?client_id=${process.env.GITHUB_CLIENT_ID}&client_secret=${process.env.GITHUB_CLIENT_SECRET}&code=${userCode}`
+  );
+
+  const userAuthorizeIdentityString = userIdentity.data;
+
+  const userAccessData: {
+    access_token: string;
+    scope: string;
+    token_type: string;
+  } = userAuthorizeIdentityString
+    .split('&')
+    .reduce((acc: { [key: string]: string }, curr: string) => {
+      const [key, value] = curr.split('=');
+      acc[key] = decodeURIComponent(value); // %2로 오는 값 decodeURIComponent로 변환
+      return acc;
+    }, {});
+
+  const userInfo = await axios.get('https://api.github.com/user', {
+    headers: {
+      Authorization: `${userAccessData.token_type} ${userAccessData.access_token}`,
+    },
+  });
+
+  const hasEmailInfo = userInfo.data.email;
+
+  // github 계정에 등록된 이메일 정보가 없는경우
+  if (!hasEmailInfo) {
+    return res.redirect(`${process.env.ORIGIN_URL}/login?hasEmailInfo=false`);
+  }
+
+  // github 계정에 등록된 이메일 정보가 있는 경우
+  if (hasEmailInfo) {
+    const userRepository = AppDataSource.getRepository(User);
+    const user = await userRepository.findOne({
+      where: {
+        email: userInfo.data.email,
+      },
+    });
+
+    // 이미 가입한 사용자 로그인
+    if (user && user.signupType === 'github') {
+      return req.login(user, async (err) => {
+        if (err) {
+          console.error(err);
+          return next(err);
+        }
+
+        return res.redirect(`${process.env.ORIGIN_URL}`);
+      });
+    }
+
+    // 동일한 이메일의 다른 가입 정보가 있는 경우
+    if (user && user.signupType !== 'github') {
+      return res.redirect(`${process.env.ORIGIN_URL}/login?duplicate=true`);
+    }
+
+    // 중복된 이메일이 없는 경우 DB저장(최초가입)
+    if (!user) {
+      const user = new User();
+      user.email = userInfo.data.email;
+      user.signupType = 'github';
+
+      try {
+        const userData = await userRepository.save(user);
+
+        if (userData) {
+          return req.login(user, async (err) => {
+            if (err) {
+              console.error(err);
+              return next(err);
+            }
+
+            return res.redirect(`${process.env.ORIGIN_URL}`);
+          });
+        }
+      } catch (error) {
+        return res.redirect(`${process.env.ORIGIN_URL}/login?error=true`);
+      }
+    }
+  }
+});
 
 export default router;
