@@ -24,7 +24,7 @@ router.get('/', (req: Request, res: Response, next: NextFunction) => {
       },
     });
   } else {
-    res.status(500).json({ success: false, message: 'Not logged in' });
+    res.status(400).json({ success: false, message: 'Not logged in' });
   }
 });
 
@@ -58,10 +58,12 @@ router.post('/login', (req: Request, res: Response, next: NextFunction) => {
 
         if (typeof user === 'object' && user !== null) {
           if (user) {
+            const { email, nickname } = user;
+
             return res.status(200).json({
               success: true,
               message: 'login success',
-              user: { email: user.email, nickname: user.nickname },
+              data: { email, nickname },
             });
           }
         }
