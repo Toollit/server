@@ -59,7 +59,7 @@ router.post('/logout', function (req, res, next) {
       return next(err);
     }
 
-    return res.status(200).json({ success: true, message: 'logout success' });
+    return res.status(302).redirect('/');
   });
 });
 
@@ -131,8 +131,8 @@ router.get(
 router.get(
   '/auth/google/callback',
   passport.authenticate('google', {
-    successRedirect: 'http://localhost:3000',
-    failureRedirect: 'http://localhost:3000/login',
+    successRedirect: process.env.ORIGIN_URL,
+    failureRedirect: `${process.env.ORIGIN_URL}/login`,
   })
 );
 
