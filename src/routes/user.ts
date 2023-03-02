@@ -121,4 +121,19 @@ router.post('/signup', function (req, res, next) {
   );
 });
 
+router.get(
+  '/login/google',
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+  })
+);
+
+router.get(
+  '/auth/google/callback',
+  passport.authenticate('google', {
+    successRedirect: 'http://localhost:3000',
+    failureRedirect: 'http://localhost:3000/login',
+  })
+);
+
 export default router;

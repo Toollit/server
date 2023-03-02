@@ -24,6 +24,7 @@
     "mysql": "^2.14.1",
     "nodemailer": "^6.9.1",
     "passport": "^0.6.0",
+    "passport-google-oauth20": "^2.0.0",
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.1.13",
     "typeorm": "0.3.12"
@@ -39,6 +40,7 @@
     "@types/node": "^16.11.10",
     "@types/nodemailer": "^6.4.7",
     "@types/passport": "^1.0.12",
+    "@types/passport-google-oauth20": "^2.0.11",
     "@types/passport-local": "^1.0.35",
     "nodemon": "^2.0.20",
     "ts-node": "10.7.0",

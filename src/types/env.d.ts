@@ -7,5 +7,8 @@ declare namespace NodeJS {
     readonly NODEMAILER_USER: string;
     readonly NODEMAILER_PASS: string;
     readonly COOKIE_SECRET: string;
+    readonly GOOGLE_CLIENT_ID: string;
+    readonly GOOGLE_CLIENT_SECRET: string;
+    readonly GOOGLE_CALLBACK_URL: string;
   }
 }

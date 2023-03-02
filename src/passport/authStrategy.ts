@@ -2,6 +2,7 @@ import passport from 'passport';
 import localStrategy from './localStrategy';
 import { AppDataSource } from '../data-source';
 import { User } from '../entity/User';
+import googleStrategy from './googleStrategy';
 
 export default () => {
   passport.serializeUser((user, done) => {
@@ -13,6 +14,7 @@ export default () => {
       const userRepository = AppDataSource.getRepository(User);
 
       const user = await userRepository.findOne({ where: { id } });
+
       done(null, user);
     } catch (err) {
       console.error(err);
@@ -21,4 +23,5 @@ export default () => {
   });
 
   localStrategy();
+  googleStrategy();
 };

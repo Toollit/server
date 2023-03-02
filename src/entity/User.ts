@@ -16,10 +16,10 @@ export class User {
   @Column({ unique: true, length: 200 })
   email: string;
 
-  @Column()
+  @Column({ nullable: true })
   password: string;
 
-  @Column()
+  @Column({ nullable: true })
   salt: string;
 
   @Column()
