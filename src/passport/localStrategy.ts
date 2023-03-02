@@ -18,10 +18,11 @@ export default () =>
           where: { email },
         });
 
-        if (!user)
+        if (!user) {
           return cb(null, false, {
             message: '회원가입되어 있지 않은 이메일입니다.',
           });
+        }
 
         const salt = Buffer.from(user.salt, 'hex');
 
