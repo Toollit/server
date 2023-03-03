@@ -40,9 +40,22 @@ export default () => {
           return done(new Error('User information lookup error'));
         }
 
-        if (user) {
+        // 이미 가입한 사용자 로그인
+        if (user && user.signupType === 'google') {
           return done(null, user);
-        } else {
+        }
+
+        // 동일한 이메일의 다른 가입 정보가 있는 경우
+        if (user && user.signupType === 'github') {
+          return done(null, user, {
+            success: false,
+            message: 'duplicate',
+            redirectUrl: `${process.env.ORIGIN_URL}/login?duplicate=true`,
+          });
+        }
+
+        // 중복된 이메일이 없는 경우 DB저장(최초가입)
+        if (!user) {
           const newUser = new User();
           newUser.email = email;
           newUser.signupType = 'google';

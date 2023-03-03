@@ -148,13 +148,20 @@ router.get(
   })
 );
 
-router.get(
-  '/auth/google/callback',
-  passport.authenticate('google', {
-    successRedirect: process.env.ORIGIN_URL,
-    failureRedirect: `${process.env.ORIGIN_URL}/login`,
-  })
-);
+router.get('/auth/google/callback', (req, res, next) => {
+  passport.authenticate(
+    'google',
+    {
+      successRedirect: process.env.ORIGIN_URL,
+      failureRedirect: `${process.env.ORIGIN_URL}/login`,
+    },
+    (err, user, info) => {
+      if (info.message === 'duplicate') {
+        return res.redirect(info.redirectUrl);
+      }
+    }
+  )(req, res, next);
+});
 
 // 임시 중단
 // router.get('/login/github', passport.authenticate('github'));
