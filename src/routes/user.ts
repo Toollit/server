@@ -63,12 +63,9 @@ router.post('/login', (req: Request, res: Response, next: NextFunction) => {
 
         if (typeof user === 'object' && user !== null) {
           if (user) {
-            const { email, nickname } = user;
-
             return res.status(200).json({
               success: true,
               message: 'login success',
-              data: { email, nickname },
             });
           }
         }
