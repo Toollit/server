@@ -20,6 +20,9 @@ export class User {
   password: string;
 
   @Column({ nullable: true })
+  tempPassword: string;
+
+  @Column({ nullable: true })
   salt: string;
 
   @Column()

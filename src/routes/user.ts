@@ -9,6 +9,10 @@ import {
   PassportLocalUser,
 } from '../entity/types';
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
+import nodemailer from 'nodemailer';
+import ejs from 'ejs';
 
 const router = express.Router();
 
@@ -249,6 +253,92 @@ router.get('/auth/github/callback', async (req, res, next) => {
         return res.redirect(`${process.env.ORIGIN_URL}/login?error=true`);
       }
     }
+  }
+});
+
+router.post('/pwInquiry', async (req, res, next) => {
+  const email = req.body.email;
+
+  const userRepository = AppDataSource.getRepository(User);
+
+  try {
+    const user = await userRepository.findOne({
+      where: {
+        email,
+      },
+    });
+
+    if (user) {
+      const temPassword = uuidv4().slice(0, 8);
+      user.tempPassword = temPassword;
+
+      const isSave = await userRepository.save(user);
+
+      if (!isSave) {
+        return res.status(500).json({
+          success: false,
+          message: '문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+        });
+      }
+
+      const appDir = path
+        .resolve(__dirname)
+        .replace('routes', '/template/tempPasswordMail.ejs');
+
+      let emailTemplate;
+      ejs.renderFile(
+        appDir,
+        { temPasswordCode: temPassword },
+        function (err, data) {
+          if (err) {
+            console.log(err);
+          }
+          emailTemplate = data;
+        }
+      );
+
+      let transporter = nodemailer.createTransport({
+        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: {
+          user: process.env.NODEMAILER_USER,
+          pass: process.env.NODEMAILER_PASS,
+        },
+      });
+
+      let mailOptions = {
+        from: `Getit <${process.env.NODEMAILER_USER}>`,
+        to: email,
+        subject: 'Getit 로그인을위한 임시 비밀번호입니다.',
+        html: emailTemplate,
+      };
+
+      transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+          console.log('send mail error');
+        }
+        console.log('finish sending email : ' + info.response);
+        res.status(201).json({
+          success: true,
+          message: '해당 이메일로 임시 비밀번호를 발급했습니다.',
+          temPassword,
+        });
+        transporter.close();
+      });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: '가입된 이메일 정보가 존재하지 않습니다.',
+      });
+    }
+  } catch (error) {
+    console.error(error);
+
+    return next(error);
   }
 });
 
