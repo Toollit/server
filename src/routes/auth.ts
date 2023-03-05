@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.post('/email', async (req: Request, res: Response) => {
   let authNums = Math.random().toString().slice(2, 8);
-  let emailTemplete;
+  let emailTemplate;
 
   let appDir = path
     .resolve(__dirname)
@@ -17,7 +17,7 @@ router.post('/email', async (req: Request, res: Response) => {
     if (err) {
       console.log(err);
     }
-    emailTemplete = data;
+    emailTemplate = data;
   });
 
   let transporter = nodemailer.createTransport({
@@ -37,7 +37,7 @@ router.post('/email', async (req: Request, res: Response) => {
     from: `Getit <${process.env.NODEMAILER_USER}>`,
     to: userMail,
     subject: 'Getit 회원가입을 위한 인증번호를 입력해주세요.',
-    html: emailTemplete,
+    html: emailTemplate,
   };
 
   transporter.sendMail(mailOptions, function (error, info) {
