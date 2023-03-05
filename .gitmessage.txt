@@ -1,0 +1,49 @@
+# --------------------
+# <Type>[scope] : <Title>
+# 타입(Type)과 제목(Title)은 필수로 작성
+# scope은 적용 범위 ex.적용한 페이지 (선택사항)
+# 제목은 50자 이내 / 변경사항이 "무엇"인지 명확히 작성 / 끝에 마침표 X
+# 예) Add : 로그인 기능 / Add[결제] : 결제 모듈 적용
+# 👇👇👇👇👇현재 주석 아랫줄에 작성👇👇👇👇👇
+
+# --------------------
+# 해당 주석 바로 아래 공백 유지 (제목과 본문의 분리를 위함)
+
+# --------------------
+# Body Message (선택사항)
+# 본문(구체적인 내용)
+# 여러 줄의 메시지를 작성할 땐 "-"로 구분 (한 줄은 72자 이내)
+# 👇👇👇👇👇현재 주석 아랫줄에 작성👇👇👇👇👇
+
+# --------------------
+# 꼬릿말(footer)을 아랫줄에 작성 (현재 커밋과 관련된 이슈 번호 추가 등)
+# 예) Close #7
+
+# --------------------
+#   Commit Type List
+#   Add      : 새로운 기능, 뷰(화면) 등 추가
+#   Fix      : 버그 수정
+#   Update   : 기능 수정
+#   WIP      : 진행중
+#   Refactor : 코드 리팩토링
+#   Style    : 코드 의미에 영향을 주지 않는 변경사항 (스타일 변경, 형식 지정, 세미콜론 누락 등)
+#   Test     : 테스트 코드 추가, 수정, 삭제 (비즈니스 로직에 변경 없음)
+#   Docs     : 문서 추가, 수정, 삭제
+#   Chore    : 기타 변경사항 (빌드 부분 혹은 패키지 매니저 수정사항)
+#   Etc      : 기타
+
+# --------------------
+#   Remember me ~
+#   Capitalize the subject line
+#     제목 첫 글자를 대문자로
+#   Use the imperative mood in the subject line
+#     제목은 명령문 사용 (과거형 X)
+#   Do not end the subject line with a period
+#     제목 끝에 마침표(.) 금지
+#   Separate subject from body with a blank line
+#     제목과 본문을 한 줄 띄워 분리하기 (빈 행으로 구분)
+#   Use the body to explain what and why vs. how
+#     본문은 "어떻게" 보다 "무엇을", "왜"를 설명한다.
+#   Can use multiple lines with "-" for bullet points in body
+#     본문에 여러줄의 메시지(목록)를 작성할 땐 "-"로 구분
+# --------------------
