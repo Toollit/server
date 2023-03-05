@@ -199,6 +199,12 @@ router.get(
 // 임시 중단
 // router.get('/login/github', passport.authenticate('github'));
 
+router.get('/login/github', (req, res, next) => {
+  res.redirect(
+    `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user:email&redirect_uri=${process.env.GITHUB_CALLBACK_URL}`
+  );
+});
+
 router.get('/auth/github/callback', async (req, res, next) => {
   const userCode = req.query.code;
 
