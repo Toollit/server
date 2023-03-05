@@ -149,20 +149,52 @@ router.get(
   })
 );
 
-router.get('/auth/google/callback', (req, res, next) => {
-  passport.authenticate(
-    'google',
-    {
-      successRedirect: process.env.ORIGIN_URL,
-      failureRedirect: `${process.env.ORIGIN_URL}/login`,
-    },
-    (err, user, info) => {
-      if (info.message === 'duplicate') {
-        return res.redirect(info.redirectUrl);
+router.get(
+  '/auth/google/callback',
+  (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate(
+      'google',
+      (
+        err: any,
+        user: User,
+        info: { success: boolean; message: 'empty' | 'duplicate' | 'error' }
+      ) => {
+        const successRedirect = process.env.ORIGIN_URL;
+        const failureRedirect = `${process.env.ORIGIN_URL}/login?error=true`;
+        const duplicateRedirect = `${process.env.ORIGIN_URL}/login?duplicate=true`;
+        const emptyRedirect = `${process.env.ORIGIN_URL}/login?hasEmailInfo=false`;
+
+        if (err) {
+          console.error(err);
+          return next(err);
+        }
+
+        if (info.success) {
+          return req.login(user, async (err) => {
+            if (err) {
+              console.error(err);
+              return next(err);
+            }
+
+            if (user) {
+              return res.redirect(successRedirect);
+            }
+          });
+        } else {
+          if (info.message === 'empty') {
+            return res.redirect(emptyRedirect);
+          }
+          if (info.message === 'duplicate') {
+            return res.redirect(duplicateRedirect);
+          }
+          if (info.message === 'error') {
+            return res.redirect(failureRedirect);
+          }
+        }
       }
-    }
-  )(req, res, next);
-});
+    )(req, res, next);
+  }
+);
 
 // 임시 중단
 // router.get('/login/github', passport.authenticate('github'));

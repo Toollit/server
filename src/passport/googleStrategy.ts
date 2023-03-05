@@ -18,59 +18,46 @@ export default () => {
 
         const email = profile.emails?.[0]?.value;
 
+        // 이메일 정보가 없는 경우
         if (!email) {
-          return done(
-            new Error('Google profile does not contain an email address.'),
-            undefined,
-            {
-              success: false,
-              message:
-                '로그인한 계정에 이메일 정보가 없습니다. 이메일 정보를 등록해주세요.',
-            }
-          );
+          return done(null, undefined, { success: false, message: 'empty' });
         }
 
         const userRepository = AppDataSource.getRepository(User);
 
-        let user;
-
         try {
-          user = await userRepository.findOne({ where: { email } });
+          const user = await userRepository.findOne({ where: { email } });
+
+          // 이미 가입한 사용자 로그인
+          if (user && user.signupType === 'google') {
+            return done(null, user, { success: true });
+          }
+
+          // 동일한 이메일의 다른 가입 정보가 있는 경우
+          if (user && user.signupType !== 'google') {
+            return done(null, user, { success: false, message: 'duplicate' });
+          }
+
+          // 중복된 이메일이 없는 경우 DB저장(최초가입)
+          if (!user) {
+            const newUser = new User();
+            newUser.email = email;
+            newUser.signupType = 'google';
+
+            try {
+              const isSaved = await userRepository.save(newUser);
+              if (isSaved) {
+                return done(null, newUser, { success: true });
+              }
+            } catch (error) {
+              return done(null, undefined, {
+                success: false,
+                message: 'error',
+              });
+            }
+          }
         } catch (error) {
-          return done(new Error('User information lookup error'));
-        }
-
-        // 이미 가입한 사용자 로그인
-        if (user && user.signupType === 'google') {
-          return done(null, user);
-        }
-
-        // 동일한 이메일의 다른 가입 정보가 있는 경우
-        if (user && user.signupType === 'github') {
-          return done(null, user, {
-            success: false,
-            message: 'duplicate',
-            redirectUrl: `${process.env.ORIGIN_URL}/login?duplicate=true`,
-          });
-        }
-
-        // 중복된 이메일이 없는 경우 DB저장(최초가입)
-        if (!user) {
-          const newUser = new User();
-          newUser.email = email;
-          newUser.signupType = 'google';
-
-          let isSaved;
-
-          try {
-            isSaved = await userRepository.save(newUser);
-          } catch (error) {
-            return done(new Error('Error saving user information'));
-          }
-
-          if (isSaved) {
-            return done(null, newUser);
-          }
+          return done(null, undefined, { success: false, message: 'error' });
         }
       }
     )
