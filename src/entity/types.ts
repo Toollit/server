@@ -2,6 +2,7 @@ export interface UserData {
   id: number;
   email: string;
   password: string;
+  tempPassword: string | null;
   salt: string;
   signupType: 'email' | 'google' | 'github';
   nickname: string | null;
