@@ -44,7 +44,7 @@ export default () =>
           310000,
           32,
           'sha256',
-          function (err, hashedPassword) {
+          async function (err, hashedPassword) {
             if (err) {
               return cb(err);
             }
@@ -55,8 +55,18 @@ export default () =>
               return cb(null, false, {
                 message: '비밀번호가 일치하지 않습니다.',
               });
+            } else {
+              // 임시비밀번호를 받았지만 기존 비밀번호로 정상적으로 로그인한 경우 발급받은 임시비밀번호 초기화
+              if (user.tempPassword) {
+                user.tempPassword = null;
+                const isSaved = await userRepository.save(user);
+                if (isSaved) {
+                  return cb(null, user);
+                }
+              } else {
+                return cb(null, user);
+              }
             }
-            return cb(null, user);
           }
         );
       } catch (error) {
