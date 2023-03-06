@@ -11,6 +11,7 @@ import logger from 'morgan';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
 import passportStrategy from './passport/authStrategy';
+import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
 
@@ -56,6 +57,8 @@ app.get('/', (req: Request, res: Response, next: NextFunction) => {
 app.use('/post', postRouter);
 app.use('/user', userRouter);
 app.use('/auth', authRouter);
+
+app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(
