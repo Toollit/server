@@ -61,13 +61,14 @@ router.post('/login', (req: Request, res: Response, next: NextFunction) => {
           return next(err);
         }
 
-        if (typeof user === 'object' && user !== null) {
-          if (user) {
-            return res.status(200).json({
-              success: true,
-              message: 'login success',
-            });
-          }
+        if (user) {
+          return res.status(200).json({
+            success: true,
+            message:
+              info?.message === 'resetPassword'
+                ? 'resetPassword'
+                : 'login success',
+          });
         }
       });
     }
@@ -376,5 +377,92 @@ router.post('/pwInquiry', async (req, res, next) => {
     return next(error);
   }
 });
+
+router.post(
+  '/resetpassword',
+  (req: Request, res: Response, next: NextFunction) => {
+    const userInfo = req.user;
+    const newPassword = req.body.password;
+
+    if (userInfo?.tempPassword) {
+      userInfo;
+      const salt = Buffer.from(userInfo.salt, 'hex');
+
+      crypto.pbkdf2(
+        newPassword,
+        salt,
+        310000,
+        32,
+        'sha256',
+        async function (err, hashedPassword) {
+          if (err) {
+            return next(err);
+          }
+
+          const userPassword = Buffer.from(userInfo.password, 'hex');
+
+          if (crypto.timingSafeEqual(userPassword, hashedPassword)) {
+            res.status(400).json({
+              success: false,
+              message: '이전에 사용한 비밀번호는 다시 사용할 수 없습니다.',
+            });
+          } else {
+            const newSalt = crypto.randomBytes(16);
+
+            crypto.pbkdf2(
+              newPassword,
+              newSalt,
+              310000,
+              32,
+              'sha256',
+              async function (err, hashedPassword) {
+                if (err) {
+                  return next(err);
+                }
+
+                const userRepository = AppDataSource.getRepository(User);
+
+                try {
+                  const userToUpdate = await userRepository.findOne({
+                    where: {
+                      id: userInfo.id,
+                    },
+                  });
+
+                  const saltString = newSalt.toString('hex');
+                  const hashedString = hashedPassword.toString('hex');
+
+                  if (userToUpdate) {
+                    userToUpdate.salt = saltString;
+                    userToUpdate.password = hashedString;
+                    userToUpdate.tempPassword = null;
+
+                    const result = await userRepository.save(userToUpdate);
+
+                    if (result) {
+                      return res.status(201).json({
+                        success: true,
+                        message:
+                          '비밀번호 변경이 완료되었습니다. 새로운 비밀번호로 다시 로그인해주세요.',
+                      });
+                    }
+                  }
+                } catch (error) {
+                  next(error);
+                }
+              }
+            );
+          }
+        }
+      );
+    } else {
+      // 임시 비밀번호로 로그인하지 않고 잘못된 접근으로 비밀번호 재설정을 하려는 경우
+      return res.status(400).json({
+        success: false,
+        message: '잘못된 접근 입니다.',
+      });
+    }
+  }
+);
 
 export default router;

@@ -30,6 +30,12 @@ export default () =>
           });
         }
 
+        if (user.tempPassword === password) {
+          return cb(null, user, {
+            message: 'resetPassword',
+          });
+        }
+
         const salt = Buffer.from(user.salt, 'hex');
 
         crypto.pbkdf2(

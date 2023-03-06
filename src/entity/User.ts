@@ -19,8 +19,8 @@ export class User {
   @Column({ nullable: true })
   password: string;
 
-  @Column({ nullable: true })
-  tempPassword: string;
+  @Column({ type: 'text', nullable: true })
+  tempPassword: string | null;
 
   @Column({ nullable: true })
   salt: string;
