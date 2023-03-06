@@ -81,7 +81,10 @@ router.post('/logout', function (req, res, next) {
       return next(err);
     }
 
-    return res.status(302).redirect('/');
+    return res.json({
+      success: true,
+      message: 'logout success',
+    });
   });
 });
 
