@@ -17,7 +17,6 @@ export default () => {
 
       done(null, user);
     } catch (err) {
-      console.error(err);
       done(err);
     }
   });

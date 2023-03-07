@@ -41,10 +41,7 @@ router.post('/login', (req: Request, res: Response, next: NextFunction) => {
       user: PassportLocalUser,
       info: PassportLocalInfo
     ) => {
-      // console.log({ err, user, info });
-
       if (err) {
-        console.error(err);
         return next(err);
       }
 
@@ -57,7 +54,6 @@ router.post('/login', (req: Request, res: Response, next: NextFunction) => {
 
       return req.login(user, async (err) => {
         if (err) {
-          console.error(err);
           return next(err);
         }
 
@@ -88,10 +84,30 @@ router.post('/logout', function (req, res, next) {
   });
 });
 
-router.post('/signup', function (req, res, next) {
+router.post('/signup', async (req, res, next) => {
   const { email, password, signupType } = req.body;
 
+  const userRepository = AppDataSource.getRepository(User);
+
+  try {
+    const isExistedEmail = await userRepository.findOne({
+      where: {
+        email,
+      },
+    });
+
+    if (isExistedEmail) {
+      return res.status(400).json({
+        success: false,
+        message: '가입되어있는 이메일 입니다.',
+      });
+    }
+  } catch (error) {
+    return next(error);
+  }
+
   const salt = crypto.randomBytes(16);
+
   crypto.pbkdf2(
     password,
     salt,
@@ -101,20 +117,6 @@ router.post('/signup', function (req, res, next) {
     async function (err, hashedPassword) {
       if (err) {
         return next(err);
-      }
-
-      const userRepository = AppDataSource.getRepository(User);
-      const isExistedEmail = await userRepository.findOne({
-        where: {
-          email,
-        },
-      });
-
-      if (isExistedEmail) {
-        return res.status(400).json({
-          success: false,
-          message: '가입되어있는 이메일 입니다.',
-        });
       }
 
       const saltString = salt.toString('hex');
@@ -136,11 +138,7 @@ router.post('/signup', function (req, res, next) {
           });
         }
       } catch (error) {
-        return res.status(400).json({
-          success: false,
-          message: 'signup error',
-          errorCode: error,
-        });
+        return next(error);
       }
     }
   );
@@ -169,14 +167,12 @@ router.get(
         const emptyRedirect = `${process.env.ORIGIN_URL}/login?hasEmailInfo=false`;
 
         if (err) {
-          console.error(err);
           return next(err);
         }
 
         if (info.success) {
           return req.login(user, async (err) => {
             if (err) {
-              console.error(err);
               return next(err);
             }
 
@@ -199,9 +195,6 @@ router.get(
     )(req, res, next);
   }
 );
-
-// 임시 중단
-// router.get('/login/github', passport.authenticate('github'));
 
 router.get('/login/github', (req, res, next) => {
   res.redirect(
@@ -256,7 +249,6 @@ router.get('/auth/github/callback', async (req, res, next) => {
     if (user && user.signupType === 'github') {
       return req.login(user, async (err) => {
         if (err) {
-          console.error(err);
           return next(err);
         }
 
@@ -281,7 +273,6 @@ router.get('/auth/github/callback', async (req, res, next) => {
         if (userData) {
           return req.login(user, async (err) => {
             if (err) {
-              console.error(err);
               return next(err);
             }
 
@@ -311,61 +302,57 @@ router.post('/pwInquiry', async (req, res, next) => {
       const temPassword = uuidv4().slice(0, 8);
       user.tempPassword = temPassword;
 
-      const isSave = await userRepository.save(user);
+      const isSaved = await userRepository.save(user);
 
-      if (!isSave) {
-        return res.status(500).json({
-          success: false,
-          message: '문제가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+      if (isSaved) {
+        const appDir = path
+          .resolve(__dirname)
+          .replace('routes', '/template/tempPasswordMail.ejs');
+
+        let emailTemplate;
+        ejs.renderFile(
+          appDir,
+          { temPasswordCode: temPassword },
+          function (err, data) {
+            if (err) {
+              return next(err);
+            }
+            emailTemplate = data;
+          }
+        );
+
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          auth: {
+            user: process.env.NODEMAILER_USER,
+            pass: process.env.NODEMAILER_PASS,
+          },
+        });
+
+        const mailOptions = {
+          from: `Getit <${process.env.NODEMAILER_USER}>`,
+          to: email,
+          subject: 'Getit 로그인을위한 임시 비밀번호입니다.',
+          html: emailTemplate,
+        };
+
+        transporter.sendMail(mailOptions, function (error, info) {
+          if (error) {
+            // console.log('send mail error');
+            return next(error);
+          }
+          console.log('finish sending email : ' + info.response);
+          res.status(201).json({
+            success: true,
+            message: '해당 이메일로 임시 비밀번호를 발급했습니다.',
+            temPassword,
+          });
+          return transporter.close();
         });
       }
-
-      const appDir = path
-        .resolve(__dirname)
-        .replace('routes', '/template/tempPasswordMail.ejs');
-
-      let emailTemplate;
-      ejs.renderFile(
-        appDir,
-        { temPasswordCode: temPassword },
-        function (err, data) {
-          if (err) {
-            console.log(err);
-          }
-          emailTemplate = data;
-        }
-      );
-
-      let transporter = nodemailer.createTransport({
-        service: 'gmail',
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-        auth: {
-          user: process.env.NODEMAILER_USER,
-          pass: process.env.NODEMAILER_PASS,
-        },
-      });
-
-      let mailOptions = {
-        from: `Getit <${process.env.NODEMAILER_USER}>`,
-        to: email,
-        subject: 'Getit 로그인을위한 임시 비밀번호입니다.',
-        html: emailTemplate,
-      };
-
-      transporter.sendMail(mailOptions, function (error, info) {
-        if (error) {
-          console.log('send mail error');
-        }
-        console.log('finish sending email : ' + info.response);
-        res.status(201).json({
-          success: true,
-          message: '해당 이메일로 임시 비밀번호를 발급했습니다.',
-          temPassword,
-        });
-        transporter.close();
-      });
     }
 
     if (!user) {
@@ -375,8 +362,6 @@ router.post('/pwInquiry', async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.error(error);
-
     return next(error);
   }
 });
@@ -407,7 +392,7 @@ router.post(
           if (crypto.timingSafeEqual(userPassword, hashedPassword)) {
             res.status(400).json({
               success: false,
-              message: '이전에 사용한 비밀번호는 다시 사용할 수 없습니다.',
+              message: '이전과 동일한 비밀번호는 다시 사용할 수 없습니다.',
             });
           } else {
             const newSalt = crypto.randomBytes(16);
@@ -451,7 +436,7 @@ router.post(
                     }
                   }
                 } catch (error) {
-                  next(error);
+                  return next(error);
                 }
               }
             );
