@@ -58,9 +58,13 @@ export default () =>
             } else {
               // 임시비밀번호를 받았지만 기존 비밀번호로 정상적으로 로그인한 경우 발급받은 임시비밀번호 초기화
               if (user.tempPassword) {
-                user.tempPassword = null;
-                const isSaved = await userRepository.save(user);
-                if (isSaved) {
+                const isUpdated = await AppDataSource.createQueryBuilder()
+                  .update(User)
+                  .set({ tempPassword: null })
+                  .where('id = :id', { id: user.id })
+                  .execute();
+
+                if (isUpdated) {
                   return cb(null, user);
                 }
               } else {

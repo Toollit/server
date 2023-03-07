@@ -299,12 +299,15 @@ router.post('/pwInquiry', async (req, res, next) => {
     });
 
     if (user) {
-      const temPassword = uuidv4().slice(0, 8);
-      user.tempPassword = temPassword;
+      const tempPassword = uuidv4().slice(0, 8);
 
-      const isSaved = await userRepository.save(user);
+      const isUpdated = await AppDataSource.createQueryBuilder()
+        .update(User)
+        .set({ tempPassword })
+        .where('id = :id', { id: user.id })
+        .execute();
 
-      if (isSaved) {
+      if (isUpdated) {
         const appDir = path
           .resolve(__dirname)
           .replace('routes', '/template/tempPasswordMail.ejs');
@@ -312,7 +315,7 @@ router.post('/pwInquiry', async (req, res, next) => {
         let emailTemplate;
         ejs.renderFile(
           appDir,
-          { temPasswordCode: temPassword },
+          { temPasswordCode: tempPassword },
           function (err, data) {
             if (err) {
               return next(err);
@@ -348,7 +351,7 @@ router.post('/pwInquiry', async (req, res, next) => {
           res.status(201).json({
             success: true,
             message: '해당 이메일로 임시 비밀번호를 발급했습니다.',
-            temPassword,
+            tempPassword,
           });
           return transporter.close();
         });
@@ -408,32 +411,26 @@ router.post(
                   return next(err);
                 }
 
-                const userRepository = AppDataSource.getRepository(User);
+                const saltString = newSalt.toString('hex');
+                const hashedString = hashedPassword.toString('hex');
 
                 try {
-                  const userToUpdate = await userRepository.findOne({
-                    where: {
-                      id: userInfo.id,
-                    },
-                  });
+                  const isUpdated = await AppDataSource.createQueryBuilder()
+                    .update(User)
+                    .set({
+                      salt: saltString,
+                      password: hashedString,
+                      tempPassword: null,
+                    })
+                    .where('id = :id', { id: userInfo.id })
+                    .execute();
 
-                  const saltString = newSalt.toString('hex');
-                  const hashedString = hashedPassword.toString('hex');
-
-                  if (userToUpdate) {
-                    userToUpdate.salt = saltString;
-                    userToUpdate.password = hashedString;
-                    userToUpdate.tempPassword = null;
-
-                    const result = await userRepository.save(userToUpdate);
-
-                    if (result) {
-                      return res.status(201).json({
-                        success: true,
-                        message:
-                          '비밀번호 변경이 완료되었습니다. 새로운 비밀번호로 다시 로그인해주세요.',
-                      });
-                    }
+                  if (isUpdated) {
+                    return res.status(201).json({
+                      success: true,
+                      message:
+                        '비밀번호 변경이 완료되었습니다. 새로운 비밀번호로 다시 로그인해주세요.',
+                    });
                   }
                 } catch (error) {
                   return next(error);
