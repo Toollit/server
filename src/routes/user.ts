@@ -106,14 +106,14 @@ router.post('/signup', async (req, res, next) => {
     return next(error);
   }
 
-  const salt = crypto.randomBytes(16);
+  const salt = crypto.randomBytes(64);
 
   crypto.pbkdf2(
     password,
     salt,
     310000,
-    32,
-    'sha256',
+    64,
+    'sha512',
     async function (err, hashedPassword) {
       if (err) {
         return next(err);
@@ -247,13 +247,21 @@ router.get('/auth/github/callback', async (req, res, next) => {
 
     // 이미 가입한 사용자 로그인
     if (user && user.signupType === 'github') {
-      return req.login(user, async (err) => {
-        if (err) {
-          return next(err);
-        }
+      const isUpdated = await AppDataSource.createQueryBuilder()
+        .update(User)
+        .set({ lastLoginAt: new Date() })
+        .where('id = :id', { id: user.id })
+        .execute();
 
-        return res.redirect(`${process.env.ORIGIN_URL}`);
-      });
+      if (isUpdated) {
+        return req.login(user, async (err) => {
+          if (err) {
+            return next(err);
+          }
+
+          return res.redirect(`${process.env.ORIGIN_URL}`);
+        });
+      }
     }
 
     // 동일한 이메일의 다른 가입 정보가 있는 경우
@@ -383,8 +391,8 @@ router.post(
         newPassword,
         salt,
         310000,
-        32,
-        'sha256',
+        64,
+        'sha512',
         async function (err, hashedPassword) {
           if (err) {
             return next(err);
@@ -398,14 +406,14 @@ router.post(
               message: '이전과 동일한 비밀번호는 다시 사용할 수 없습니다.',
             });
           } else {
-            const newSalt = crypto.randomBytes(16);
+            const newSalt = crypto.randomBytes(64);
 
             crypto.pbkdf2(
               newPassword,
               newSalt,
               310000,
-              32,
-              'sha256',
+              64,
+              'sha512',
               async function (err, hashedPassword) {
                 if (err) {
                   return next(err);

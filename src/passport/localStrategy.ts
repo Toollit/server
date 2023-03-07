@@ -42,8 +42,8 @@ export default () =>
           password,
           salt,
           310000,
-          32,
-          'sha256',
+          64,
+          'sha512',
           async function (err, hashedPassword) {
             if (err) {
               return cb(err);
@@ -60,7 +60,7 @@ export default () =>
               if (user.tempPassword) {
                 const isUpdated = await AppDataSource.createQueryBuilder()
                   .update(User)
-                  .set({ tempPassword: null })
+                  .set({ tempPassword: null, lastLoginAt: new Date() })
                   .where('id = :id', { id: user.id })
                   .execute();
 
@@ -68,7 +68,15 @@ export default () =>
                   return cb(null, user);
                 }
               } else {
-                return cb(null, user);
+                const isUpdated = await AppDataSource.createQueryBuilder()
+                  .update(User)
+                  .set({ lastLoginAt: new Date() })
+                  .where('id = :id', { id: user.id })
+                  .execute();
+
+                if (isUpdated) {
+                  return cb(null, user);
+                }
               }
             }
           }

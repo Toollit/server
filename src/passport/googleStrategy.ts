@@ -30,7 +30,15 @@ export default () => {
 
           // 이미 가입한 사용자 로그인
           if (user && user.signupType === 'google') {
-            return done(null, user, { success: true });
+            const isUpdated = await AppDataSource.createQueryBuilder()
+              .update(User)
+              .set({ lastLoginAt: new Date() })
+              .where('id = :id', { id: user.id })
+              .execute();
+
+            if (isUpdated) {
+              return done(null, user, { success: true });
+            }
           }
 
           // 동일한 이메일의 다른 가입 정보가 있는 경우
