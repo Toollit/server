@@ -315,7 +315,7 @@ router.post('/pwInquiry', async (req, res, next) => {
         let emailTemplate;
         ejs.renderFile(
           appDir,
-          { temPasswordCode: tempPassword },
+          { tempPasswordCode: tempPassword },
           function (err, data) {
             if (err) {
               return next(err);
