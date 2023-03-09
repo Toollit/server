@@ -60,4 +60,12 @@ router.post(
   }
 );
 
+router.get('/user', async (req: Request, res: Response) => {
+  if (req.user) {
+    return res.status(200).json({ success: true });
+  } else {
+    return res.status(200).json({ success: false });
+  }
+});
+
 export default router;
