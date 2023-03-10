@@ -61,10 +61,17 @@ router.post(
 );
 
 router.get('/user', async (req: Request, res: Response) => {
-  if (req.user) {
-    return res.status(200).json({ success: true });
+  const user = req.user;
+  if (user) {
+    if (user.tempPassword) {
+      return res
+        .status(200)
+        .json({ success: true, message: 'needResetPassword' });
+    }
+
+    return res.status(200).json({ success: true, message: null });
   } else {
-    return res.status(200).json({ success: false });
+    return res.status(200).json({ success: false, message: null });
   }
 });
 
