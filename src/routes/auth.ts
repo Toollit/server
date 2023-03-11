@@ -69,7 +69,14 @@ router.get('/user', async (req: Request, res: Response) => {
         .json({ success: true, message: 'needResetPassword' });
     }
 
-    return res.status(200).json({ success: true, message: null });
+    return res.status(200).json({
+      success: true,
+      message: null,
+      data: {
+        email: user.email,
+        nickname: user.nickname,
+      },
+    });
   } else {
     return res.status(200).json({ success: false, message: null });
   }
