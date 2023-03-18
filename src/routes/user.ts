@@ -16,6 +16,12 @@ import ejs from 'ejs';
 
 const router = express.Router();
 
+const successRedirect = process.env.ORIGIN_URL;
+const failureRedirect = `${process.env.ORIGIN_URL}/login?error=true`;
+const duplicateRedirect = `${process.env.ORIGIN_URL}/login?duplicate=true`;
+const emptyRedirect = `${process.env.ORIGIN_URL}/login?hasEmailInfo=false`;
+const firstTimeRedirect = `${process.env.ORIGIN_URL}/login?firstTime=true`;
+
 router.post('/login', (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate(
     'local',
@@ -158,12 +164,6 @@ router.get(
           message: 'empty' | 'duplicate' | 'error' | 'firstTime';
         }
       ) => {
-        const successRedirect = process.env.ORIGIN_URL;
-        const failureRedirect = `${process.env.ORIGIN_URL}/login?error=true`;
-        const duplicateRedirect = `${process.env.ORIGIN_URL}/login?duplicate=true`;
-        const emptyRedirect = `${process.env.ORIGIN_URL}/login?hasEmailInfo=false`;
-        const firstTimeRedirect = `${process.env.ORIGIN_URL}/login?firstTime=true`;
-
         if (err) {
           return next(err);
         }
@@ -235,7 +235,7 @@ router.get('/auth/github/callback', async (req, res, next) => {
 
   // github 계정에 등록된 이메일 정보가 없는경우
   if (!hasEmailInfo) {
-    return res.redirect(`${process.env.ORIGIN_URL}/login?hasEmailInfo=false`);
+    return res.redirect(emptyRedirect);
   }
 
   // github 계정에 등록된 이메일 정보가 있는 경우
@@ -261,14 +261,14 @@ router.get('/auth/github/callback', async (req, res, next) => {
             return next(err);
           }
 
-          return res.redirect(`${process.env.ORIGIN_URL}`);
+          return res.redirect(successRedirect);
         });
       }
     }
 
     // 동일한 이메일의 다른 가입 정보가 있는 경우
     if (user && user.signupType !== 'github') {
-      return res.redirect(`${process.env.ORIGIN_URL}/login?duplicate=true`);
+      return res.redirect(duplicateRedirect);
     }
 
     // 중복된 이메일이 없는 경우 DB저장(최초가입)
@@ -291,13 +291,11 @@ router.get('/auth/github/callback', async (req, res, next) => {
               return next(err);
             }
 
-            return res.redirect(
-              `${process.env.ORIGIN_URL}/login?firstTime=true`
-            );
+            return res.redirect(firstTimeRedirect);
           });
         }
       } catch (error) {
-        return res.redirect(`${process.env.ORIGIN_URL}/login?error=true`);
+        return res.redirect(failureRedirect);
       }
     }
   }
