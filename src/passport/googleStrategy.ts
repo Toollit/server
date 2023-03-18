@@ -48,9 +48,14 @@ export default () => {
 
           // 중복된 이메일이 없는 경우 DB저장(최초가입)
           if (!user) {
+            const atSignIndex = email.indexOf('@');
+            const initialNickname = email.slice(0, atSignIndex);
+
             const newUser = new User();
             newUser.email = email;
             newUser.signupType = 'google';
+            newUser.nickname = initialNickname;
+            newUser.lastLoginAt = new Date();
 
             try {
               const isSaved = await userRepository.save(newUser);

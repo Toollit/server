@@ -89,6 +89,9 @@ router.post('/signup', async (req, res, next) => {
     return next(error);
   }
 
+  const atSignIndex = email.indexOf('@');
+  const initialNickname = email.slice(0, atSignIndex);
+
   const salt = crypto.randomBytes(64);
 
   crypto.pbkdf2(
@@ -105,19 +108,27 @@ router.post('/signup', async (req, res, next) => {
       const saltString = salt.toString('hex');
       const hashedString = hashedPassword.toString('hex');
 
-      const user = new User();
-      user.email = email;
-      user.password = hashedString;
-      user.salt = saltString;
-      user.signupType = signupType;
+      const newUser = new User();
+      newUser.email = email;
+      newUser.password = hashedString;
+      newUser.salt = saltString;
+      newUser.signupType = signupType;
+      newUser.nickname = initialNickname;
+      newUser.lastLoginAt = new Date();
 
       try {
-        const result = await userRepository.save(user);
+        const userData = await userRepository.save(newUser);
 
-        if (result) {
-          return res.status(201).json({
-            success: true,
-            message: 'signup success',
+        if (userData) {
+          return req.login(newUser, async (err) => {
+            if (err) {
+              return next(err);
+            }
+
+            return res.status(201).json({
+              success: true,
+              message: 'signup success',
+            });
           });
         }
       } catch (error) {
@@ -254,15 +265,20 @@ router.get('/auth/github/callback', async (req, res, next) => {
 
     // 중복된 이메일이 없는 경우 DB저장(최초가입)
     if (!user) {
-      const user = new User();
-      user.email = userInfo.data.email;
-      user.signupType = 'github';
+      const atSignIndex = userInfo.data.email.indexOf('@');
+      const initialNickname = userInfo.data.email.slice(0, atSignIndex);
+
+      const newUser = new User();
+      newUser.email = userInfo.data.email;
+      newUser.signupType = 'github';
+      newUser.nickname = initialNickname;
+      newUser.lastLoginAt = new Date();
 
       try {
-        const userData = await userRepository.save(user);
+        const userData = await userRepository.save(newUser);
 
         if (userData) {
-          return req.login(user, async (err) => {
+          return req.login(newUser, async (err) => {
             if (err) {
               return next(err);
             }
