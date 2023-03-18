@@ -60,7 +60,10 @@ export default () => {
             try {
               const isSaved = await userRepository.save(newUser);
               if (isSaved) {
-                return done(null, newUser, { success: true });
+                return done(null, newUser, {
+                  success: true,
+                  message: 'firstTime',
+                });
               }
             } catch (error) {
               return done(null, undefined, {

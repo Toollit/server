@@ -153,12 +153,16 @@ router.get(
       (
         err: any,
         user: User,
-        info: { success: boolean; message: 'empty' | 'duplicate' | 'error' }
+        info: {
+          success: boolean;
+          message: 'empty' | 'duplicate' | 'error' | 'firstTime';
+        }
       ) => {
         const successRedirect = process.env.ORIGIN_URL;
         const failureRedirect = `${process.env.ORIGIN_URL}/login?error=true`;
         const duplicateRedirect = `${process.env.ORIGIN_URL}/login?duplicate=true`;
         const emptyRedirect = `${process.env.ORIGIN_URL}/login?hasEmailInfo=false`;
+        const firstTimeRedirect = `${process.env.ORIGIN_URL}/login?firstTime=true`;
 
         if (err) {
           return next(err);
@@ -171,6 +175,10 @@ router.get(
             }
 
             if (user) {
+              if (info.message === 'firstTime') {
+                return res.redirect(firstTimeRedirect);
+              }
+
               return res.redirect(successRedirect);
             }
           });
@@ -283,7 +291,9 @@ router.get('/auth/github/callback', async (req, res, next) => {
               return next(err);
             }
 
-            return res.redirect(`${process.env.ORIGIN_URL}`);
+            return res.redirect(
+              `${process.env.ORIGIN_URL}/login?firstTime=true`
+            );
           });
         }
       } catch (error) {
