@@ -5,8 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  OneToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Post } from './Post';
+import { ProfileImage } from './ProfileImage';
 
 @Entity()
 export class User {
@@ -48,4 +51,8 @@ export class User {
 
   @OneToMany(() => Post, (post) => post.user)
   posts: Post[];
+
+  @OneToOne(() => ProfileImage)
+  @JoinColumn()
+  profileImage: ProfileImage;
 }

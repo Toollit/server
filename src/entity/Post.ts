@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
+import { PostImage } from './PostImage';
 import { User } from './User';
 
 @Entity()
@@ -6,7 +13,7 @@ export class Post {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 1000 })
+  @Column({ type: 'text' })
   content: string;
 
   @Column()
@@ -23,4 +30,7 @@ export class Post {
 
   @ManyToOne(() => User, (user) => user.posts)
   user: User;
+
+  @OneToMany(() => PostImage, (postImage) => postImage.post)
+  images: PostImage[];
 }

@@ -1,10 +1,10 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity()
-export class Image {
+export class ProfileImage {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ length: 500 })
-  src: string;
+  url: string;
 }

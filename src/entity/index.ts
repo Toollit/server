@@ -1,7 +1,8 @@
-import { User } from './/User';
+import { User } from './User';
+import { ProfileImage } from './ProfileImage';
 import { Post } from './Post';
-import { Image } from './Image';
+import { PostImage } from './PostImage';
 import { Hashtag } from './Hashtag';
 import { Comment } from './Comment';
 
-export const Tables = [User, Post, Image, Hashtag, Comment];
+export const Tables = [User, ProfileImage, Post, PostImage, Hashtag, Comment];
