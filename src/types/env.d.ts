@@ -11,5 +11,9 @@ declare namespace NodeJS {
     readonly GOOGLE_CLIENT_ID: string;
     readonly GOOGLE_CLIENT_SECRET: string;
     readonly GOOGLE_CALLBACK_URL: string;
+    readonly S3_ACCESS_KEY_ID: string;
+    readonly S3_SECRET_ACCESS_KEY: string;
+    readonly S3_BUCKET_NAME: string;
+    readonly S3_BUCKET_REGION: string;
   }
 }
