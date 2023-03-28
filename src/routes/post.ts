@@ -3,6 +3,9 @@ import multer from 'multer';
 import multerS3 from 'multer-s3';
 import { S3Client } from '@aws-sdk/client-s3';
 import dotenv from 'dotenv';
+import { AppDataSource } from '../data-source';
+import { Post } from '../entity/Post';
+import { User } from '../entity/User';
 
 dotenv.config();
 
@@ -27,8 +30,38 @@ router.get('/', (req: Request, res: Response) => {
 
 router.post(
   '/project/create',
-  (req: Request, res: Response, next: NextFunction) => {
-    console.log('@@@@@@@@', req.body);
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const { title, contentHtml, contentMark } = req.body;
+
+    if (user) {
+      const userRepository = AppDataSource.getRepository(User);
+
+      const writer = await userRepository
+        .findOne({ where: { id: user.id } })
+        .catch((error) => next(error));
+
+      if (writer) {
+        const newPost = new Post();
+        newPost.title = title;
+        newPost.contentHTML = contentHtml;
+        newPost.contentMarkdown = contentMark;
+        newPost.user = writer;
+
+        const postRepository = AppDataSource.getRepository(Post);
+
+        const postData = await postRepository
+          .save(newPost)
+          .catch((error) => next(error));
+
+        if (postData) {
+          res.json({
+            success: true,
+            message: 'success create project',
+          });
+        }
+      }
+    }
   }
 );
 
