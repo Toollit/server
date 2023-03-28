@@ -24,13 +24,13 @@ export class Post {
   @Column({ type: 'text' })
   contentMarkdown: string;
 
-  @Column()
-  views: number;
+  @Column({ default: true })
+  views: number = 1;
 
-  @Column()
-  edit: boolean;
+  @Column({ default: true })
+  edit: boolean = false;
 
-  @Column({ default: null })
+  @Column({ nullable: true })
   updatedAt?: Date;
 
   @Column({ default: () => 'NOW()' })
