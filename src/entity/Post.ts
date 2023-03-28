@@ -13,8 +13,16 @@ export class Post {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ length: 50 })
+  title: string;
+
+  // 컨텐츠 보여주기용
   @Column({ type: 'text' })
-  content: string;
+  contentHTML: string;
+
+  // 작성자 수정용
+  @Column({ type: 'text' })
+  contentMarkdown: string;
 
   @Column()
   views: number;
