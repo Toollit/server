@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { AppDataSource } from '../data-source';
 import { Post } from '../entity/Post';
 import { User } from '../entity/User';
+import { PostImage } from '../entity/PostImage';
 
 dotenv.config();
 
@@ -72,7 +73,7 @@ router.post(
   '/project/create',
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
-    const { title, contentHtml, contentMark } = req.body;
+    const { title, contentHtml, contentMark, imageUrls } = req.body;
 
     if (user) {
       const userRepository = AppDataSource.getRepository(User);
@@ -93,6 +94,28 @@ router.post(
         const postData = await postRepository
           .save(newPost)
           .catch((error) => next(error));
+
+        if (postData && imageUrls) {
+          const postImageRepository = AppDataSource.getRepository(PostImage);
+
+          const requests = imageUrls.map((url: string) => {
+            const newPostImage = new PostImage();
+            newPostImage.url = url;
+            newPostImage.post = postData;
+
+            postImageRepository
+              .save(newPostImage)
+              .catch((error) => next(error));
+          });
+
+          Promise.all(requests)
+            .then((responses) =>
+              responses.forEach((response) =>
+                console.log('save image urls', response)
+              )
+            )
+            .catch((error) => next(error));
+        }
 
         if (postData) {
           res.json({
