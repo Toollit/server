@@ -24,9 +24,49 @@ const s3 = new S3Client({
 
 const router = express.Router();
 
-router.get('/', (req: Request, res: Response) => {
-  res.send('GET: /post');
-});
+router.get(
+  '/project/:postId',
+  async (req: Request, res: Response, next: NextFunction) => {
+    const postId = Number(req.params.postId);
+    const requestUserId = req.user?.id;
+
+    const postRepository = AppDataSource.getRepository(Post);
+
+    const post = await postRepository
+      .findOne({
+        where: { id: postId },
+        relations: { user: true },
+      })
+      .catch((error) => next(error));
+
+    if (post) {
+      const {
+        title,
+        contentHTML,
+        contentMarkdown,
+        views,
+        createdAt,
+        updatedAt,
+        user,
+      } = post;
+
+      // 내가 작성한 글이면 markdown도 같이 보내고 아닌경우엔 html만 보내기
+      res.json({
+        success: true,
+        message: null,
+        data: {
+          user: { nickname: user.nickname },
+          title,
+          contentHTML,
+          contentMarkdown: user.id === requestUserId ? contentMarkdown : null,
+          views,
+          createdAt,
+          updatedAt,
+        },
+      });
+    }
+  }
+);
 
 router.post(
   '/project/create',
