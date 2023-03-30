@@ -14,7 +14,10 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "strictPropertyInitialization": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": ["./*"]
+    }
   },
   "ts-node": { "files": true },
   "exclude": ["node_modules"]
