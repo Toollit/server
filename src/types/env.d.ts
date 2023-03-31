@@ -4,6 +4,7 @@ declare namespace NodeJS {
     readonly DB_PORT: string;
     readonly DB_USERNAME: string;
     readonly DB_PASSWORD: string;
+    readonly DB_DATABASE: string;
     readonly ORIGIN_URL: string;
     readonly NODEMAILER_USER: string;
     readonly NODEMAILER_PASS: string;
