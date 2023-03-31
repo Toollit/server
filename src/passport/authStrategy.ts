@@ -1,7 +1,7 @@
 import passport from 'passport';
 import localStrategy from './localStrategy';
-import { AppDataSource } from '../data-source';
-import { User } from '../entity/User';
+import { AppDataSource } from '@/data-source';
+import { User } from '@/entity/User';
 import googleStrategy from './googleStrategy';
 
 export default () => {

@@ -3,10 +3,10 @@ import multer from 'multer';
 import multerS3 from 'multer-s3';
 import { S3Client } from '@aws-sdk/client-s3';
 import dotenv from 'dotenv';
-import { AppDataSource } from '../data-source';
-import { Post } from '../entity/Post';
-import { User } from '../entity/User';
-import { PostImage } from '../entity/PostImage';
+import { AppDataSource } from '@/data-source';
+import { Post } from '@/entity/Post';
+import { User } from '@/entity/User';
+import { PostImage } from '@/entity/PostImage';
 
 dotenv.config();
 

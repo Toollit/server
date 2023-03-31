@@ -1,8 +1,8 @@
 import passport from 'passport';
 import passportLocal from 'passport-local';
 import crypto from 'crypto';
-import { AppDataSource } from '../data-source';
-import { User } from '../entity/User';
+import { AppDataSource } from '@/data-source';
+import { User } from '@/entity/User';
 
 const LocalStrategy = passportLocal.Strategy;
 

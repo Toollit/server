@@ -1,13 +1,13 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { AppDataSource } from '../data-source';
-import { User } from '../entity/User';
+import { AppDataSource } from '@/data-source';
+import { User } from '@/entity/User';
 import crypto from 'crypto';
 import passport from 'passport';
 import {
   PassportLocalError,
   PassportLocalInfo,
   PassportLocalUser,
-} from '../entity/types';
+} from '@/entity/types';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
