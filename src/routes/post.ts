@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import multerS3 from 'multer-s3';
-import { S3Client } from '@aws-sdk/client-s3';
+import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import dotenv from 'dotenv';
 import { AppDataSource } from '@/data-source';
 import { Post } from '@/entity/Post';
@@ -73,9 +73,42 @@ router.post(
   '/project/create',
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
-    const { title, contentHtml, contentMark, imageUrls } = req.body;
+    const {
+      title,
+      contentHtml,
+      contentMark,
+      imageUrls: { saveImgUrls, removeImgUrls },
+    } = req.body;
+
+    // console.log({
+    //   title,
+    //   contentHtml,
+    //   contentMark,
+    //   saveImgUrls,
+    //   removeImgUrls,
+    // });
 
     if (user) {
+      const removeFileNameList: string[] = removeImgUrls.map((url: string) => {
+        return url.slice(
+          `https://${S3_BUCKET_NAME}.s3.ap-northeast-2.amazonaws.com/`.length
+        );
+      });
+
+      const s3ImageRemoveRequest = removeFileNameList.map((filename) => {
+        const bucketParams = { Bucket: S3_BUCKET_NAME, Key: filename };
+
+        s3.send(new DeleteObjectCommand(bucketParams));
+      });
+
+      Promise.all(s3ImageRemoveRequest)
+        .then((responses) =>
+          responses.forEach((response) =>
+            console.log('remove image urls', response)
+          )
+        )
+        .catch((error) => next(error));
+
       const userRepository = AppDataSource.getRepository(User);
 
       const writer = await userRepository
@@ -95,10 +128,10 @@ router.post(
           .save(newPost)
           .catch((error) => next(error));
 
-        if (postData && imageUrls) {
+        if (postData && saveImgUrls) {
           const postImageRepository = AppDataSource.getRepository(PostImage);
 
-          const requests = imageUrls.map((url: string) => {
+          const requests = saveImgUrls.map((url: string) => {
             const newPostImage = new PostImage();
             newPostImage.url = url;
             newPostImage.post = postData;
@@ -121,6 +154,9 @@ router.post(
           res.json({
             success: true,
             message: 'success create project',
+            data: {
+              postId: postData.id,
+            },
           });
         }
       }
