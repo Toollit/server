@@ -314,6 +314,13 @@ router.post('/pwInquiry', async (req, res, next) => {
     });
 
     if (user) {
+      if (user.signupType !== 'email') {
+        return res.status(400).json({
+          success: false,
+          message: '소셜 로그인으로 가입한 사용자입니다.',
+        });
+      }
+
       const tempPassword = uuidv4().slice(0, 8);
 
       const isUpdated = await AppDataSource.createQueryBuilder()
