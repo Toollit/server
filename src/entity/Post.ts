@@ -4,6 +4,8 @@ import {
   Column,
   ManyToOne,
   OneToMany,
+  UpdateDateColumn,
+  CreateDateColumn,
 } from 'typeorm';
 import { PostImage } from './PostImage';
 import { User } from './User';
@@ -27,14 +29,11 @@ export class Post {
   @Column({ default: true })
   views: number = 1;
 
-  @Column({ default: true })
-  edit: boolean = false;
-
-  @Column({ nullable: true })
-  updatedAt?: Date;
-
-  @Column({ default: () => 'NOW()' })
+  @CreateDateColumn()
   createdAt: Date;
+
+  @UpdateDateColumn({ nullable: true })
+  updatedAt: Date;
 
   @ManyToOne(() => User, (user) => user.posts)
   user: User;
