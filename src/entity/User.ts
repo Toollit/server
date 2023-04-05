@@ -8,7 +8,7 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
-import { Post } from './Post';
+import { Project } from './Project';
 import { ProfileImage } from './ProfileImage';
 
 @Entity()
@@ -49,8 +49,8 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   lastLoginAt: Date;
 
-  @OneToMany(() => Post, (post) => post.user)
-  posts: Post[];
+  @OneToMany(() => Project, (project) => project.user)
+  posts: Project[];
 
   @OneToOne(() => ProfileImage)
   @JoinColumn()

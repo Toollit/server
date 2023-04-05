@@ -7,11 +7,11 @@ import {
   UpdateDateColumn,
   CreateDateColumn,
 } from 'typeorm';
-import { PostImage } from './PostImage';
+import { ProjectImage } from './ProjectImage';
 import { User } from './User';
 
 @Entity()
-export class Post {
+export class Project {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -38,6 +38,6 @@ export class Post {
   @ManyToOne(() => User, (user) => user.posts)
   user: User;
 
-  @OneToMany(() => PostImage, (postImage) => postImage.post)
-  images: PostImage[];
+  @OneToMany(() => ProjectImage, (projectImage) => projectImage.project)
+  images: ProjectImage[];
 }

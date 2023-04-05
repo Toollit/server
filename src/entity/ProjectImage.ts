@@ -1,14 +1,14 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import { Post } from './Post';
+import { Project } from './Project';
 
 @Entity()
-export class PostImage {
+export class ProjectImage {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ length: 500 })
   url: string;
 
-  @ManyToOne(() => Post, (post) => post.images)
-  post: Post;
+  @ManyToOne(() => Project, (project) => project.images)
+  project: Project;
 }
