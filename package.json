@@ -7,7 +7,11 @@
     "start": "cross-env NODE_ENV=development node dist/app.js",
     "dev": "npm run typeorm && cross-env NODE_ENV=development nodemon",
     "build": "rm -rf dist && npx tsc -p .",
-    "typeorm": "typeorm-ts-node-commonjs schema:sync -d src/data-source"
+    "typeorm": "typeorm-ts-node-commonjs schema:sync -d src/data-source",
+    "migration:create": "typeorm-ts-node-commonjs migration:create src/migrations/migration",
+    "migration:run": "typeorm-ts-node-commonjs migration:run -d src/data-source",
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/data-source",
+    "migration:show": "typeorm-ts-node-commonjs migration:show -d src/data-source"
   },
   "author": "seungwon.code@gmail.com",
   "license": "ISC",
