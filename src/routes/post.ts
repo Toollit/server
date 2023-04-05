@@ -4,9 +4,9 @@ import multerS3 from 'multer-s3';
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import dotenv from 'dotenv';
 import { AppDataSource } from '@/data-source';
-import { Post } from '@/entity/Post';
+import { Project } from '@/entity/Project';
 import { User } from '@/entity/User';
-import { PostImage } from '@/entity/PostImage';
+import { ProjectImage } from '@/entity/ProjectImage';
 
 dotenv.config();
 
@@ -26,27 +26,27 @@ const s3 = new S3Client({
 const router = express.Router();
 
 router.get(
-  '/project/:postId',
+  '/project/:projectId',
   async (req: Request, res: Response, next: NextFunction) => {
-    const postId = Number(req.params.postId);
+    const projectId = Number(req.params.projectId);
     const requestUserId = req.user?.id;
 
-    const postRepository = AppDataSource.getRepository(Post);
+    const projectRepository = AppDataSource.getRepository(Project);
 
     try {
       // 조회시 조회수 1증가
       await AppDataSource.createQueryBuilder()
-        .update(Post)
+        .update(Project)
         .set({ views: () => 'views + 1', updatedAt: () => 'updatedAt' })
-        .where('id = :id', { id: postId })
+        .where('id = :id', { id: projectId })
         .execute();
 
-      const post = await postRepository.findOne({
-        where: { id: postId },
+      const project = await projectRepository.findOne({
+        where: { id: projectId },
         relations: { user: true },
       });
 
-      if (post) {
+      if (project) {
         const {
           title,
           contentHTML,
@@ -55,7 +55,7 @@ router.get(
           createdAt,
           updatedAt,
           user,
-        } = post;
+        } = project;
 
         // 내가 작성한 글이면 markdown도 같이 보내고 아닌경우엔 html만 보내기
         res.json({
@@ -129,28 +129,29 @@ router.post(
         .catch((error) => next(error));
 
       if (writer) {
-        const newPost = new Post();
-        newPost.title = title;
-        newPost.contentHTML = contentHtml;
-        newPost.contentMarkdown = contentMark;
-        newPost.user = writer;
+        const newProject = new Project();
+        newProject.title = title;
+        newProject.contentHTML = contentHtml;
+        newProject.contentMarkdown = contentMark;
+        newProject.user = writer;
 
-        const postRepository = AppDataSource.getRepository(Post);
+        const projectRepository = AppDataSource.getRepository(Project);
 
-        const postData = await postRepository
-          .save(newPost)
+        const projectData = await projectRepository
+          .save(newProject)
           .catch((error) => next(error));
 
-        if (postData && saveImgUrls) {
-          const postImageRepository = AppDataSource.getRepository(PostImage);
+        if (projectData && saveImgUrls) {
+          const projectImageRepository =
+            AppDataSource.getRepository(ProjectImage);
 
           const requests = saveImgUrls.map((url: string) => {
-            const newPostImage = new PostImage();
-            newPostImage.url = url;
-            newPostImage.post = postData;
+            const newProjectImage = new ProjectImage();
+            newProjectImage.url = url;
+            newProjectImage.project = projectData;
 
-            postImageRepository
-              .save(newPostImage)
+            projectImageRepository
+              .save(newProjectImage)
               .catch((error) => next(error));
           });
 
@@ -163,12 +164,12 @@ router.post(
             .catch((error) => next(error));
         }
 
-        if (postData) {
+        if (projectData) {
           res.json({
             success: true,
             message: 'success create project',
             data: {
-              postId: postData.id,
+              projectId: projectData.id,
             },
           });
         }
