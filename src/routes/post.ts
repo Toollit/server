@@ -33,38 +33,51 @@ router.get(
 
     const postRepository = AppDataSource.getRepository(Post);
 
-    const post = await postRepository
-      .findOne({
+    try {
+      // 조회시 조회수 1증가
+      await AppDataSource.createQueryBuilder()
+        .update(Post)
+        .set({ views: () => 'views + 1', updatedAt: () => 'updatedAt' })
+        .where('id = :id', { id: postId })
+        .execute();
+
+      const post = await postRepository.findOne({
         where: { id: postId },
         relations: { user: true },
-      })
-      .catch((error) => next(error));
+      });
 
-    if (post) {
-      const {
-        title,
-        contentHTML,
-        contentMarkdown,
-        views,
-        createdAt,
-        updatedAt,
-        user,
-      } = post;
-
-      // 내가 작성한 글이면 markdown도 같이 보내고 아닌경우엔 html만 보내기
-      res.json({
-        success: true,
-        message: null,
-        data: {
-          user: { nickname: user.nickname },
+      if (post) {
+        const {
           title,
           contentHTML,
-          contentMarkdown: user.id === requestUserId ? contentMarkdown : null,
+          contentMarkdown,
           views,
           createdAt,
           updatedAt,
-        },
-      });
+          user,
+        } = post;
+
+        // 내가 작성한 글이면 markdown도 같이 보내고 아닌경우엔 html만 보내기
+        res.json({
+          success: true,
+          message: null,
+          data: {
+            user: {
+              nickname: user.nickname,
+              lastLoginAt: user.lastLoginAt,
+              profileImage: user.profileImage,
+            },
+            title,
+            contentHTML,
+            contentMarkdown: user.id === requestUserId ? contentMarkdown : null,
+            views,
+            createdAt,
+            updatedAt,
+          },
+        });
+      }
+    } catch (error) {
+      return next(error);
     }
   }
 );
