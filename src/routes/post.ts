@@ -26,6 +26,29 @@ const s3 = new S3Client({
 const router = express.Router();
 
 router.get(
+  '/project',
+  async (req: Request, res: Response, next: NextFunction) => {
+    const projectRepository = AppDataSource.getRepository(Project);
+
+    const projectList = await projectRepository.find({});
+
+    const processedData = projectList.map((project) => {
+      return {
+        id: project.id,
+        title: project.title,
+        views: project.views,
+      };
+    });
+
+    return res.json({
+      success: true,
+      message: null,
+      data: { projectList: processedData },
+    });
+  }
+);
+
+router.get(
   '/project/:projectId',
   async (req: Request, res: Response, next: NextFunction) => {
     const projectId = Number(req.params.projectId);
@@ -88,15 +111,15 @@ router.post(
     const user = req.user;
     const {
       title,
-      contentHtml,
-      contentMark,
+      contentHTML,
+      contentMarkdown,
       imageUrls: { saveImgUrls, removeImgUrls },
     } = req.body;
 
     // console.log({
     //   title,
-    //   contentHtml,
-    //   contentMark,
+    //   contentHTML,
+    //   contentMarkdown,
     //   saveImgUrls,
     //   removeImgUrls,
     // });
@@ -131,8 +154,8 @@ router.post(
       if (writer) {
         const newProject = new Project();
         newProject.title = title;
-        newProject.contentHTML = contentHtml;
-        newProject.contentMarkdown = contentMark;
+        newProject.contentHTML = contentHTML;
+        newProject.contentMarkdown = contentMarkdown;
         newProject.user = writer;
 
         const projectRepository = AppDataSource.getRepository(Project);
