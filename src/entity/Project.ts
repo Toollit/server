@@ -26,8 +26,11 @@ export class Project {
   @Column({ type: 'text' })
   contentMarkdown: string;
 
-  @Column({ default: true })
+  @Column({ default: 1 })
   views: number = 1;
+
+  @Column({ default: 0 })
+  bookmarks: number = 0;
 
   @CreateDateColumn()
   createdAt: Date;
