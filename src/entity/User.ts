@@ -50,7 +50,7 @@ export class User {
   lastLoginAt: Date;
 
   @OneToMany(() => Project, (project) => project.user)
-  posts: Project[];
+  projects: Project[];
 
   @OneToOne(() => ProfileImage)
   @JoinColumn()

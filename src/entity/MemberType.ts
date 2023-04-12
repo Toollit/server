@@ -4,24 +4,19 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
 } from 'typeorm';
-import { Project } from './Project';
 
 @Entity()
-export class Comment {
+export class MemberType {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 200 })
-  content: string;
+  @Column()
+  type: 'developer' | 'designer' | 'pm' | 'anyone';
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn({ nullable: true })
   updatedAt: Date;
-
-  @ManyToOne(() => Project, (project) => project.comments)
-  project: Project;
 }

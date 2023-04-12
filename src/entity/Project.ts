@@ -9,6 +9,8 @@ import {
 } from 'typeorm';
 import { ProjectImage } from './ProjectImage';
 import { User } from './User';
+import { Hashtag } from './Hashtag';
+import { Comment } from './Comment';
 
 @Entity()
 export class Project {
@@ -38,9 +40,15 @@ export class Project {
   @UpdateDateColumn({ nullable: true })
   updatedAt: Date;
 
-  @ManyToOne(() => User, (user) => user.posts)
+  @ManyToOne(() => User, (user) => user.projects)
   user: User;
 
   @OneToMany(() => ProjectImage, (projectImage) => projectImage.project)
   images: ProjectImage[];
+
+  @OneToMany(() => Hashtag, (hashtag) => hashtag.project)
+  hashtags: Hashtag[];
+
+  @OneToMany(() => Comment, (comment) => comment.project)
+  comments: Comment[];
 }
