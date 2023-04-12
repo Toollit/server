@@ -50,6 +50,30 @@ router.get(
         (memberType) => memberType.type
       );
 
+      // developer, designer, pm, anyone 순으로 정렬
+      processedMemberTypesData.sort(function (a, b) {
+        return (
+          (a === 'developer'
+            ? -3
+            : a === 'designer'
+            ? -2
+            : a === 'pm'
+            ? -1
+            : a === 'anyone'
+            ? 0
+            : 1) -
+          (b === 'developer'
+            ? -3
+            : b === 'designer'
+            ? -2
+            : b === 'pm'
+            ? -1
+            : b === 'anyone'
+            ? 0
+            : 1)
+        );
+      });
+
       return {
         id: project.id,
         title: project.title,
@@ -117,9 +141,33 @@ router.get(
           (hashtag) => hashtag.tagName
         );
 
+        // developer, designer, pm, anyone 순으로 정렬
         const processedMemberTypesData = memberTypes.map(
           (memberType) => memberType.type
         );
+
+        processedMemberTypesData.sort(function (a, b) {
+          return (
+            (a === 'developer'
+              ? -3
+              : a === 'designer'
+              ? -2
+              : a === 'pm'
+              ? -1
+              : a === 'anyone'
+              ? 0
+              : 1) -
+            (b === 'developer'
+              ? -3
+              : b === 'designer'
+              ? -2
+              : b === 'pm'
+              ? -1
+              : b === 'anyone'
+              ? 0
+              : 1)
+          );
+        });
 
         // 내가 작성한 글이면 markdown도 같이 보내고 아닌경우엔 html만 보내기
         res.json({
