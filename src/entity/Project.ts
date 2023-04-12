@@ -11,6 +11,7 @@ import { ProjectImage } from './ProjectImage';
 import { User } from './User';
 import { Hashtag } from './Hashtag';
 import { Comment } from './Comment';
+import { MemberType } from './MemberType';
 
 @Entity()
 export class Project {
@@ -51,4 +52,7 @@ export class Project {
 
   @OneToMany(() => Comment, (comment) => comment.project)
   comments: Comment[];
+
+  @OneToMany(() => MemberType, (memberType) => memberType.project)
+  memberTypes: MemberType[];
 }

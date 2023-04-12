@@ -4,7 +4,9 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
 } from 'typeorm';
+import { Project } from './Project';
 
 @Entity()
 export class MemberType {
@@ -19,4 +21,7 @@ export class MemberType {
 
   @UpdateDateColumn({ nullable: true })
   updatedAt: Date;
+
+  @ManyToOne(() => Project, (project) => project.memberTypes)
+  project: Project;
 }
