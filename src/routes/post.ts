@@ -283,19 +283,20 @@ router.post(
           if (hashtags.length >= 1) {
             const HashtagRepository = AppDataSource.getRepository(Hashtag);
 
-            const hashtagSaveRequests = hashtags.map((hashtag: string) => {
-              const newHashtag = new Hashtag();
-              newHashtag.project = projectData;
-              newHashtag.tagName = hashtag;
+            (async function saveHashtagsInOrder() {
+              await hashtags.reduce(
+                async (previousPromise: Promise<any>, hashtag: string) => {
+                  await previousPromise;
 
-              HashtagRepository.save(newHashtag);
-            });
+                  const newHashtag = new Hashtag();
+                  newHashtag.project = projectData;
+                  newHashtag.tagName = hashtag;
 
-            Promise.all(hashtagSaveRequests).then((responses) =>
-              responses.forEach((response) =>
-                console.log('save hashtags', response)
-              )
-            );
+                  await HashtagRepository.save(newHashtag);
+                },
+                Promise.resolve()
+              );
+            })();
           }
 
           if (memberTypes.length >= 1) {
