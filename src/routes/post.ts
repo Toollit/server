@@ -7,6 +7,8 @@ import { AppDataSource } from '@/data-source';
 import { Project } from '@/entity/Project';
 import { User } from '@/entity/User';
 import { ProjectImage } from '@/entity/ProjectImage';
+import { Hashtag } from '@/entity/Hashtag';
+import { MemberType } from '@/entity/MemberType';
 
 dotenv.config();
 
@@ -30,13 +32,31 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     const projectRepository = AppDataSource.getRepository(Project);
 
-    const projectList = await projectRepository.find({});
+    const projectList = await projectRepository.find({
+      relations: { hashtags: true, memberTypes: true },
+      order: {
+        memberTypes: {
+          id: 'ASC',
+        },
+      },
+    });
 
     const processedData = projectList.map((project) => {
+      const processedHashtagsData = project.hashtags.map(
+        (hashtag) => hashtag.tagName
+      );
+
+      const processedMemberTypesData = project.memberTypes.map(
+        (memberType) => memberType.type
+      );
+
       return {
         id: project.id,
         title: project.title,
         views: project.views,
+        bookmarks: project.bookmarks,
+        hashtags: processedHashtagsData,
+        memberTypes: processedMemberTypesData,
       };
     });
 
@@ -66,7 +86,17 @@ router.get(
 
       const project = await projectRepository.findOne({
         where: { id: projectId },
-        relations: { user: true },
+        relations: {
+          user: true,
+          hashtags: true,
+          memberTypes: true,
+          comments: true,
+        },
+        order: {
+          memberTypes: {
+            id: 'ASC',
+          },
+        },
       });
 
       if (project) {
@@ -78,24 +108,41 @@ router.get(
           createdAt,
           updatedAt,
           user,
+          hashtags,
+          memberTypes,
+          comments,
         } = project;
+
+        const processedHashtagsData = hashtags.map(
+          (hashtag) => hashtag.tagName
+        );
+
+        const processedMemberTypesData = memberTypes.map(
+          (memberType) => memberType.type
+        );
 
         // 내가 작성한 글이면 markdown도 같이 보내고 아닌경우엔 html만 보내기
         res.json({
           success: true,
           message: null,
           data: {
-            user: {
+            writer: {
               nickname: user.nickname,
               lastLoginAt: user.lastLoginAt,
               profileImage: user.profileImage,
             },
-            title,
-            contentHTML,
-            contentMarkdown: user.id === requestUserId ? contentMarkdown : null,
-            views,
-            createdAt,
-            updatedAt,
+            content: {
+              title,
+              contentHTML,
+              contentMarkdown:
+                user.id === requestUserId ? contentMarkdown : null,
+              views,
+              createdAt,
+              updatedAt,
+              hashtags: processedHashtagsData,
+              memberTypes: processedMemberTypesData,
+            },
+            comments,
           },
         });
       }
@@ -114,80 +161,116 @@ router.post(
       contentHTML,
       contentMarkdown,
       imageUrls: { saveImgUrls, removeImgUrls },
+      hashtags,
+      memberTypes,
     } = req.body;
 
-    // console.log({
-    //   title,
-    //   contentHTML,
-    //   contentMarkdown,
-    //   saveImgUrls,
-    //   removeImgUrls,
-    // });
+    console.log({
+      title,
+      contentHTML,
+      contentMarkdown,
+      saveImgUrls,
+      removeImgUrls,
+      hashtags,
+      memberTypes,
+    });
 
     if (user) {
-      const removeFileNameList: string[] = removeImgUrls.map((url: string) => {
-        return url.slice(
-          `https://${S3_BUCKET_NAME}.s3.ap-northeast-2.amazonaws.com/`.length
+      try {
+        const removeFileNameList: string[] = removeImgUrls.map(
+          (url: string) => {
+            return url.slice(
+              `https://${S3_BUCKET_NAME}.s3.ap-northeast-2.amazonaws.com/`
+                .length
+            );
+          }
         );
-      });
 
-      const s3ImageRemoveRequest = removeFileNameList.map((filename) => {
-        const bucketParams = { Bucket: S3_BUCKET_NAME, Key: filename };
+        const s3ImageRemoveRequest = removeFileNameList.map((filename) => {
+          const bucketParams = { Bucket: S3_BUCKET_NAME, Key: filename };
 
-        s3.send(new DeleteObjectCommand(bucketParams));
-      });
+          s3.send(new DeleteObjectCommand(bucketParams));
+        });
 
-      Promise.all(s3ImageRemoveRequest)
-        .then((responses) =>
+        Promise.all(s3ImageRemoveRequest).then((responses) =>
           responses.forEach((response) =>
             console.log('remove image urls', response)
           )
-        )
-        .catch((error) => next(error));
+        );
 
-      const userRepository = AppDataSource.getRepository(User);
+        const userRepository = AppDataSource.getRepository(User);
 
-      const writer = await userRepository
-        .findOne({ where: { id: user.id } })
-        .catch((error) => next(error));
+        const writer = await userRepository.findOne({ where: { id: user.id } });
 
-      if (writer) {
-        const newProject = new Project();
-        newProject.title = title;
-        newProject.contentHTML = contentHTML;
-        newProject.contentMarkdown = contentMarkdown;
-        newProject.user = writer;
+        if (writer) {
+          const newProject = new Project();
+          newProject.title = title;
+          newProject.contentHTML = contentHTML;
+          newProject.contentMarkdown = contentMarkdown;
+          newProject.user = writer;
 
-        const projectRepository = AppDataSource.getRepository(Project);
+          const projectRepository = AppDataSource.getRepository(Project);
 
-        const projectData = await projectRepository
-          .save(newProject)
-          .catch((error) => next(error));
+          const projectData = await projectRepository.save(newProject);
 
-        if (projectData && saveImgUrls) {
-          const projectImageRepository =
-            AppDataSource.getRepository(ProjectImage);
+          if (projectData && saveImgUrls) {
+            const projectImageRepository =
+              AppDataSource.getRepository(ProjectImage);
 
-          const requests = saveImgUrls.map((url: string) => {
-            const newProjectImage = new ProjectImage();
-            newProjectImage.url = url;
-            newProjectImage.project = projectData;
+            const imgSaveRequests = saveImgUrls.map((url: string) => {
+              const newProjectImage = new ProjectImage();
+              newProjectImage.url = url;
+              newProjectImage.project = projectData;
 
-            projectImageRepository
-              .save(newProjectImage)
-              .catch((error) => next(error));
-          });
+              projectImageRepository.save(newProjectImage);
+            });
 
-          Promise.all(requests)
-            .then((responses) =>
+            Promise.all(imgSaveRequests).then((responses) =>
               responses.forEach((response) =>
                 console.log('save image urls', response)
               )
-            )
-            .catch((error) => next(error));
-        }
+            );
+          }
 
-        if (projectData) {
+          if (hashtags.length >= 1) {
+            const HashtagRepository = AppDataSource.getRepository(Hashtag);
+
+            const hashtagSaveRequests = hashtags.map((hashtag: string) => {
+              const newHashtag = new Hashtag();
+              newHashtag.project = projectData;
+              newHashtag.tagName = hashtag;
+
+              HashtagRepository.save(newHashtag);
+            });
+
+            Promise.all(hashtagSaveRequests).then((responses) =>
+              responses.forEach((response) =>
+                console.log('save hashtags', response)
+              )
+            );
+          }
+
+          if (memberTypes.length >= 1) {
+            const MemberTypeRepository =
+              AppDataSource.getRepository(MemberType);
+
+            const memberTypeSaveRequests = memberTypes.map(
+              (memberType: 'developer' | 'designer' | 'pm' | 'anyone') => {
+                const newMemberType = new MemberType();
+                newMemberType.project = projectData;
+                newMemberType.type = memberType;
+
+                MemberTypeRepository.save(newMemberType);
+              }
+            );
+
+            Promise.all(memberTypeSaveRequests).then((responses) =>
+              responses.forEach((response) =>
+                console.log('save memberTypes', response)
+              )
+            );
+          }
+
           res.json({
             success: true,
             message: 'success create project',
@@ -196,6 +279,8 @@ router.post(
             },
           });
         }
+      } catch (error) {
+        next(error);
       }
     }
   }
