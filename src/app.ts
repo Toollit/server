@@ -54,9 +54,9 @@ app.get('/', (req: Request, res: Response, next: NextFunction) => {
   res.send('Hello World!');
 });
 
-app.use('/post', postRouter);
-app.use('/user', userRouter);
-app.use('/auth', authRouter);
+app.use('/api/post', postRouter);
+app.use('/api/user', userRouter);
+app.use('/api/auth', authRouter);
 
 app.use(errorHandler);
 
