@@ -28,11 +28,11 @@ const s3 = new S3Client({
 const router = express.Router();
 
 router.get(
-  '/project',
+  '/projects',
   async (req: Request, res: Response, next: NextFunction) => {
     const projectRepository = AppDataSource.getRepository(Project);
 
-    const projectList = await projectRepository.find({
+    const projects = await projectRepository.find({
       relations: { hashtags: true, memberTypes: true },
       order: {
         memberTypes: {
@@ -41,7 +41,7 @@ router.get(
       },
     });
 
-    const processedData = projectList.map((project) => {
+    const processedData = projects.map((project) => {
       const processedHashtagsData = project.hashtags.map(
         (hashtag) => hashtag.tagName
       );
@@ -87,7 +87,7 @@ router.get(
     return res.json({
       success: true,
       message: null,
-      data: { projectList: processedData },
+      data: { projects: processedData },
     });
   }
 );
