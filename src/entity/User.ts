@@ -32,7 +32,7 @@ export class User {
   salt: string;
 
   @Column()
-  signupType: 'google' | 'github' | 'email';
+  signUpType: 'google' | 'github' | 'email';
 
   @Column({ nullable: true, length: 20 })
   nickname: string;

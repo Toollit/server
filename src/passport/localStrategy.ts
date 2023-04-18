@@ -24,7 +24,7 @@ export default () =>
           });
         }
 
-        if (user.signupType !== 'email') {
+        if (user.signUpType !== 'email') {
           return cb(null, false, {
             message: '소셜 로그인을 통해 가입이 이루어진 계정입니다.',
           });

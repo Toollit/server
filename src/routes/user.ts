@@ -73,8 +73,8 @@ router.post('/logout', function (req, res, next) {
   });
 });
 
-router.post('/signup', async (req, res, next) => {
-  const { email, password, signupType } = req.body;
+router.post('/signUp', async (req, res, next) => {
+  const { email, password, signUpType } = req.body;
 
   const userRepository = AppDataSource.getRepository(User);
 
@@ -118,7 +118,7 @@ router.post('/signup', async (req, res, next) => {
       newUser.email = email;
       newUser.password = hashedString;
       newUser.salt = saltString;
-      newUser.signupType = signupType;
+      newUser.signUpType = signUpType;
       newUser.nickname = initialNickname;
       newUser.lastLoginAt = new Date();
 
@@ -248,7 +248,7 @@ router.get('/auth/github/callback', async (req, res, next) => {
     });
 
     // 이미 가입한 사용자 로그인
-    if (user && user.signupType === 'github') {
+    if (user && user.signUpType === 'github') {
       const isUpdated = await AppDataSource.createQueryBuilder()
         .update(User)
         .set({ lastLoginAt: new Date() })
@@ -267,7 +267,7 @@ router.get('/auth/github/callback', async (req, res, next) => {
     }
 
     // 동일한 이메일의 다른 가입 정보가 있는 경우
-    if (user && user.signupType !== 'github') {
+    if (user && user.signUpType !== 'github') {
       return res.redirect(duplicateRedirect);
     }
 
@@ -278,7 +278,7 @@ router.get('/auth/github/callback', async (req, res, next) => {
 
       const newUser = new User();
       newUser.email = userInfo.data.email;
-      newUser.signupType = 'github';
+      newUser.signUpType = 'github';
       newUser.nickname = initialNickname;
       newUser.lastLoginAt = new Date();
 
@@ -314,7 +314,7 @@ router.post('/pwInquiry', async (req, res, next) => {
     });
 
     if (user) {
-      if (user.signupType !== 'email') {
+      if (user.signUpType !== 'email') {
         return res.status(400).json({
           success: false,
           message: '소셜 로그인으로 가입한 사용자입니다.',

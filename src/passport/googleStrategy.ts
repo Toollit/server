@@ -29,7 +29,7 @@ export default () => {
           const user = await userRepository.findOne({ where: { email } });
 
           // 이미 가입한 사용자 로그인
-          if (user && user.signupType === 'google') {
+          if (user && user.signUpType === 'google') {
             const isUpdated = await AppDataSource.createQueryBuilder()
               .update(User)
               .set({ lastLoginAt: new Date() })
@@ -42,7 +42,7 @@ export default () => {
           }
 
           // 동일한 이메일의 다른 가입 정보가 있는 경우
-          if (user && user.signupType !== 'google') {
+          if (user && user.signUpType !== 'google') {
             return done(null, user, { success: false, message: 'duplicate' });
           }
 
@@ -53,7 +53,7 @@ export default () => {
 
             const newUser = new User();
             newUser.email = email;
-            newUser.signupType = 'google';
+            newUser.signUpType = 'google';
             newUser.nickname = initialNickname;
             newUser.lastLoginAt = new Date();
 

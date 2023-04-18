@@ -4,7 +4,7 @@ export interface UserData {
   password: string;
   tempPassword: string | null;
   salt: string;
-  signupType: 'email' | 'google' | 'github';
+  signUpType: 'email' | 'google' | 'github';
   nickname: string | null;
   username: string | null;
   createdAt: Date;
