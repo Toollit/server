@@ -32,63 +32,67 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     const projectRepository = AppDataSource.getRepository(Project);
 
-    const projects = await projectRepository.find({
-      relations: { hashtags: true, memberTypes: true },
-      order: {
-        memberTypes: {
-          id: 'ASC',
+    try {
+      const projects = await projectRepository.find({
+        relations: { hashtags: true, memberTypes: true },
+        order: {
+          memberTypes: {
+            id: 'ASC',
+          },
         },
-      },
-    });
-
-    const processedData = projects.map((project) => {
-      const processedHashtagsData = project.hashtags.map(
-        (hashtag) => hashtag.tagName
-      );
-
-      const processedMemberTypesData = project.memberTypes.map(
-        (memberType) => memberType.type
-      );
-
-      // developer, designer, pm, anyone 순으로 정렬
-      processedMemberTypesData.sort(function (a, b) {
-        return (
-          (a === 'developer'
-            ? -3
-            : a === 'designer'
-            ? -2
-            : a === 'pm'
-            ? -1
-            : a === 'anyone'
-            ? 0
-            : 1) -
-          (b === 'developer'
-            ? -3
-            : b === 'designer'
-            ? -2
-            : b === 'pm'
-            ? -1
-            : b === 'anyone'
-            ? 0
-            : 1)
-        );
       });
 
-      return {
-        id: project.id,
-        title: project.title,
-        views: project.views,
-        bookmarks: project.bookmarks,
-        hashtags: processedHashtagsData,
-        memberTypes: processedMemberTypesData,
-      };
-    });
+      const processedData = projects.map((project) => {
+        const processedHashtagsData = project.hashtags.map(
+          (hashtag) => hashtag.tagName
+        );
 
-    return res.json({
-      success: true,
-      message: null,
-      data: { projects: processedData },
-    });
+        const processedMemberTypesData = project.memberTypes.map(
+          (memberType) => memberType.type
+        );
+
+        // developer, designer, pm, anyone 순으로 정렬
+        processedMemberTypesData.sort(function (a, b) {
+          return (
+            (a === 'developer'
+              ? -3
+              : a === 'designer'
+              ? -2
+              : a === 'pm'
+              ? -1
+              : a === 'anyone'
+              ? 0
+              : 1) -
+            (b === 'developer'
+              ? -3
+              : b === 'designer'
+              ? -2
+              : b === 'pm'
+              ? -1
+              : b === 'anyone'
+              ? 0
+              : 1)
+          );
+        });
+
+        return {
+          id: project.id,
+          title: project.title,
+          views: project.views,
+          bookmarks: project.bookmarks,
+          hashtags: processedHashtagsData,
+          memberTypes: processedMemberTypesData,
+        };
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: null,
+        data: { projects: processedData },
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 );
 
@@ -170,7 +174,7 @@ router.get(
         });
 
         // 내가 작성한 글이면 markdown도 같이 보내고 아닌경우엔 html만 보내기
-        res.json({
+        res.status(200).json({
           success: true,
           message: null,
           data: {
@@ -320,7 +324,7 @@ router.post(
             );
           }
 
-          res.json({
+          res.status(201).json({
             success: true,
             message: 'success create project',
             data: {
@@ -363,7 +367,7 @@ router.post(
 
     // console.log('===>', req.file);
 
-    res.status(200).json({
+    res.status(201).json({
       success: true,
       message: null,
       data: {
