@@ -212,44 +212,13 @@ router.post(
       title,
       contentHTML,
       contentMarkdown,
-      imageUrls: { saveImgUrls, removeImgUrls },
+      imageUrls,
       hashtags,
       memberTypes,
     } = req.body;
 
-    console.log({
-      title,
-      contentHTML,
-      contentMarkdown,
-      saveImgUrls,
-      removeImgUrls,
-      hashtags,
-      memberTypes,
-    });
-
     if (user) {
       try {
-        const removeFileNameList: string[] = removeImgUrls.map(
-          (url: string) => {
-            return url.slice(
-              `https://${S3_BUCKET_NAME}.s3.ap-northeast-2.amazonaws.com/`
-                .length
-            );
-          }
-        );
-
-        const s3ImageRemoveRequest = removeFileNameList.map((filename) => {
-          const bucketParams = { Bucket: S3_BUCKET_NAME, Key: filename };
-
-          s3.send(new DeleteObjectCommand(bucketParams));
-        });
-
-        Promise.all(s3ImageRemoveRequest).then((responses) =>
-          responses.forEach((response) =>
-            console.log('remove image urls', response)
-          )
-        );
-
         const userRepository = AppDataSource.getRepository(User);
 
         const writer = await userRepository.findOne({ where: { id: user.id } });
@@ -265,11 +234,11 @@ router.post(
 
           const projectData = await projectRepository.save(newProject);
 
-          if (projectData && saveImgUrls) {
+          if (projectData && imageUrls.length >= 1) {
             const projectImageRepository =
               AppDataSource.getRepository(ProjectImage);
 
-            const imgSaveRequests = saveImgUrls.map((url: string) => {
+            const imgSaveRequests = imageUrls.map((url: string) => {
               const newProjectImage = new ProjectImage();
               newProjectImage.url = url;
               newProjectImage.project = projectData;
