@@ -375,7 +375,13 @@ router.post(
     } = req.body;
 
     if (user) {
-      const projectRepository = AppDataSource.getRepository(Project);
+      const queryRunner = AppDataSource.createQueryRunner();
+
+      await queryRunner.connect();
+
+      await queryRunner.startTransaction();
+
+      const projectRepository = queryRunner.manager.getRepository(Project);
 
       try {
         const existedProject = await projectRepository.findOne({
@@ -440,7 +446,8 @@ router.post(
             }
 
             // updateData가 빈 객체라서 따로 업데이트 되는 데이터를 전달하지 않더라도 execute 메소드가 동작하면 업데이트가 된 것 처럼 affected 1을 반환하므로 바로 위에 코드 nothingChange에서 업데이트가 필요없다고 판단되면 null을 반환한다.
-            await AppDataSource.createQueryBuilder()
+            await queryRunner.manager
+              .createQueryBuilder()
               .update(Project)
               .set(updateData)
               .where('id = :id', { id: existedProject.id })
@@ -448,9 +455,8 @@ router.post(
           };
 
           const updateProjectImages = async () => {
-            const savedProjectImages = await AppDataSource.getRepository(
-              ProjectImage
-            )
+            const savedProjectImages = await queryRunner.manager
+              .getRepository(ProjectImage)
               .createQueryBuilder()
               .where('projectImage.projectId = :postId', { postId: postId })
               .getMany();
@@ -477,7 +483,8 @@ router.post(
 
             const deleteProjectImageRequests = toBeDeletedProjectImages.map(
               (url: string) => {
-                const requests = AppDataSource.createQueryBuilder()
+                const requests = queryRunner.manager
+                  .createQueryBuilder()
                   .delete()
                   .from(ProjectImage)
                   .where('projectId = :postId', { postId: postId })
@@ -500,7 +507,8 @@ router.post(
               }
             );
 
-            await AppDataSource.createQueryBuilder()
+            await queryRunner.manager
+              .createQueryBuilder()
               .insert()
               .into(ProjectImage)
               .values([...addProcessedProjectImages])
@@ -508,7 +516,8 @@ router.post(
           };
 
           const updateProjectHashtags = async () => {
-            const savedHashtags = await AppDataSource.getRepository(Hashtag)
+            const savedHashtags = await queryRunner.manager
+              .getRepository(Hashtag)
               .createQueryBuilder()
               .where('hashtag.projectId = :postId', { postId: postId })
               .getMany();
@@ -534,7 +543,8 @@ router.post(
 
             const deleteHashtagRequests = toBeDeletedHashtags.map(
               (tagName: string) => {
-                const result = AppDataSource.createQueryBuilder()
+                const result = queryRunner.manager
+                  .createQueryBuilder()
                   .delete()
                   .from(Hashtag)
                   .where('projectId = :postId', { postId: postId })
@@ -555,7 +565,8 @@ router.post(
               return { tagName: hashtag, project: existedProject };
             });
 
-            await AppDataSource.createQueryBuilder()
+            await queryRunner.manager
+              .createQueryBuilder()
               .insert()
               .into(Hashtag)
               .values([...addProcessedHashtags])
@@ -563,9 +574,8 @@ router.post(
           };
 
           const updateProjectMemberTypes = async () => {
-            const savedMemberTypes = await AppDataSource.getRepository(
-              MemberType
-            )
+            const savedMemberTypes = await queryRunner.manager
+              .getRepository(MemberType)
               .createQueryBuilder()
               .where('memberType.projectId = :postId', { postId: postId })
               .getMany();
@@ -591,7 +601,8 @@ router.post(
 
             const deleteMemberTypeRequests = toBeDeletedMemberTypes.map(
               (type: string) => {
-                const result = AppDataSource.createQueryBuilder()
+                const result = queryRunner.manager
+                  .createQueryBuilder()
                   .delete()
                   .from(MemberType)
                   .where('projectId = :postId', { postId: postId })
@@ -612,7 +623,8 @@ router.post(
               return { type, project: existedProject };
             });
 
-            await AppDataSource.createQueryBuilder()
+            await queryRunner.manager
+              .createQueryBuilder()
               .insert()
               .into(MemberType)
               .values([...addProcessedMemberTypes])
@@ -632,7 +644,9 @@ router.post(
             updateProjectHashtags(),
             updateProjectMemberTypes(),
           ])
-            .then((response) => {
+            .then(async (response) => {
+              await queryRunner.commitTransaction();
+
               const isContentNotChanged = response.every(
                 (value) => value === null
               );
@@ -655,7 +669,13 @@ router.post(
                 });
               }
             })
-            .catch((error) => next(error));
+            .catch(async (error) => {
+              await queryRunner.rollbackTransaction();
+              return next(error);
+            })
+            .finally(async () => {
+              await queryRunner.release();
+            });
         }
       } catch (error) {
         return next(error);
