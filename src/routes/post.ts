@@ -346,6 +346,256 @@ router.post(
   }
 );
 
+interface ProjectModifyReqBody {
+  postId: string;
+  title: string;
+  contentHTML: string;
+  contentMarkdown: string;
+  imageUrls: string[];
+  hashtags: string[];
+  memberTypes: ('developer' | 'designer' | 'pm' | 'anyone')[];
+}
+
+router.post(
+  '/project/modify',
+  async (
+    req: Request<{}, {}, ProjectModifyReqBody>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const user = req.user;
+    const {
+      postId,
+      title,
+      contentHTML,
+      contentMarkdown,
+      imageUrls,
+      hashtags,
+      memberTypes,
+    } = req.body;
+
+    if (user) {
+      // content diff check
+      const contentDiffCheck = (
+        prevProject: Project,
+        modifyProject: ProjectModifyReqBody
+      ): ('title' | 'contentHTML' | 'contentMarkdown')[] => {
+        const changedFields: ('title' | 'contentHTML' | 'contentMarkdown')[] =
+          [];
+
+        if (prevProject.title !== modifyProject.title) {
+          changedFields.push('title');
+        }
+
+        if (prevProject.contentHTML !== modifyProject.contentHTML) {
+          changedFields.push('contentHTML');
+        }
+
+        if (prevProject.contentMarkdown !== modifyProject.contentMarkdown) {
+          changedFields.push('contentMarkdown');
+        }
+
+        return changedFields;
+      };
+
+      // update data
+      const updateChangedProjectFields = async (
+        prevProject: Project,
+        modifyProject: ProjectModifyReqBody
+      ): Promise<any | null> => {
+        const changedFields = contentDiffCheck(prevProject, modifyProject);
+
+        const updateData = changedFields.reduce<{ [key: string]: string }>(
+          (acc, field) => {
+            acc[field] = modifyProject[field];
+            return acc;
+          },
+          {}
+        );
+
+        const nothingChange = Object.keys(updateData).length === 0;
+
+        if (nothingChange) {
+          return null;
+        }
+
+        try {
+          // updateData가 빈 객체라서 따로 업데이트 되는 데이터를 전달하지 않더라도 execute 메소드가 동작하면 업데이트가 된 것 처럼 affected 1을 반환하므로 바로 위에 코드 nothingChange에서 업데이트가 필요없다고 판단되면 null을 반환한다.
+          const result = await AppDataSource.createQueryBuilder()
+            .update(Project)
+            .set(updateData)
+            .where('id = :id', { id: prevProject.id })
+            .execute();
+
+          return result;
+        } catch (error) {
+          next(error);
+        }
+      };
+
+      const projectRepository = AppDataSource.getRepository(Project);
+
+      try {
+        const prevProject = await projectRepository.findOne({
+          where: {
+            id: Number(postId),
+          },
+        });
+
+        const modifiedProjectData = {
+          ...prevProject,
+          ...req.body,
+        };
+
+        if (prevProject && hashtags.length >= 1 && memberTypes.length >= 1) {
+          const updateHashtags = async () => {
+            const savedHashtags = await AppDataSource.getRepository(Hashtag)
+              .createQueryBuilder()
+              .where('hashtag.projectId = :postId', { postId: postId })
+              .getMany();
+
+            const prevHashtags = savedHashtags.map((hashtag) => {
+              return hashtag.tagName;
+            });
+
+            const toBeDeletedHashtags = prevHashtags.filter(
+              (value) => !hashtags.includes(value)
+            );
+
+            const toBeAddedHashtags = hashtags.filter(
+              (value) => !prevHashtags.includes(value)
+            );
+
+            if (
+              toBeDeletedHashtags.length === 0 &&
+              toBeAddedHashtags.length === 0
+            ) {
+              return null;
+            }
+
+            const hashtagDeleteRequests = toBeDeletedHashtags.map(
+              (tagName: string) => {
+                const result = AppDataSource.createQueryBuilder()
+                  .delete()
+                  .from(Hashtag)
+                  .where('projectId = :postId', { postId: postId })
+                  .andWhere('tagName = :tagName', { tagName })
+                  .execute();
+
+                return result;
+              }
+            );
+
+            Promise.all(hashtagDeleteRequests).then((responses) =>
+              responses.forEach((response) =>
+                console.log('deleted hashtag ', response)
+              )
+            );
+
+            const processedAddHashtags = toBeAddedHashtags.map((hashtag) => {
+              return { tagName: hashtag, project: prevProject };
+            });
+
+            await AppDataSource.createQueryBuilder()
+              .insert()
+              .into(Hashtag)
+              .values([...processedAddHashtags])
+              .execute();
+          };
+
+          const updateMemberTypes = async () => {
+            const savedMemberTypes = await AppDataSource.getRepository(
+              MemberType
+            )
+              .createQueryBuilder()
+              .where('memberType.projectId = :postId', { postId: postId })
+              .getMany();
+
+            const prevMemberTypes = savedMemberTypes.map((memberType) => {
+              return memberType.type;
+            });
+
+            const toBeDeletedMemberTypes = prevMemberTypes.filter(
+              (value) => !memberTypes.includes(value)
+            );
+
+            const toBeAddedMemberTypes = memberTypes.filter(
+              (value) => !prevMemberTypes.includes(value)
+            );
+
+            if (
+              toBeDeletedMemberTypes.length === 0 &&
+              toBeAddedMemberTypes.length === 0
+            ) {
+              return null;
+            }
+
+            const memberTypeDeleteRequests = toBeDeletedMemberTypes.map(
+              (type: string) => {
+                const result = AppDataSource.createQueryBuilder()
+                  .delete()
+                  .from(MemberType)
+                  .where('projectId = :postId', { postId: postId })
+                  .andWhere('type = :type', { type })
+                  .execute();
+
+                return result;
+              }
+            );
+
+            Promise.all(memberTypeDeleteRequests).then((responses) =>
+              responses.forEach((response) =>
+                console.log('deleted memberType ', response)
+              )
+            );
+
+            const processedAddMemberTypes = toBeAddedMemberTypes.map((type) => {
+              return { type, project: prevProject };
+            });
+
+            await AppDataSource.createQueryBuilder()
+              .insert()
+              .into(MemberType)
+              .values([...processedAddMemberTypes])
+              .execute();
+          };
+
+          const updateTitleContentResult = await updateChangedProjectFields(
+            prevProject,
+            modifiedProjectData
+          );
+          const updateHashtagsResult = await updateHashtags();
+          const updateMemberTypesResult = await updateMemberTypes();
+
+          if (
+            updateTitleContentResult === null &&
+            updateHashtagsResult === null &&
+            updateMemberTypesResult === null
+          ) {
+            res.status(200).json({
+              success: true,
+              message: 'nothing change',
+              data: {
+                postId,
+              },
+            });
+          } else {
+            res.status(200).json({
+              success: true,
+              message: 'project updated successfully',
+              data: {
+                postId,
+              },
+            });
+          }
+        }
+      } catch (error) {
+        next(error);
+      }
+    }
+  }
+);
+
 router.delete('/', (req, res) => {
   res.send('DELETE: /post');
 });
