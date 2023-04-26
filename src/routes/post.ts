@@ -369,7 +369,7 @@ router.post(
       title: modifiedTitle,
       contentHTML: modifiedContentHTML,
       contentMarkdown: modifiedContentMarkdown,
-      imageUrls,
+      imageUrls: modifiedImageUrls,
       hashtags,
       memberTypes,
     } = req.body;
@@ -438,227 +438,220 @@ router.post(
 
       const projectRepository = AppDataSource.getRepository(Project);
 
-      try {
-        const existedProject = await projectRepository.findOne({
-          where: {
-            id: Number(postId),
-          },
-        });
+      const existedProject = await projectRepository.findOne({
+        where: {
+          id: Number(postId),
+        },
+      });
 
-        if (existedProject && hashtags.length >= 1 && memberTypes.length >= 1) {
-          const updateProjectImages = async () => {
-            const savedProjectImages = await AppDataSource.getRepository(
-              ProjectImage
+      if (existedProject && hashtags.length >= 1 && memberTypes.length >= 1) {
+        const updateProjectImages = async () => {
+          const savedProjectImages = await AppDataSource.getRepository(
+            ProjectImage
+          )
+            .createQueryBuilder()
+            .where('projectImage.projectId = :postId', { postId: postId })
+            .getMany();
+
+          const existedProjectImages = savedProjectImages.map((image) => {
+            return image.url;
+          });
+
+          const toBeDeletedProjectImages = existedProjectImages.filter(
+            (value) => !modifiedImageUrls.includes(value)
+          );
+
+          const toBeAddedProjectImages = modifiedImageUrls.filter(
+            (value) => !existedProjectImages.includes(value)
+          );
+
+          // 변경된 사항이 없는 경우 return null
+          if (
+            toBeDeletedProjectImages.length === 0 &&
+            toBeAddedProjectImages.length === 0
+          ) {
+            return null;
+          }
+
+          const deleteProjectImageRequests = toBeDeletedProjectImages.map(
+            (url: string) => {
+              const requests = AppDataSource.createQueryBuilder()
+                .delete()
+                .from(ProjectImage)
+                .where('projectId = :postId', { postId: postId })
+                .andWhere('url = :url', { url })
+                .execute();
+
+              return requests;
+            }
+          );
+
+          Promise.all(deleteProjectImageRequests).then((responses) =>
+            responses.forEach((response) =>
+              console.log('deleted project image ', response)
             )
-              .createQueryBuilder()
-              .where('projectImage.projectId = :postId', { postId: postId })
-              .getMany();
+          );
 
-            const prevProjectImages = savedProjectImages.map((image) => {
-              return image.url;
-            });
-
-            const toBeDeletedProjectImages = prevProjectImages.filter(
-              (value) => !imageUrls.includes(value)
-            );
-
-            const toBeAddedProjectImages = imageUrls.filter(
-              (value) => !prevProjectImages.includes(value)
-            );
-
-            if (
-              toBeDeletedProjectImages.length === 0 &&
-              toBeAddedProjectImages.length === 0
-            ) {
-              return null;
+          const addProcessedProjectImages = toBeAddedProjectImages.map(
+            (url) => {
+              return { url, project: existedProject };
             }
+          );
 
-            const projectImageDeleteRequests = toBeDeletedProjectImages.map(
-              (url: string) => {
-                const result = AppDataSource.createQueryBuilder()
-                  .delete()
-                  .from(ProjectImage)
-                  .where('projectId = :postId', { postId: postId })
-                  .andWhere('url = :url', { url })
-                  .execute();
+          await AppDataSource.createQueryBuilder()
+            .insert()
+            .into(ProjectImage)
+            .values([...addProcessedProjectImages])
+            .execute();
+        };
 
-                return result;
-              }
-            );
+        const updateProjectHashtags = async () => {
+          const savedHashtags = await AppDataSource.getRepository(Hashtag)
+            .createQueryBuilder()
+            .where('hashtag.projectId = :postId', { postId: postId })
+            .getMany();
 
-            Promise.all(projectImageDeleteRequests).then((responses) =>
-              responses.forEach((response) =>
-                console.log('deleted project image ', response)
-              )
-            );
+          const prevHashtags = savedHashtags.map((hashtag) => {
+            return hashtag.tagName;
+          });
 
-            const processedAddProjectImages = toBeAddedProjectImages.map(
-              (url) => {
-                return { url, project: existedProject };
-              }
-            );
+          const toBeDeletedHashtags = prevHashtags.filter(
+            (value) => !hashtags.includes(value)
+          );
 
-            await AppDataSource.createQueryBuilder()
-              .insert()
-              .into(ProjectImage)
-              .values([...processedAddProjectImages])
-              .execute();
-          };
-
-          const updateProjectHashtags = async () => {
-            const savedHashtags = await AppDataSource.getRepository(Hashtag)
-              .createQueryBuilder()
-              .where('hashtag.projectId = :postId', { postId: postId })
-              .getMany();
-
-            const prevHashtags = savedHashtags.map((hashtag) => {
-              return hashtag.tagName;
-            });
-
-            const toBeDeletedHashtags = prevHashtags.filter(
-              (value) => !hashtags.includes(value)
-            );
-
-            const toBeAddedHashtags = hashtags.filter(
-              (value) => !prevHashtags.includes(value)
-            );
-
-            if (
-              toBeDeletedHashtags.length === 0 &&
-              toBeAddedHashtags.length === 0
-            ) {
-              return null;
-            }
-
-            const hashtagDeleteRequests = toBeDeletedHashtags.map(
-              (tagName: string) => {
-                const result = AppDataSource.createQueryBuilder()
-                  .delete()
-                  .from(Hashtag)
-                  .where('projectId = :postId', { postId: postId })
-                  .andWhere('tagName = :tagName', { tagName })
-                  .execute();
-
-                return result;
-              }
-            );
-
-            Promise.all(hashtagDeleteRequests).then((responses) =>
-              responses.forEach((response) =>
-                console.log('deleted hashtag ', response)
-              )
-            );
-
-            const processedAddHashtags = toBeAddedHashtags.map((hashtag) => {
-              return { tagName: hashtag, project: existedProject };
-            });
-
-            await AppDataSource.createQueryBuilder()
-              .insert()
-              .into(Hashtag)
-              .values([...processedAddHashtags])
-              .execute();
-          };
-
-          const updateProjectMemberTypes = async () => {
-            const savedMemberTypes = await AppDataSource.getRepository(
-              MemberType
-            )
-              .createQueryBuilder()
-              .where('memberType.projectId = :postId', { postId: postId })
-              .getMany();
-
-            const prevMemberTypes = savedMemberTypes.map((memberType) => {
-              return memberType.type;
-            });
-
-            const toBeDeletedMemberTypes = prevMemberTypes.filter(
-              (value) => !memberTypes.includes(value)
-            );
-
-            const toBeAddedMemberTypes = memberTypes.filter(
-              (value) => !prevMemberTypes.includes(value)
-            );
-
-            if (
-              toBeDeletedMemberTypes.length === 0 &&
-              toBeAddedMemberTypes.length === 0
-            ) {
-              return null;
-            }
-
-            const memberTypeDeleteRequests = toBeDeletedMemberTypes.map(
-              (type: string) => {
-                const result = AppDataSource.createQueryBuilder()
-                  .delete()
-                  .from(MemberType)
-                  .where('projectId = :postId', { postId: postId })
-                  .andWhere('type = :type', { type })
-                  .execute();
-
-                return result;
-              }
-            );
-
-            Promise.all(memberTypeDeleteRequests).then((responses) =>
-              responses.forEach((response) =>
-                console.log('deleted memberType ', response)
-              )
-            );
-
-            const processedAddMemberTypes = toBeAddedMemberTypes.map((type) => {
-              return { type, project: existedProject };
-            });
-
-            await AppDataSource.createQueryBuilder()
-              .insert()
-              .into(MemberType)
-              .values([...processedAddMemberTypes])
-              .execute();
-          };
-
-          const modifiedProject = {
-            ...existedProject,
-            title: modifiedTitle,
-            contentHTML: modifiedContentHTML,
-            contentMarkdown: modifiedContentMarkdown,
-          };
-
-          const updateTitleContentResult =
-            await updateChangedTitleContentFields(
-              existedProject,
-              modifiedProject
-            );
-
-          const updateImagesResult = await updateProjectImages();
-          const updateHashtagsResult = await updateProjectHashtags();
-          const updateMemberTypesResult = await updateProjectMemberTypes();
+          const toBeAddedHashtags = hashtags.filter(
+            (value) => !prevHashtags.includes(value)
+          );
 
           if (
-            updateTitleContentResult === null &&
-            updateImagesResult === null &&
-            updateHashtagsResult === null &&
-            updateMemberTypesResult === null
+            toBeDeletedHashtags.length === 0 &&
+            toBeAddedHashtags.length === 0
           ) {
-            res.status(200).json({
-              success: true,
-              message: 'nothing change',
-              data: {
-                postId,
-              },
-            });
-          } else {
-            res.status(200).json({
-              success: true,
-              message: 'project updated successfully',
-              data: {
-                postId,
-              },
-            });
+            return null;
           }
-        }
-      } catch (error) {
-        next(error);
+
+          const hashtagDeleteRequests = toBeDeletedHashtags.map(
+            (tagName: string) => {
+              const result = AppDataSource.createQueryBuilder()
+                .delete()
+                .from(Hashtag)
+                .where('projectId = :postId', { postId: postId })
+                .andWhere('tagName = :tagName', { tagName })
+                .execute();
+
+              return result;
+            }
+          );
+
+          Promise.all(hashtagDeleteRequests).then((responses) =>
+            responses.forEach((response) =>
+              console.log('deleted hashtag ', response)
+            )
+          );
+
+          const processedAddHashtags = toBeAddedHashtags.map((hashtag) => {
+            return { tagName: hashtag, project: existedProject };
+          });
+
+          await AppDataSource.createQueryBuilder()
+            .insert()
+            .into(Hashtag)
+            .values([...processedAddHashtags])
+            .execute();
+        };
+
+        const updateProjectMemberTypes = async () => {
+          const savedMemberTypes = await AppDataSource.getRepository(MemberType)
+            .createQueryBuilder()
+            .where('memberType.projectId = :postId', { postId: postId })
+            .getMany();
+
+          const prevMemberTypes = savedMemberTypes.map((memberType) => {
+            return memberType.type;
+          });
+
+          const toBeDeletedMemberTypes = prevMemberTypes.filter(
+            (value) => !memberTypes.includes(value)
+          );
+
+          const toBeAddedMemberTypes = memberTypes.filter(
+            (value) => !prevMemberTypes.includes(value)
+          );
+
+          if (
+            toBeDeletedMemberTypes.length === 0 &&
+            toBeAddedMemberTypes.length === 0
+          ) {
+            return null;
+          }
+
+          const memberTypeDeleteRequests = toBeDeletedMemberTypes.map(
+            (type: string) => {
+              const result = AppDataSource.createQueryBuilder()
+                .delete()
+                .from(MemberType)
+                .where('projectId = :postId', { postId: postId })
+                .andWhere('type = :type', { type })
+                .execute();
+
+              return result;
+            }
+          );
+
+          Promise.all(memberTypeDeleteRequests).then((responses) =>
+            responses.forEach((response) =>
+              console.log('deleted memberType ', response)
+            )
+          );
+
+          const processedAddMemberTypes = toBeAddedMemberTypes.map((type) => {
+            return { type, project: existedProject };
+          });
+
+          await AppDataSource.createQueryBuilder()
+            .insert()
+            .into(MemberType)
+            .values([...processedAddMemberTypes])
+            .execute();
+        };
+
+        const modifiedProject = {
+          ...existedProject,
+          title: modifiedTitle,
+          contentHTML: modifiedContentHTML,
+          contentMarkdown: modifiedContentMarkdown,
+        };
+
+        Promise.all([
+          updateChangedTitleContentFields(existedProject, modifiedProject),
+          updateProjectImages(),
+          updateProjectHashtags(),
+          updateProjectMemberTypes(),
+        ])
+          .then((response) => {
+            const isContentNotChanged = response.every(
+              (value) => value === null
+            );
+
+            if (isContentNotChanged) {
+              return res.status(200).json({
+                success: true,
+                message: 'nothing change',
+                data: {
+                  postId,
+                },
+              });
+            } else {
+              return res.status(200).json({
+                success: true,
+                message: 'project updated successfully',
+                data: {
+                  postId,
+                },
+              });
+            }
+          })
+          .catch((error) => next(error));
       }
     }
   }
