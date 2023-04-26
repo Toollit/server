@@ -38,8 +38,8 @@ export class Project {
   @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn({ nullable: true })
-  updatedAt: Date;
+  @UpdateDateColumn({ nullable: true, default: null })
+  updatedAt: Date | null = null;
 
   @ManyToOne(() => User, (user) => user.projects)
   user: User;

@@ -8,7 +8,7 @@ export interface UserData {
   nickname: string | null;
   username: string | null;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt: Date | null;
   lastLoginAt: Date | null;
 }
 type PassportLocalError = Error | null;
