@@ -366,32 +366,34 @@ router.post(
     const user = req.user;
     const {
       postId,
-      title,
-      contentHTML,
-      contentMarkdown,
+      title: modifiedTitle,
+      contentHTML: modifiedContentHTML,
+      contentMarkdown: modifiedContentMarkdown,
       imageUrls,
       hashtags,
       memberTypes,
     } = req.body;
 
     if (user) {
-      // content diff check
-      const contentDiffCheck = (
-        prevProject: Project,
-        modifyProject: ProjectModifyReqBody
+      // title, content diff check
+      const titleContentDiffCheck = (
+        existedProject: Project,
+        modifiedProject: Project
       ): ('title' | 'contentHTML' | 'contentMarkdown')[] => {
         const changedFields: ('title' | 'contentHTML' | 'contentMarkdown')[] =
           [];
 
-        if (prevProject.title !== modifyProject.title) {
+        if (existedProject.title !== modifiedProject.title) {
           changedFields.push('title');
         }
 
-        if (prevProject.contentHTML !== modifyProject.contentHTML) {
+        if (existedProject.contentHTML !== modifiedProject.contentHTML) {
           changedFields.push('contentHTML');
         }
 
-        if (prevProject.contentMarkdown !== modifyProject.contentMarkdown) {
+        if (
+          existedProject.contentMarkdown !== modifiedProject.contentMarkdown
+        ) {
           changedFields.push('contentMarkdown');
         }
 
@@ -399,15 +401,18 @@ router.post(
       };
 
       // update data
-      const updateChangedProjectFields = async (
-        prevProject: Project,
-        modifyProject: ProjectModifyReqBody
-      ): Promise<any | null> => {
-        const changedFields = contentDiffCheck(prevProject, modifyProject);
+      const updateChangedTitleContentFields = async (
+        existedProject: Project,
+        modifiedProject: Project
+      ) => {
+        const changedFields = titleContentDiffCheck(
+          existedProject,
+          modifiedProject
+        );
 
         const updateData = changedFields.reduce<{ [key: string]: string }>(
           (acc, field) => {
-            acc[field] = modifyProject[field];
+            acc[field] = modifiedProject[field];
             return acc;
           },
           {}
@@ -421,13 +426,11 @@ router.post(
 
         try {
           // updateData가 빈 객체라서 따로 업데이트 되는 데이터를 전달하지 않더라도 execute 메소드가 동작하면 업데이트가 된 것 처럼 affected 1을 반환하므로 바로 위에 코드 nothingChange에서 업데이트가 필요없다고 판단되면 null을 반환한다.
-          const result = await AppDataSource.createQueryBuilder()
+          await AppDataSource.createQueryBuilder()
             .update(Project)
             .set(updateData)
-            .where('id = :id', { id: prevProject.id })
+            .where('id = :id', { id: existedProject.id })
             .execute();
-
-          return result;
         } catch (error) {
           next(error);
         }
@@ -436,18 +439,13 @@ router.post(
       const projectRepository = AppDataSource.getRepository(Project);
 
       try {
-        const prevProject = await projectRepository.findOne({
+        const existedProject = await projectRepository.findOne({
           where: {
             id: Number(postId),
           },
         });
 
-        const modifiedProjectData = {
-          ...prevProject,
-          ...req.body,
-        };
-
-        if (prevProject && hashtags.length >= 1 && memberTypes.length >= 1) {
+        if (existedProject && hashtags.length >= 1 && memberTypes.length >= 1) {
           const updateProjectImages = async () => {
             const savedProjectImages = await AppDataSource.getRepository(
               ProjectImage
@@ -496,7 +494,7 @@ router.post(
 
             const processedAddProjectImages = toBeAddedProjectImages.map(
               (url) => {
-                return { url, project: prevProject };
+                return { url, project: existedProject };
               }
             );
 
@@ -552,7 +550,7 @@ router.post(
             );
 
             const processedAddHashtags = toBeAddedHashtags.map((hashtag) => {
-              return { tagName: hashtag, project: prevProject };
+              return { tagName: hashtag, project: existedProject };
             });
 
             await AppDataSource.createQueryBuilder()
@@ -609,7 +607,7 @@ router.post(
             );
 
             const processedAddMemberTypes = toBeAddedMemberTypes.map((type) => {
-              return { type, project: prevProject };
+              return { type, project: existedProject };
             });
 
             await AppDataSource.createQueryBuilder()
@@ -619,10 +617,18 @@ router.post(
               .execute();
           };
 
-          const updateTitleContentResult = await updateChangedProjectFields(
-            prevProject,
-            modifiedProjectData
-          );
+          const modifiedProject = {
+            ...existedProject,
+            title: modifiedTitle,
+            contentHTML: modifiedContentHTML,
+            contentMarkdown: modifiedContentMarkdown,
+          };
+
+          const updateTitleContentResult =
+            await updateChangedTitleContentFields(
+              existedProject,
+              modifiedProject
+            );
 
           const updateImagesResult = await updateProjectImages();
           const updateHashtagsResult = await updateProjectHashtags();
