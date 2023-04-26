@@ -448,7 +448,66 @@ router.post(
         };
 
         if (prevProject && hashtags.length >= 1 && memberTypes.length >= 1) {
-          const updateHashtags = async () => {
+          const updateProjectImages = async () => {
+            const savedProjectImages = await AppDataSource.getRepository(
+              ProjectImage
+            )
+              .createQueryBuilder()
+              .where('projectImage.projectId = :postId', { postId: postId })
+              .getMany();
+
+            const prevProjectImages = savedProjectImages.map((image) => {
+              return image.url;
+            });
+
+            const toBeDeletedProjectImages = prevProjectImages.filter(
+              (value) => !imageUrls.includes(value)
+            );
+
+            const toBeAddedProjectImages = imageUrls.filter(
+              (value) => !prevProjectImages.includes(value)
+            );
+
+            if (
+              toBeDeletedProjectImages.length === 0 &&
+              toBeAddedProjectImages.length === 0
+            ) {
+              return null;
+            }
+
+            const projectImageDeleteRequests = toBeDeletedProjectImages.map(
+              (url: string) => {
+                const result = AppDataSource.createQueryBuilder()
+                  .delete()
+                  .from(ProjectImage)
+                  .where('projectId = :postId', { postId: postId })
+                  .andWhere('url = :url', { url })
+                  .execute();
+
+                return result;
+              }
+            );
+
+            Promise.all(projectImageDeleteRequests).then((responses) =>
+              responses.forEach((response) =>
+                console.log('deleted project image ', response)
+              )
+            );
+
+            const processedAddProjectImages = toBeAddedProjectImages.map(
+              (url) => {
+                return { url, project: prevProject };
+              }
+            );
+
+            await AppDataSource.createQueryBuilder()
+              .insert()
+              .into(ProjectImage)
+              .values([...processedAddProjectImages])
+              .execute();
+          };
+
+          const updateProjectHashtags = async () => {
             const savedHashtags = await AppDataSource.getRepository(Hashtag)
               .createQueryBuilder()
               .where('hashtag.projectId = :postId', { postId: postId })
@@ -503,7 +562,7 @@ router.post(
               .execute();
           };
 
-          const updateMemberTypes = async () => {
+          const updateProjectMemberTypes = async () => {
             const savedMemberTypes = await AppDataSource.getRepository(
               MemberType
             )
@@ -564,11 +623,14 @@ router.post(
             prevProject,
             modifiedProjectData
           );
-          const updateHashtagsResult = await updateHashtags();
-          const updateMemberTypesResult = await updateMemberTypes();
+
+          const updateImagesResult = await updateProjectImages();
+          const updateHashtagsResult = await updateProjectHashtags();
+          const updateMemberTypesResult = await updateProjectMemberTypes();
 
           if (
             updateTitleContentResult === null &&
+            updateImagesResult === null &&
             updateHashtagsResult === null &&
             updateMemberTypesResult === null
           ) {
