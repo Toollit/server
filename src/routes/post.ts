@@ -370,8 +370,8 @@ router.post(
       contentHTML: modifiedContentHTML,
       contentMarkdown: modifiedContentMarkdown,
       imageUrls: modifiedImageUrls,
-      hashtags,
-      memberTypes,
+      hashtags: modifiedHashtags,
+      memberTypes: modifiedMemberTypes,
     } = req.body;
 
     if (user) {
@@ -444,7 +444,11 @@ router.post(
         },
       });
 
-      if (existedProject && hashtags.length >= 1 && memberTypes.length >= 1) {
+      if (
+        existedProject &&
+        modifiedHashtags.length >= 1 &&
+        modifiedMemberTypes.length >= 1
+      ) {
         const updateProjectImages = async () => {
           const savedProjectImages = await AppDataSource.getRepository(
             ProjectImage
@@ -511,16 +515,16 @@ router.post(
             .where('hashtag.projectId = :postId', { postId: postId })
             .getMany();
 
-          const prevHashtags = savedHashtags.map((hashtag) => {
+          const existedHashtags = savedHashtags.map((hashtag) => {
             return hashtag.tagName;
           });
 
-          const toBeDeletedHashtags = prevHashtags.filter(
-            (value) => !hashtags.includes(value)
+          const toBeDeletedHashtags = existedHashtags.filter(
+            (value) => !modifiedHashtags.includes(value)
           );
 
-          const toBeAddedHashtags = hashtags.filter(
-            (value) => !prevHashtags.includes(value)
+          const toBeAddedHashtags = modifiedHashtags.filter(
+            (value) => !existedHashtags.includes(value)
           );
 
           if (
@@ -530,7 +534,7 @@ router.post(
             return null;
           }
 
-          const hashtagDeleteRequests = toBeDeletedHashtags.map(
+          const deleteHashtagRequests = toBeDeletedHashtags.map(
             (tagName: string) => {
               const result = AppDataSource.createQueryBuilder()
                 .delete()
@@ -543,20 +547,20 @@ router.post(
             }
           );
 
-          Promise.all(hashtagDeleteRequests).then((responses) =>
+          Promise.all(deleteHashtagRequests).then((responses) =>
             responses.forEach((response) =>
               console.log('deleted hashtag ', response)
             )
           );
 
-          const processedAddHashtags = toBeAddedHashtags.map((hashtag) => {
+          const addProcessedHashtags = toBeAddedHashtags.map((hashtag) => {
             return { tagName: hashtag, project: existedProject };
           });
 
           await AppDataSource.createQueryBuilder()
             .insert()
             .into(Hashtag)
-            .values([...processedAddHashtags])
+            .values([...addProcessedHashtags])
             .execute();
         };
 
@@ -566,16 +570,16 @@ router.post(
             .where('memberType.projectId = :postId', { postId: postId })
             .getMany();
 
-          const prevMemberTypes = savedMemberTypes.map((memberType) => {
+          const existedMemberTypes = savedMemberTypes.map((memberType) => {
             return memberType.type;
           });
 
-          const toBeDeletedMemberTypes = prevMemberTypes.filter(
-            (value) => !memberTypes.includes(value)
+          const toBeDeletedMemberTypes = existedMemberTypes.filter(
+            (value) => !modifiedMemberTypes.includes(value)
           );
 
-          const toBeAddedMemberTypes = memberTypes.filter(
-            (value) => !prevMemberTypes.includes(value)
+          const toBeAddedMemberTypes = modifiedMemberTypes.filter(
+            (value) => !existedMemberTypes.includes(value)
           );
 
           if (
@@ -585,7 +589,7 @@ router.post(
             return null;
           }
 
-          const memberTypeDeleteRequests = toBeDeletedMemberTypes.map(
+          const deleteMemberTypeRequests = toBeDeletedMemberTypes.map(
             (type: string) => {
               const result = AppDataSource.createQueryBuilder()
                 .delete()
@@ -598,20 +602,20 @@ router.post(
             }
           );
 
-          Promise.all(memberTypeDeleteRequests).then((responses) =>
+          Promise.all(deleteMemberTypeRequests).then((responses) =>
             responses.forEach((response) =>
               console.log('deleted memberType ', response)
             )
           );
 
-          const processedAddMemberTypes = toBeAddedMemberTypes.map((type) => {
+          const addProcessedMemberTypes = toBeAddedMemberTypes.map((type) => {
             return { type, project: existedProject };
           });
 
           await AppDataSource.createQueryBuilder()
             .insert()
             .into(MemberType)
-            .values([...processedAddMemberTypes])
+            .values([...addProcessedMemberTypes])
             .execute();
         };
 
