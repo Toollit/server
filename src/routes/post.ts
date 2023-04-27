@@ -204,9 +204,22 @@ router.get(
   }
 );
 
+interface ProjectCreateReqBody {
+  title: string;
+  contentHTML: string;
+  contentMarkdown: string;
+  imageUrls: string[];
+  hashtags: string[];
+  memberTypes: ('developer' | 'designer' | 'pm' | 'anyone')[];
+}
+
 router.post(
   '/project/create',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (
+    req: Request<{}, {}, ProjectCreateReqBody>,
+    res: Response,
+    next: NextFunction
+  ) => {
     const user = req.user;
     const {
       title,
@@ -228,7 +241,7 @@ router.post(
       try {
         const writer = await userRepository.findOne({ where: { id: user.id } });
 
-        if (writer) {
+        if (writer && hashtags.length >= 1 && memberTypes.length >= 1) {
           const newProject = new Project();
           newProject.title = title;
           newProject.contentHTML = contentHTML;
@@ -239,7 +252,7 @@ router.post(
 
           const projectData = await projectRepository.save(newProject);
 
-          if (projectData && imageUrls.length >= 1) {
+          if (projectData) {
             const projectImageRepository =
               queryRunner.manager.getRepository(ProjectImage);
 
@@ -256,58 +269,39 @@ router.post(
                 console.log('save image urls', response)
               )
             );
+
+            const addProcessedHashtags = hashtags.map((hashtag) => {
+              return { tagName: hashtag, project: projectData };
+            });
+
+            await queryRunner.manager
+              .createQueryBuilder()
+              .insert()
+              .into(Hashtag)
+              .values([...addProcessedHashtags])
+              .execute();
+
+            const addProcessedMemberTypes = memberTypes.map((memberType) => {
+              return { type: memberType, project: projectData };
+            });
+
+            await queryRunner.manager
+              .createQueryBuilder()
+              .insert()
+              .into(MemberType)
+              .values([...addProcessedMemberTypes])
+              .execute();
           }
 
-          if (hashtags.length >= 1) {
-            const HashtagRepository =
-              queryRunner.manager.getRepository(Hashtag);
-
-            (async function saveHashtagsInOrder() {
-              await hashtags.reduce(
-                async (previousPromise: Promise<any>, hashtag: string) => {
-                  await previousPromise;
-
-                  const newHashtag = new Hashtag();
-                  newHashtag.project = projectData;
-                  newHashtag.tagName = hashtag;
-
-                  await HashtagRepository.save(newHashtag);
-                },
-                Promise.resolve()
-              );
-            })();
-          }
-
-          if (memberTypes.length >= 1) {
-            const MemberTypeRepository =
-              queryRunner.manager.getRepository(MemberType);
-
-            const memberTypeSaveRequests = memberTypes.map(
-              (memberType: 'developer' | 'designer' | 'pm' | 'anyone') => {
-                const newMemberType = new MemberType();
-                newMemberType.project = projectData;
-                newMemberType.type = memberType;
-
-                MemberTypeRepository.save(newMemberType);
-              }
-            );
-
-            Promise.all(memberTypeSaveRequests).then((responses) =>
-              responses.forEach((response) =>
-                console.log('save memberTypes', response)
-              )
-            );
-          }
-
-          await queryRunner.commitTransaction();
-
-          return res.status(201).json({
+          res.status(201).json({
             success: true,
             message: 'success create project',
             data: {
               projectId: projectData.id,
             },
           });
+
+          await queryRunner.commitTransaction();
         }
       } catch (error) {
         await queryRunner.rollbackTransaction();
