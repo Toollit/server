@@ -218,9 +218,14 @@ router.post(
     } = req.body;
 
     if (user) {
-      try {
-        const userRepository = AppDataSource.getRepository(User);
+      const queryRunner = AppDataSource.createQueryRunner();
 
+      await queryRunner.connect();
+
+      await queryRunner.startTransaction();
+
+      const userRepository = queryRunner.manager.getRepository(User);
+      try {
         const writer = await userRepository.findOne({ where: { id: user.id } });
 
         if (writer) {
@@ -230,13 +235,13 @@ router.post(
           newProject.contentMarkdown = contentMarkdown;
           newProject.user = writer;
 
-          const projectRepository = AppDataSource.getRepository(Project);
+          const projectRepository = queryRunner.manager.getRepository(Project);
 
           const projectData = await projectRepository.save(newProject);
 
           if (projectData && imageUrls.length >= 1) {
             const projectImageRepository =
-              AppDataSource.getRepository(ProjectImage);
+              queryRunner.manager.getRepository(ProjectImage);
 
             const imgSaveRequests = imageUrls.map((url: string) => {
               const newProjectImage = new ProjectImage();
@@ -254,7 +259,8 @@ router.post(
           }
 
           if (hashtags.length >= 1) {
-            const HashtagRepository = AppDataSource.getRepository(Hashtag);
+            const HashtagRepository =
+              queryRunner.manager.getRepository(Hashtag);
 
             (async function saveHashtagsInOrder() {
               await hashtags.reduce(
@@ -274,7 +280,7 @@ router.post(
 
           if (memberTypes.length >= 1) {
             const MemberTypeRepository =
-              AppDataSource.getRepository(MemberType);
+              queryRunner.manager.getRepository(MemberType);
 
             const memberTypeSaveRequests = memberTypes.map(
               (memberType: 'developer' | 'designer' | 'pm' | 'anyone') => {
@@ -293,7 +299,9 @@ router.post(
             );
           }
 
-          res.status(201).json({
+          await queryRunner.commitTransaction();
+
+          return res.status(201).json({
             success: true,
             message: 'success create project',
             data: {
@@ -302,7 +310,11 @@ router.post(
           });
         }
       } catch (error) {
-        next(error);
+        await queryRunner.rollbackTransaction();
+
+        return next(error);
+      } finally {
+        await queryRunner.release();
       }
     }
   }
