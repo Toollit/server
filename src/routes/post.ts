@@ -186,8 +186,7 @@ router.get(
             content: {
               title,
               contentHTML,
-              contentMarkdown:
-                user.id === requestUserId ? contentMarkdown : null,
+              contentMarkdown,
               views,
               createdAt,
               updatedAt,
