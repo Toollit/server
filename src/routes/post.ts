@@ -36,6 +36,7 @@ router.get(
       const projects = await projectRepository.find({
         relations: { hashtags: true, memberTypes: true },
         order: {
+          id: 'DESC',
           memberTypes: {
             id: 'ASC',
           },
