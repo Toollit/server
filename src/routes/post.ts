@@ -381,15 +381,15 @@ router.post(
     } = req.body;
 
     if (user) {
-      const queryRunner = AppDataSource.createQueryRunner();
-
-      await queryRunner.connect();
-
-      await queryRunner.startTransaction();
-
-      const projectRepository = queryRunner.manager.getRepository(Project);
-
       try {
+        const queryRunner = AppDataSource.createQueryRunner();
+
+        await queryRunner.connect();
+
+        await queryRunner.startTransaction();
+
+        const projectRepository = queryRunner.manager.getRepository(Project);
+
         const existedProject = await projectRepository.findOne({
           where: {
             id: Number(postId),
@@ -501,7 +501,7 @@ router.post(
               }
             );
 
-            Promise.all(deleteProjectImageRequests).then((responses) =>
+            await Promise.all(deleteProjectImageRequests).then((responses) =>
               responses.forEach((response) =>
                 console.log('deleted project image ', response)
               )
@@ -532,22 +532,28 @@ router.post(
               return hashtag.tagName;
             });
 
-            const toBeDeletedHashtags = existedHashtags.filter(
-              (value) => !modifiedHashtags.includes(value)
-            );
+            const isEqual = (
+              existedData: string[],
+              modifiedHData: string[]
+            ) => {
+              if (existedData.length !== modifiedHData.length) {
+                return false;
+              }
 
-            const toBeAddedHashtags = modifiedHashtags.filter(
-              (value) => !existedHashtags.includes(value)
-            );
+              for (let i = 0; i < existedData.length; i++) {
+                if (existedData[i] !== modifiedHData[i]) {
+                  return false;
+                }
+              }
 
-            if (
-              toBeDeletedHashtags.length === 0 &&
-              toBeAddedHashtags.length === 0
-            ) {
+              return true;
+            };
+
+            if (isEqual(existedHashtags, modifiedHashtags)) {
               return null;
             }
 
-            const deleteHashtagRequests = toBeDeletedHashtags.map(
+            const deleteExistedHashtagRequests = existedHashtags.map(
               (tagName: string) => {
                 const result = queryRunner.manager
                   .createQueryBuilder()
@@ -561,13 +567,13 @@ router.post(
               }
             );
 
-            Promise.all(deleteHashtagRequests).then((responses) =>
-              responses.forEach((response) =>
-                console.log('deleted hashtag ', response)
-              )
+            await Promise.all(deleteExistedHashtagRequests).then((responses) =>
+              responses.forEach((response) => {
+                console.log('deleted hashtag ', response);
+              })
             );
 
-            const addProcessedHashtags = toBeAddedHashtags.map((hashtag) => {
+            const addProcessedHashtags = modifiedHashtags.map((hashtag) => {
               return { tagName: hashtag, project: existedProject };
             });
 
@@ -619,7 +625,7 @@ router.post(
               }
             );
 
-            Promise.all(deleteMemberTypeRequests).then((responses) =>
+            await Promise.all(deleteMemberTypeRequests).then((responses) =>
               responses.forEach((response) =>
                 console.log('deleted memberType ', response)
               )
