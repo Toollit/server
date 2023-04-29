@@ -696,8 +696,66 @@ router.post(
   }
 );
 
-router.delete('/', (req, res) => {
-  res.send('DELETE: /post');
-});
+interface PostDeleteReqBody {
+  postId: string;
+  postType: 'project' | 'free' | 'question';
+}
+
+router.post(
+  '/delete',
+  async (
+    req: Request<{}, {}, PostDeleteReqBody>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const { postType, postId } = req.body;
+
+    if (req.user) {
+      const queryRunner = AppDataSource.createQueryRunner();
+
+      if (postType === 'project') {
+        try {
+          await queryRunner.connect();
+
+          await queryRunner.startTransaction();
+
+          await queryRunner.manager
+            .createQueryBuilder()
+            .delete()
+            .from(Hashtag)
+            .where('projectId = :postId', { postId })
+            .execute();
+
+          await queryRunner.manager
+            .createQueryBuilder()
+            .delete()
+            .from(MemberType)
+            .where('projectId = :postId', { postId })
+            .execute();
+
+          await queryRunner.manager
+            .createQueryBuilder()
+            .delete()
+            .from(Project)
+            .where('id = :postId', { postId })
+            .execute();
+
+          await queryRunner.commitTransaction();
+
+          return res.status(200).json({
+            success: true,
+            message: 'resource deleted successfully',
+          });
+        } catch (error) {
+          await queryRunner.rollbackTransaction();
+        } finally {
+          await queryRunner.release();
+        }
+      }
+    } else {
+      next(new Error('not loggedIn'));
+    }
+  }
+);
 
 export default router;
