@@ -101,7 +101,8 @@ router.get(
   '/project/:projectId',
   async (req: Request, res: Response, next: NextFunction) => {
     const projectId = Number(req.params.projectId);
-    const requestUserId = req.user?.id;
+
+    const modifyRequest = req.headers.modify;
 
     const projectRepository = AppDataSource.getRepository(Project);
 
@@ -109,7 +110,10 @@ router.get(
       // 조회시 조회수 1증가
       await AppDataSource.createQueryBuilder()
         .update(Project)
-        .set({ views: () => 'views + 1', updatedAt: () => 'updatedAt' })
+        .set({
+          views: () => (modifyRequest ? 'views' : 'views + 1'),
+          updatedAt: () => 'updatedAt',
+        })
         .where('id = :id', { id: projectId })
         .execute();
 
