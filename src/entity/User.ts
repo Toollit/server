@@ -43,8 +43,8 @@ export class User {
   @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn()
-  updatedAt: Date;
+  @UpdateDateColumn({ nullable: true, default: null })
+  updatedAt: Date | null = null;
 
   @Column({ type: 'timestamp', nullable: true })
   lastLoginAt: Date;
