@@ -251,7 +251,7 @@ router.get('/auth/github/callback', async (req, res, next) => {
     if (user && user.signUpType === 'github') {
       const isUpdated = await AppDataSource.createQueryBuilder()
         .update(User)
-        .set({ lastLoginAt: new Date() })
+        .set({ lastLoginAt: new Date(), updatedAt: null })
         .where('id = :id', { id: user.id })
         .execute();
 

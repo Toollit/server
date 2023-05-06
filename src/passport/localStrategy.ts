@@ -60,7 +60,11 @@ export default () =>
               if (user.tempPassword) {
                 const isUpdated = await AppDataSource.createQueryBuilder()
                   .update(User)
-                  .set({ tempPassword: null, lastLoginAt: new Date() })
+                  .set({
+                    tempPassword: null,
+                    lastLoginAt: new Date(),
+                    updatedAt: null,
+                  })
                   .where('id = :id', { id: user.id })
                   .execute();
 

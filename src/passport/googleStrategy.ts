@@ -32,7 +32,7 @@ export default () => {
           if (user && user.signUpType === 'google') {
             const isUpdated = await AppDataSource.createQueryBuilder()
               .update(User)
-              .set({ lastLoginAt: new Date() })
+              .set({ lastLoginAt: new Date(), updatedAt: null })
               .where('id = :id', { id: user.id })
               .execute();
 
