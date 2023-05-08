@@ -1,6 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '@/data-source';
-import { User } from '@/entity/User';
 import crypto from 'crypto';
 import passport from 'passport';
 import {
@@ -13,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import nodemailer from 'nodemailer';
 import ejs from 'ejs';
+import { User } from '@/entity/User';
 
 const router = express.Router();
 
@@ -468,6 +468,43 @@ router.post(
         success: false,
         message: '잘못된 접근 입니다.',
       });
+    }
+  }
+);
+
+router.get(
+  '/profile/:nickname',
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const nickname = req.params.nickname;
+
+    try {
+      const existUser = await AppDataSource.getRepository(User)
+        .createQueryBuilder('user')
+        .where('user.nickname = :nickname', { nickname })
+        .getOne();
+
+      if (!existUser) {
+        return res.status(404).json({
+          success: false,
+          message: '존재하지 않는 유저 입니다.',
+        });
+      }
+
+      //TODO 본인 확인 여부에따라 데이터 값 다르게 보내도록 분기처리하기
+      return res.status(200).json({
+        success: true,
+        message: null,
+        data: {
+          email: user?.email,
+          nickname: user?.nickname,
+          signUpType: user?.signUpType,
+          createdAt: user?.createdAt,
+          lastLoginAt: user?.lastLoginAt,
+        },
+      });
+    } catch (error) {
+      next(error);
     }
   }
 );
