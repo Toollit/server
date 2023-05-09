@@ -475,7 +475,6 @@ router.post(
 router.get(
   '/profile/:nickname',
   async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user;
     const nickname = req.params.nickname;
 
     try {
@@ -496,11 +495,11 @@ router.get(
         success: true,
         message: null,
         data: {
-          email: user?.email,
-          nickname: user?.nickname,
-          signUpType: user?.signUpType,
-          createdAt: user?.createdAt,
-          lastLoginAt: user?.lastLoginAt,
+          email: existUser?.email,
+          nickname: existUser?.nickname,
+          signUpType: existUser?.signUpType,
+          createdAt: existUser?.createdAt,
+          lastLoginAt: existUser?.lastLoginAt,
         },
       });
     } catch (error) {
