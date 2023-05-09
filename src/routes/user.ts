@@ -13,6 +13,7 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 import ejs from 'ejs';
 import { User } from '@/entity/User';
+import { Project } from '@/entity/Project';
 
 const router = express.Router();
 
@@ -476,6 +477,7 @@ router.get(
   '/profile/:nickname',
   async (req: Request, res: Response, next: NextFunction) => {
     const nickname = req.params.nickname;
+    const tab = req.query.tab;
 
     try {
       const existUser = await AppDataSource.getRepository(User)
@@ -490,18 +492,36 @@ router.get(
         });
       }
 
-      //TODO 본인 확인 여부에따라 데이터 값 다르게 보내도록 분기처리하기
-      return res.status(200).json({
-        success: true,
-        message: null,
-        data: {
-          email: existUser?.email,
-          nickname: existUser?.nickname,
-          signUpType: existUser?.signUpType,
-          createdAt: existUser?.createdAt,
-          lastLoginAt: existUser?.lastLoginAt,
-        },
-      });
+      if (tab === 'viewProfile') {
+        //TODO 본인 확인 여부에따라 데이터 값 다르게 보내도록 분기처리하기
+        return res.status(200).json({
+          success: true,
+          message: null,
+          data: {
+            email: existUser?.email,
+            nickname: existUser?.nickname,
+            signUpType: existUser?.signUpType,
+            createdAt: existUser?.createdAt,
+            lastLoginAt: existUser?.lastLoginAt,
+          },
+        });
+      }
+
+      if (tab === 'viewProjects') {
+        const projects = await AppDataSource.getRepository(Project)
+          .createQueryBuilder('project')
+          .where('project.user = :userId', { userId: existUser.id })
+          .getMany();
+
+        return res.status(200).json({
+          success: true,
+          message: null,
+          data: { projects },
+        });
+      }
+
+      if (tab === 'viewBookmark') {
+      }
     } catch (error) {
       next(error);
     }
