@@ -14,6 +14,8 @@ import nodemailer from 'nodemailer';
 import ejs from 'ejs';
 import { User } from '@/entity/User';
 import { Project } from '@/entity/Project';
+import { Profile } from '@/entity/Profile';
+import { ProfileImage } from '@/entity/ProfileImage';
 
 const router = express.Router();
 
@@ -77,7 +79,13 @@ router.post('/logout', function (req, res, next) {
 router.post('/signUp', async (req, res, next) => {
   const { email, password, signUpType } = req.body;
 
-  const userRepository = AppDataSource.getRepository(User);
+  const queryRunner = AppDataSource.createQueryRunner();
+
+  await queryRunner.connect();
+
+  await queryRunner.startTransaction();
+
+  const userRepository = queryRunner.manager.getRepository(User);
 
   try {
     const isExistedEmail = await userRepository.findOne({
@@ -115,19 +123,47 @@ router.post('/signUp', async (req, res, next) => {
       const saltString = salt.toString('hex');
       const hashedString = hashedPassword.toString('hex');
 
-      const newUser = new User();
-      newUser.email = email;
-      newUser.password = hashedString;
-      newUser.salt = saltString;
-      newUser.signUpType = signUpType;
-      newUser.nickname = initialNickname;
-      newUser.lastLoginAt = new Date();
-
       try {
-        const userData = await userRepository.save(newUser);
+        const newProfile = await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into(Profile)
+          .values({})
+          .execute();
 
-        if (userData) {
-          return req.login(newUser, async (err) => {
+        const newProfileImage = await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into(ProfileImage)
+          .values({})
+          .execute();
+
+        const newUser = await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into(User)
+          .values({
+            email,
+            password: hashedString,
+            salt: saltString,
+            signUpType,
+            nickname: initialNickname,
+            lastLoginAt: new Date(),
+            profile: newProfile.identifiers[0].id,
+            profileImage: newProfileImage.identifiers[0].id,
+          })
+          .execute();
+
+        const user = await queryRunner.manager
+          .getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.id = :id', { id: newUser.identifiers[0].id })
+          .getOne();
+
+        await queryRunner.commitTransaction();
+
+        if (user) {
+          return req.login(user, async (err) => {
             if (err) {
               return next(err);
             }
@@ -139,7 +175,11 @@ router.post('/signUp', async (req, res, next) => {
           });
         }
       } catch (error) {
+        await queryRunner.rollbackTransaction();
+
         return next(error);
+      } finally {
+        await queryRunner.release();
       }
     }
   );
