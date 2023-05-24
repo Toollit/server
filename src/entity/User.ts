@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Project } from './Project';
 import { ProfileImage } from './ProfileImage';
+import { Profile } from './Profile';
 
 @Entity()
 export class User {
@@ -55,4 +56,8 @@ export class User {
   @OneToOne(() => ProfileImage)
   @JoinColumn()
   profileImage: ProfileImage;
+
+  @OneToOne(() => Profile)
+  @JoinColumn()
+  profile: Profile;
 }
