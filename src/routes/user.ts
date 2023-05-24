@@ -524,6 +524,7 @@ router.get(
         .createQueryBuilder('user')
         .where('user.nickname = :nickname', { nickname })
         .leftJoinAndSelect('user.profile', 'profile')
+        .leftJoinAndSelect('user.profileImage', 'profileImage')
         .getOne();
 
       if (!existUser) {
@@ -534,8 +535,15 @@ router.get(
       }
 
       if (tab === 'viewProfile') {
-        const { email, nickname, signUpType, createdAt, lastLoginAt, profile } =
-          existUser;
+        const {
+          email,
+          nickname,
+          signUpType,
+          createdAt,
+          lastLoginAt,
+          profile,
+          profileImage,
+        } = existUser;
         const {
           introduce,
           onOffline,
@@ -544,6 +552,7 @@ router.get(
           interests,
           career,
         } = profile;
+        const { url } = profileImage;
         //TODO 본인 확인 여부에따라 데이터 값 다르게 보내도록 분기처리하기
         return res.status(200).json({
           success: true,
@@ -560,6 +569,7 @@ router.get(
             meetingTime,
             interests,
             career,
+            profileImage: url,
           },
         });
       }
