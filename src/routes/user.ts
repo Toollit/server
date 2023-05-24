@@ -483,6 +483,7 @@ router.get(
       const existUser = await AppDataSource.getRepository(User)
         .createQueryBuilder('user')
         .where('user.nickname = :nickname', { nickname })
+        .leftJoinAndSelect('user.profile', 'profile')
         .getOne();
 
       if (!existUser) {
@@ -493,16 +494,32 @@ router.get(
       }
 
       if (tab === 'viewProfile') {
+        const { email, nickname, signUpType, createdAt, lastLoginAt, profile } =
+          existUser;
+        const {
+          introduce,
+          onOffline,
+          meetingPlace,
+          meetingTime,
+          interests,
+          career,
+        } = profile;
         //TODO 본인 확인 여부에따라 데이터 값 다르게 보내도록 분기처리하기
         return res.status(200).json({
           success: true,
           message: null,
           data: {
-            email: existUser?.email,
-            nickname: existUser?.nickname,
-            signUpType: existUser?.signUpType,
-            createdAt: existUser?.createdAt,
-            lastLoginAt: existUser?.lastLoginAt,
+            email,
+            nickname,
+            signUpType,
+            createdAt,
+            lastLoginAt,
+            introduce,
+            onOffline,
+            meetingPlace,
+            meetingTime,
+            interests,
+            career,
           },
         });
       }
