@@ -520,7 +520,14 @@ router.get(
         });
       }
 
-      if (tab === 'viewBookmark') {
+      if (tab === 'viewBookmarks') {
+        return res.status(200).json({
+          success: true,
+          message: null,
+          data: {
+            bookmarks: ['북마크1', '북마크2', '북마크3', '북마크4'],
+          },
+        });
       }
     } catch (error) {
       next(error);
