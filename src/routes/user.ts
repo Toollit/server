@@ -535,4 +535,47 @@ router.get(
   }
 );
 
+router.post(
+  '/profile/:category',
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const { category } = req.params;
+    const { data } = req.body;
+
+    console.log({ category, data });
+
+    try {
+      if (category === 'nickname') {
+        const existNickname = await AppDataSource.getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.nickname = :nickname', { nickname: data })
+          .getOne();
+
+        if (existNickname === null) {
+          await AppDataSource.createQueryBuilder()
+            .update(User)
+            .set({ nickname: data })
+            .where('id = :id', { id: user?.id })
+            .execute();
+
+          return res.status(201).json({
+            success: true,
+            message: null,
+            data: {
+              nickname: data,
+            },
+          });
+        } else {
+          return res.status(404).json({
+            success: false,
+            message: '중복된 닉네임입니다.',
+          });
+        }
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 export default router;
