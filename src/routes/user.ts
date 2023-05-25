@@ -613,12 +613,38 @@ router.post(
 
     try {
       if (category === 'nickname') {
-        const existNickname = await AppDataSource.getRepository(User)
+        const existUser = await AppDataSource.getRepository(User)
           .createQueryBuilder('user')
           .where('user.nickname = :nickname', { nickname: data })
           .getOne();
 
-        if (existNickname === null) {
+        if (existUser?.nickname === data) {
+          return res.status(200).json({
+            success: true,
+            message: null,
+            data: {
+              nickname: data,
+            },
+          });
+        }
+
+        if (data.length < 4 || data.length > 20) {
+          return res.status(404).json({
+            success: false,
+            message: '닉네임은 4~20자 이어야 합니다.',
+          });
+        }
+
+        const koEnNumRegex = /^[0-9|a-zA-Z|ㄱ-ㅎ|ㅏ-ㅣ|가-힣]+$/;
+
+        if (!koEnNumRegex.test(data)) {
+          return res.status(404).json({
+            success: false,
+            message: '한글, 숫자, 영어만 사용 가능합니다. 공백 불가.',
+          });
+        }
+
+        if (existUser === null) {
           await AppDataSource.createQueryBuilder()
             .update(User)
             .set({ nickname: data })
