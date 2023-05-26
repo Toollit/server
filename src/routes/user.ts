@@ -665,6 +665,45 @@ router.post(
           });
         }
       }
+
+      if (category === 'introduce') {
+        if (data.length > 1000) {
+          return res.status(400).json({
+            success: false,
+            message: '자기소개는 1000자 이하여야 합니다.',
+          });
+        }
+
+        const existUser = await AppDataSource.getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.id = :id', { id: user?.id })
+          .leftJoinAndSelect('user.profile', 'profile')
+          .getOne();
+
+        if (existUser?.profile.introduce === data) {
+          return res.status(200).json({
+            success: true,
+            message: null,
+            data: {
+              introduce: data,
+            },
+          });
+        }
+
+        await AppDataSource.createQueryBuilder()
+          .update(Profile)
+          .set({ introduce: data })
+          .where('id = :profileId', { profileId: existUser?.profile.id })
+          .execute();
+
+        return res.status(201).json({
+          success: true,
+          message: null,
+          data: {
+            introduce: data,
+          },
+        });
+      }
     } catch (error) {
       next(error);
     }
