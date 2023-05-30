@@ -57,8 +57,36 @@ export default () =>
 
             const userPassword = Buffer.from(user.password, 'hex');
 
-            if (!crypto.timingSafeEqual(userPassword, hashedPassword)) {
-              // login fail
+            const isPasswordMatch = crypto.timingSafeEqual(
+              userPassword,
+              hashedPassword
+            );
+
+            if (isPasswordMatch) {
+              if (user.tempPassword) {
+                // Resetting a temporary password if user received a temporary password but logged in with an existing password
+                await AppDataSource.createQueryBuilder()
+                  .update(User)
+                  .set({
+                    tempPassword: null,
+                    lastLoginAt: new Date(),
+                    updatedAt: () => 'updatedAt',
+                  })
+                  .where('id = :id', { id: user.id })
+                  .execute();
+
+                return cb(null, user);
+              } else {
+                // logged in with the original password
+                await AppDataSource.createQueryBuilder()
+                  .update(User)
+                  .set({ lastLoginAt: new Date() })
+                  .where('id = :id', { id: user.id })
+                  .execute();
+
+                return cb(null, user);
+              }
+            } else {
               await AppDataSource.createQueryBuilder()
                 .update(User)
                 .set({
@@ -78,34 +106,6 @@ export default () =>
               return cb(null, false, {
                 message: `비밀번호가 일치하지 않습니다.\n5회 이상 오류시 서비스 이용이 제한됩니다.\n(누적오류입력 ${loginFailedCounts}회)`,
               });
-            } else {
-              // login success
-              // 임시비밀번호를 받았지만 기존 비밀번호로 정상적으로 로그인한 경우 발급받은 임시비밀번호 초기화
-              if (user.tempPassword) {
-                const isUpdated = await AppDataSource.createQueryBuilder()
-                  .update(User)
-                  .set({
-                    tempPassword: null,
-                    lastLoginAt: new Date(),
-                    updatedAt: null,
-                  })
-                  .where('id = :id', { id: user.id })
-                  .execute();
-
-                if (isUpdated) {
-                  return cb(null, user);
-                }
-              } else {
-                const isUpdated = await AppDataSource.createQueryBuilder()
-                  .update(User)
-                  .set({ lastLoginAt: new Date() })
-                  .where('id = :id', { id: user.id })
-                  .execute();
-
-                if (isUpdated) {
-                  return cb(null, user);
-                }
-              }
             }
           }
         );
