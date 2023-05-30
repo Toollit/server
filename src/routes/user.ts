@@ -478,23 +478,22 @@ router.post(
                 const hashedString = hashedPassword.toString('hex');
 
                 try {
-                  const isUpdated = await AppDataSource.createQueryBuilder()
+                  await AppDataSource.createQueryBuilder()
                     .update(User)
                     .set({
                       salt: saltString,
                       password: hashedString,
                       tempPassword: null,
+                      loginFailedCounts: 0,
                     })
                     .where('id = :id', { id: userInfo.id })
                     .execute();
 
-                  if (isUpdated) {
-                    return res.status(201).json({
-                      success: true,
-                      message:
-                        '비밀번호 변경이 완료되었습니다. 새로운 비밀번호로 다시 로그인해주세요.',
-                    });
-                  }
+                  return res.status(201).json({
+                    success: true,
+                    message:
+                      '비밀번호 변경이 완료되었습니다. 새로운 비밀번호로 다시 로그인해주세요.',
+                  });
                 } catch (error) {
                   return next(error);
                 }
