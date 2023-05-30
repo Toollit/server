@@ -36,6 +36,12 @@ export default () =>
           });
         }
 
+        if (user.loginFailedCounts >= 5) {
+          return cb(null, false, {
+            message: `비밀번호 5회 연속 오류로 서비스 이용이 불가합니다.\n(*고객센터 - 공지사항 - 비밀번호 5회 연속 오류 공지 확인)`,
+          });
+        }
+
         const salt = Buffer.from(user.salt, 'hex');
 
         crypto.pbkdf2(
@@ -52,10 +58,28 @@ export default () =>
             const userPassword = Buffer.from(user.password, 'hex');
 
             if (!crypto.timingSafeEqual(userPassword, hashedPassword)) {
+              // login fail
+              await AppDataSource.createQueryBuilder()
+                .update(User)
+                .set({
+                  loginFailedCounts: () => 'loginFailedCounts + 1',
+                  updatedAt: () => 'updatedAt',
+                })
+                .where('id = :id', { id: user.id })
+                .execute();
+
+              const loginTryUser = await AppDataSource.getRepository(User)
+                .createQueryBuilder('user')
+                .where('user.id = :id', { id: user.id })
+                .getOne();
+
+              const loginFailedCounts = loginTryUser?.loginFailedCounts;
+
               return cb(null, false, {
-                message: '비밀번호가 일치하지 않습니다.',
+                message: `비밀번호가 일치하지 않습니다.\n5회 이상 오류시 서비스 이용이 제한됩니다.\n(누적오류입력 ${loginFailedCounts}회)`,
               });
             } else {
+              // login success
               // 임시비밀번호를 받았지만 기존 비밀번호로 정상적으로 로그인한 경우 발급받은 임시비밀번호 초기화
               if (user.tempPassword) {
                 const isUpdated = await AppDataSource.createQueryBuilder()
