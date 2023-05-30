@@ -41,6 +41,9 @@ export class User {
   @Column({ nullable: true, length: 20 })
   username: string;
 
+  @Column({ default: 0 })
+  loginFailedCounts: number = 0;
+
   @CreateDateColumn()
   createdAt: Date;
 
