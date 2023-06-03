@@ -68,6 +68,7 @@ export default () =>
                 await AppDataSource.createQueryBuilder()
                   .update(User)
                   .set({
+                    loginFailedCounts: 0,
                     tempPassword: null,
                     lastLoginAt: new Date(),
                     updatedAt: () => 'updatedAt',
@@ -80,7 +81,10 @@ export default () =>
                 // logged in with the original password
                 await AppDataSource.createQueryBuilder()
                   .update(User)
-                  .set({ lastLoginAt: new Date() })
+                  .set({
+                    loginFailedCounts: 0,
+                    lastLoginAt: new Date(),
+                  })
                   .where('id = :id', { id: user.id })
                   .execute();
 
