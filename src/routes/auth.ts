@@ -2,20 +2,46 @@ import express, { Request, Response, NextFunction } from 'express';
 import nodemailer from 'nodemailer';
 import ejs from 'ejs';
 import path from 'path';
+import { createClient } from 'redis';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const redisClient = createClient({
+  url: process.env.REDIS_CLOUD,
+  legacyMode: true,
+});
+
+redisClient.on('connect', () => {
+  console.info('Redis connected!');
+});
+redisClient.on('error', (err) => {
+  console.error('Redis Client Error', err);
+});
+
+// await redisClient.connect();
+redisClient.connect().then();
 
 const router = express.Router();
 
+interface EmailAuthCodeReqBody {
+  email: string;
+}
+
 router.post(
   '/email',
-  async (req: Request, res: Response, next: NextFunction) => {
-    const authNums = Math.random().toString().slice(2, 8);
+  async (
+    req: Request<{}, {}, EmailAuthCodeReqBody>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const authCode = Math.random().toString().slice(2, 8);
     let emailTemplate;
 
     const appDir = path
       .resolve(__dirname)
       .replace('routes', '/template/authMail.ejs');
 
-    ejs.renderFile(appDir, { authCode: authNums }, function (err, data) {
+    ejs.renderFile(appDir, { authCode }, function (err, data) {
       if (err) {
         return next(err);
       }
@@ -33,30 +59,76 @@ router.post(
       },
     });
 
-    const userMail = req.body.email;
+    const userEmail = req.body.email;
 
     const mailOptions = {
       from: `Getit <${process.env.NODEMAILER_USER}>`,
-      to: userMail,
+      to: userEmail,
       subject: 'Getit 회원가입을 위한 인증번호를 입력해주세요.',
       html: emailTemplate,
     };
 
-    transporter.sendMail(mailOptions, function (error, info) {
+    transporter.sendMail(mailOptions, async function (error, info) {
       if (error) {
-        // console.log('send mail error');
+        // send email error
         return next(error);
       }
       console.log('finish sending email : ' + info.response);
+
+      // redis cache expires in 5 minutes
+      await redisClient.v4.set(userEmail, authCode, { EX: 60 * 5 });
+
       res.status(200).json({
         success: true,
         message: 'sending email success',
-        data: {
-          authNums,
-        },
       });
+
       return transporter.close();
     });
+  }
+);
+
+interface AuthCodeReqBody {
+  email: string;
+  authCode: string;
+}
+
+router.post(
+  '/verify',
+  async (
+    req: Request<{}, {}, AuthCodeReqBody>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const { email, authCode } = req.body;
+
+    try {
+      const redisAuthcode = await redisClient.v4.get(email);
+      // console.log('redis key value test ===>', { email, redisAuthcode });
+
+      if (redisAuthcode === null) {
+        return res.status(500).json({
+          success: true,
+          message: '인증시간이 만료되었습니다.',
+        });
+      }
+
+      if (authCode === redisAuthcode) {
+        return res.status(200).json({
+          success: true,
+          message: 'verify success',
+        });
+      }
+
+      if (authCode !== redisAuthcode) {
+        return res.status(400).json({
+          success: true,
+          message: '인증번호가 일치하지 않습니다.',
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
   }
 );
 
