@@ -30,18 +30,27 @@ const router = express.Router();
 router.get(
   '/projects',
   async (req: Request, res: Response, next: NextFunction) => {
+    const page = Number(req.query.page);
+
+    const postsPerPage = 12;
+
+    const skip = (page - 1) * postsPerPage;
+
     const projectRepository = AppDataSource.getRepository(Project);
 
     try {
       const projects = await projectRepository.find({
         relations: { hashtags: true, memberTypes: true },
-        order: {
-          id: 'DESC',
-          memberTypes: {
-            id: 'ASC',
-          },
-        },
+        order: { id: 'DESC' },
+        skip: page >= 2 ? skip : 0,
+        take: postsPerPage,
       });
+
+      const projectsTotalCount = await projectRepository
+        .createQueryBuilder('projects')
+        .getCount();
+
+      const totalPage = Math.ceil(projectsTotalCount / postsPerPage);
 
       const processedData = projects.map((project) => {
         const processedHashtagsData = project.hashtags.map(
@@ -89,7 +98,10 @@ router.get(
       return res.status(200).json({
         success: true,
         message: null,
-        data: { projects: processedData },
+        data: {
+          projects: processedData,
+          totalPage,
+        },
       });
     } catch (error) {
       next(error);
