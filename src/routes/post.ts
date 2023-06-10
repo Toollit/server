@@ -31,6 +31,7 @@ router.get(
   '/projects',
   async (req: Request, res: Response, next: NextFunction) => {
     const page = Number(req.query.page);
+    const order = req.query.order as 'new' | 'popularity';
 
     const postsPerPage = 12;
 
@@ -41,7 +42,7 @@ router.get(
     try {
       const projects = await projectRepository.find({
         relations: { hashtags: true, memberTypes: true },
-        order: { id: 'DESC' },
+        order: order === 'new' ? { id: 'DESC' } : { views: 'DESC' },
         skip: page >= 2 ? skip : 0,
         take: postsPerPage,
       });
