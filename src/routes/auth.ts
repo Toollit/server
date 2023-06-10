@@ -4,6 +4,8 @@ import ejs from 'ejs';
 import path from 'path';
 import { createClient } from 'redis';
 import dotenv from 'dotenv';
+import { AppDataSource } from '@/data-source';
+import { User } from '@/entity/User';
 dotenv.config();
 
 const redisClient = createClient({
@@ -34,7 +36,29 @@ router.post(
     res: Response,
     next: NextFunction
   ) => {
+    const userEmail = req.body.email;
+
+    const userRepository = AppDataSource.getRepository(User);
+
+    try {
+      const isExistedEmail = await userRepository.findOne({
+        where: {
+          email: userEmail,
+        },
+      });
+
+      if (isExistedEmail) {
+        return res.status(400).json({
+          success: false,
+          message: '가입되어있는 이메일 입니다.',
+        });
+      }
+    } catch (error) {
+      return next(error);
+    }
+
     const authCode = Math.random().toString().slice(2, 8);
+
     let emailTemplate;
 
     const appDir = path
@@ -59,8 +83,6 @@ router.post(
       },
     });
 
-    const userEmail = req.body.email;
-
     const mailOptions = {
       from: `Getit <${process.env.NODEMAILER_USER}>`,
       to: userEmail,
@@ -69,21 +91,26 @@ router.post(
     };
 
     transporter.sendMail(mailOptions, async function (error, info) {
+      // nomailer send email error
       if (error) {
-        // send email error
+        transporter.close();
         return next(error);
       }
       console.log('finish sending email : ' + info.response);
 
-      // redis cache expires in 5 minutes
-      await redisClient.v4.set(userEmail, authCode, { EX: 60 * 5 });
+      try {
+        // redis cache expires in 5 minutes
+        await redisClient.v4.set(userEmail, authCode, { EX: 60 * 5 });
 
-      res.status(200).json({
-        success: true,
-        message: 'sending email success',
-      });
-
-      return transporter.close();
+        return res.status(200).json({
+          success: true,
+          message: 'sending email success',
+        });
+      } catch (error) {
+        return next(error);
+      } finally {
+        return transporter.close();
+      }
     });
   }
 );
@@ -103,24 +130,24 @@ router.post(
     const { email, authCode } = req.body;
 
     try {
-      const redisAuthcode = await redisClient.v4.get(email);
-      // console.log('redis key value test ===>', { email, redisAuthcode });
+      const redisAuthCode = await redisClient.v4.get(email);
+      // console.log('redis key value test ===>', { email, redisAuthCode });
 
-      if (redisAuthcode === null) {
+      if (redisAuthCode === null) {
         return res.status(500).json({
           success: true,
           message: '인증시간이 만료되었습니다.',
         });
       }
 
-      if (authCode === redisAuthcode) {
+      if (authCode === redisAuthCode) {
         return res.status(200).json({
           success: true,
           message: 'verify success',
         });
       }
 
-      if (authCode !== redisAuthcode) {
+      if (authCode !== redisAuthCode) {
         return res.status(400).json({
           success: true,
           message: '인증번호가 일치하지 않습니다.',
