@@ -745,6 +745,13 @@ router.post(
           await queryRunner.manager
             .createQueryBuilder()
             .delete()
+            .from(ProjectImage)
+            .where('projectId = :postId', { postId })
+            .execute();
+
+          await queryRunner.manager
+            .createQueryBuilder()
+            .delete()
             .from(Hashtag)
             .where('projectId = :postId', { postId })
             .execute();
@@ -771,6 +778,8 @@ router.post(
           });
         } catch (error) {
           await queryRunner.rollbackTransaction();
+
+          return next(error);
         } finally {
           await queryRunner.release();
         }
