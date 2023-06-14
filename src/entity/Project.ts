@@ -18,7 +18,7 @@ export class Project {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 50 })
+  @Column({ length: 100 })
   title: string;
 
   // 컨텐츠 보여주기용
