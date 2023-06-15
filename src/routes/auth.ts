@@ -176,7 +176,13 @@ router.get('/user', async (req: Request, res: Response) => {
       },
     });
   } else {
-    return res.status(200).json({ success: false, message: null });
+    return res.status(200).json({
+      success: false,
+      message: null,
+      data: {
+        nickname: null,
+      },
+    });
   }
 });
 
