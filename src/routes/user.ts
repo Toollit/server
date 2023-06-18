@@ -81,13 +81,13 @@ router.post('/signUp', async (req, res, next) => {
 
   const queryRunner = AppDataSource.createQueryRunner();
 
-  await queryRunner.connect();
-
-  await queryRunner.startTransaction();
-
-  const userRepository = queryRunner.manager.getRepository(User);
-
   try {
+    await queryRunner.connect();
+
+    await queryRunner.startTransaction();
+
+    const userRepository = queryRunner.manager.getRepository(User);
+
     const isExistedEmail = await userRepository.findOne({
       where: {
         email,
@@ -100,89 +100,96 @@ router.post('/signUp', async (req, res, next) => {
         message: '가입되어있는 이메일 입니다.',
       });
     }
-  } catch (error) {
-    return next(error);
-  }
 
-  const atSignIndex = email.indexOf('@');
-  const initialNickname = email.slice(0, atSignIndex);
+    const atSignIndex = email.indexOf('@');
+    const initialNickname = email.slice(0, atSignIndex);
 
-  const salt = crypto.randomBytes(64);
+    const salt = crypto.randomBytes(64);
 
-  crypto.pbkdf2(
-    password,
-    salt,
-    310000,
-    64,
-    'sha512',
-    async function (err, hashedPassword) {
-      if (err) {
-        return next(err);
-      }
+    // If it does not work asynchronously, queryRunner.release() written inside the finally block will work first, resulting in an error (ex. QueryRunnerAlreadyReleasedError: Query runner already released.)
+    await new Promise(() => {
+      crypto.pbkdf2(
+        password,
+        salt,
+        310000,
+        64,
+        'sha512',
+        async function (err, hashedPassword) {
+          if (err) {
+            return next(err);
+          }
 
-      const saltString = salt.toString('hex');
-      const hashedString = hashedPassword.toString('hex');
+          const saltString = salt.toString('hex');
+          const hashedString = hashedPassword.toString('hex');
 
-      try {
-        const newProfile = await queryRunner.manager
-          .createQueryBuilder()
-          .insert()
-          .into(Profile)
-          .values({})
-          .execute();
+          try {
+            const newProfile = await queryRunner.manager
+              .createQueryBuilder()
+              .insert()
+              .into(Profile)
+              .values({})
+              .execute();
 
-        const newProfileImage = await queryRunner.manager
-          .createQueryBuilder()
-          .insert()
-          .into(ProfileImage)
-          .values({})
-          .execute();
+            const newProfileImage = await queryRunner.manager
+              .createQueryBuilder()
+              .insert()
+              .into(ProfileImage)
+              .values({})
+              .execute();
 
-        const newUser = await queryRunner.manager
-          .createQueryBuilder()
-          .insert()
-          .into(User)
-          .values({
-            email,
-            password: hashedString,
-            salt: saltString,
-            signUpType,
-            nickname: initialNickname,
-            lastLoginAt: new Date(),
-            profile: newProfile.identifiers[0].id,
-            profileImage: newProfileImage.identifiers[0].id,
-          })
-          .execute();
+            const newUser = await queryRunner.manager
+              .createQueryBuilder()
+              .insert()
+              .into(User)
+              .values({
+                email,
+                password: hashedString,
+                salt: saltString,
+                signUpType,
+                nickname: initialNickname,
+                lastLoginAt: new Date(),
+                profile: newProfile.identifiers[0].id,
+                profileImage: newProfileImage.identifiers[0].id,
+              })
+              .execute();
 
-        const user = await queryRunner.manager
-          .getRepository(User)
-          .createQueryBuilder('user')
-          .where('user.id = :id', { id: newUser.identifiers[0].id })
-          .getOne();
+            const user = await queryRunner.manager
+              .getRepository(User)
+              .createQueryBuilder('user')
+              .where('user.id = :id', { id: newUser.identifiers[0].id })
+              .getOne();
 
-        await queryRunner.commitTransaction();
+            await queryRunner.commitTransaction();
 
-        if (user) {
-          return req.login(user, async (err) => {
-            if (err) {
-              return next(err);
+            if (user) {
+              return req.login(user, async (err) => {
+                if (err) {
+                  return next(err);
+                }
+
+                return res.status(201).json({
+                  success: true,
+                  message: 'signup success',
+                });
+              });
             }
+          } catch (error) {
+            await queryRunner.rollbackTransaction();
 
-            return res.status(201).json({
-              success: true,
-              message: 'signup success',
-            });
-          });
+            return next(error);
+          } finally {
+            await queryRunner.release();
+          }
         }
-      } catch (error) {
-        await queryRunner.rollbackTransaction();
+      );
+    });
+  } catch (error) {
+    await queryRunner.rollbackTransaction();
 
-        return next(error);
-      } finally {
-        await queryRunner.release();
-      }
-    }
-  );
+    return next(error);
+  } finally {
+    await queryRunner.release();
+  }
 });
 
 router.get(
