@@ -64,7 +64,7 @@ router.post('/login', (req: Request, res: Response, next: NextFunction) => {
 });
 
 router.post('/logout', function (req, res, next) {
-  req.logout(function (err) {
+  return req.logout(function (err) {
     if (err) {
       return next(err);
     }
@@ -247,7 +247,7 @@ router.get(
 );
 
 router.get('/login/github', (req, res, next) => {
-  res.redirect(
+  return res.redirect(
     `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user:email&redirect_uri=${process.env.GITHUB_CALLBACK_URL}`
   );
 });
@@ -465,7 +465,7 @@ router.post(
           const userPassword = Buffer.from(userInfo.password, 'hex');
 
           if (crypto.timingSafeEqual(userPassword, hashedPassword)) {
-            res.status(400).json({
+            return res.status(400).json({
               success: false,
               message: '이전과 동일한 비밀번호는 다시 사용할 수 없습니다.',
             });

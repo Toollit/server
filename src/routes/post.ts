@@ -191,8 +191,7 @@ router.get(
           );
         });
 
-        // 내가 작성한 글이면 markdown도 같이 보내고 아닌경우엔 html만 보내기
-        res.status(200).json({
+        return res.status(200).json({
           success: true,
           message: null,
           data: {
@@ -358,9 +357,7 @@ router.post(
   (req: Request, res: Response, next: NextFunction) => {
     const multerS3File = (req as MulterRequest).file;
 
-    // console.log('===>', req.file);
-
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: null,
       data: {

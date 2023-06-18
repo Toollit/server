@@ -91,7 +91,6 @@ router.post(
     };
 
     transporter.sendMail(mailOptions, async function (error, info) {
-      // nomailer send email error
       if (error) {
         transporter.close();
         return next(error);
