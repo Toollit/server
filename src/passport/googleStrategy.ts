@@ -57,20 +57,12 @@ export default () => {
             newUser.nickname = initialNickname;
             newUser.lastLoginAt = new Date();
 
-            try {
-              const isSaved = await userRepository.save(newUser);
-              if (isSaved) {
-                return done(null, newUser, {
-                  success: true,
-                  message: 'firstTime',
-                });
-              }
-            } catch (error) {
-              return done(null, undefined, {
-                success: false,
-                message: 'error',
-              });
-            }
+            await userRepository.save(newUser);
+
+            return done(null, newUser, {
+              success: true,
+              message: 'firstTime',
+            });
           }
         } catch (error) {
           return done(null, undefined, { success: false, message: 'error' });
