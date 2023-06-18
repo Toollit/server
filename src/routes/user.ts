@@ -255,82 +255,82 @@ router.get('/login/github', (req, res, next) => {
 router.get('/auth/github/callback', async (req, res, next) => {
   const userCode = req.query.code;
 
-  const userIdentity = await axios.post(
-    `https://github.com/login/oauth/access_token?client_id=${process.env.GITHUB_CLIENT_ID}&client_secret=${process.env.GITHUB_CLIENT_SECRET}&code=${userCode}`
-  );
+  try {
+    const userIdentity = await axios.post(
+      `https://github.com/login/oauth/access_token?client_id=${process.env.GITHUB_CLIENT_ID}&client_secret=${process.env.GITHUB_CLIENT_SECRET}&code=${userCode}`
+    );
 
-  const userAuthorizeIdentityString = userIdentity.data;
+    const userAuthorizeIdentityString = userIdentity.data;
 
-  const userAccessData: {
-    access_token: string;
-    scope: string;
-    token_type: string;
-  } = userAuthorizeIdentityString
-    .split('&')
-    .reduce((acc: { [key: string]: string }, curr: string) => {
-      const [key, value] = curr.split('=');
-      acc[key] = decodeURIComponent(value); // %2로 오는 값 decodeURIComponent로 변환
-      return acc;
-    }, {});
+    const userAccessData: {
+      access_token: string;
+      scope: string;
+      token_type: string;
+    } = userAuthorizeIdentityString
+      .split('&')
+      .reduce((acc: { [key: string]: string }, curr: string) => {
+        const [key, value] = curr.split('=');
+        acc[key] = decodeURIComponent(value); // %2로 오는 값 decodeURIComponent로 변환
+        return acc;
+      }, {});
 
-  const userInfo = await axios.get('https://api.github.com/user', {
-    headers: {
-      Authorization: `${userAccessData.token_type} ${userAccessData.access_token}`,
-    },
-  });
-
-  const hasEmailInfo = userInfo.data.email;
-
-  // github 계정에 등록된 이메일 정보가 없는경우
-  if (!hasEmailInfo) {
-    return res.redirect(emptyRedirect);
-  }
-
-  // github 계정에 등록된 이메일 정보가 있는 경우
-  if (hasEmailInfo) {
-    const userRepository = AppDataSource.getRepository(User);
-    const user = await userRepository.findOne({
-      where: {
-        email: userInfo.data.email,
+    const userInfo = await axios.get('https://api.github.com/user', {
+      headers: {
+        Authorization: `${userAccessData.token_type} ${userAccessData.access_token}`,
       },
     });
 
-    // 이미 가입한 사용자 로그인
-    if (user && user.signUpType === 'github') {
-      const isUpdated = await AppDataSource.createQueryBuilder()
-        .update(User)
-        .set({ lastLoginAt: new Date(), updatedAt: null })
-        .where('id = :id', { id: user.id })
-        .execute();
+    const hasEmailInfo = userInfo.data.email;
 
-      if (isUpdated) {
-        return req.login(user, async (err) => {
-          if (err) {
-            return next(err);
-          }
+    // github 계정에 등록된 이메일 정보가 없는경우
+    if (!hasEmailInfo) {
+      return res.redirect(emptyRedirect);
+    }
 
-          return res.redirect(successRedirect);
-        });
+    // github 계정에 등록된 이메일 정보가 있는 경우
+    if (hasEmailInfo) {
+      const userRepository = AppDataSource.getRepository(User);
+      const user = await userRepository.findOne({
+        where: {
+          email: userInfo.data.email,
+        },
+      });
+
+      // 이미 가입한 사용자 로그인
+      if (user && user.signUpType === 'github') {
+        const isUpdated = await AppDataSource.createQueryBuilder()
+          .update(User)
+          .set({ lastLoginAt: new Date(), updatedAt: null })
+          .where('id = :id', { id: user.id })
+          .execute();
+
+        if (isUpdated) {
+          return req.login(user, async (err) => {
+            if (err) {
+              return next(err);
+            }
+
+            return res.redirect(successRedirect);
+          });
+        }
       }
-    }
 
-    // 동일한 이메일의 다른 가입 정보가 있는 경우
-    if (user && user.signUpType !== 'github') {
-      return res.redirect(duplicateRedirect);
-    }
+      // 동일한 이메일의 다른 가입 정보가 있는 경우
+      if (user && user.signUpType !== 'github') {
+        return res.redirect(duplicateRedirect);
+      }
 
-    // 중복된 이메일이 없는 경우 DB저장(최초가입)
-    if (!user) {
-      const atSignIndex = userInfo.data.email.indexOf('@');
-      const initialNickname = userInfo.data.email.slice(0, atSignIndex);
+      // 중복된 이메일이 없는 경우 DB저장(최초가입)
+      if (!user) {
+        const atSignIndex = userInfo.data.email.indexOf('@');
+        const initialNickname = userInfo.data.email.slice(0, atSignIndex);
 
-      const newUser = new User();
-      newUser.email = userInfo.data.email;
-      newUser.signUpType = 'github';
-      newUser.nickname = initialNickname;
-      newUser.lastLoginAt = new Date();
+        const newUser = new User();
+        newUser.email = userInfo.data.email;
+        newUser.signUpType = 'github';
+        newUser.nickname = initialNickname;
+        newUser.lastLoginAt = new Date();
 
-      try {
         const userData = await userRepository.save(newUser);
 
         if (userData) {
@@ -342,10 +342,10 @@ router.get('/auth/github/callback', async (req, res, next) => {
             return res.redirect(firstTimeRedirect);
           });
         }
-      } catch (error) {
-        return res.redirect(failureRedirect);
       }
     }
+  } catch (error) {
+    return res.redirect(failureRedirect);
   }
 });
 
