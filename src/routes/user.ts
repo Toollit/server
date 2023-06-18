@@ -414,16 +414,18 @@ router.post('/pwInquiry', async (req, res, next) => {
 
         transporter.sendMail(mailOptions, function (error, info) {
           if (error) {
-            // console.log('send mail error');
+            transporter.close();
             return next(error);
           }
           console.log('finish sending email : ' + info.response);
-          res.status(201).json({
+
+          transporter.close();
+
+          return res.status(201).json({
             success: true,
             message: '해당 이메일로 임시 비밀번호를 발급했습니다.',
             tempPassword,
           });
-          return transporter.close();
         });
       }
     }
