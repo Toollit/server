@@ -250,12 +250,13 @@ router.post(
     if (user) {
       const queryRunner = AppDataSource.createQueryRunner();
 
-      await queryRunner.connect();
-
-      await queryRunner.startTransaction();
-
-      const userRepository = queryRunner.manager.getRepository(User);
       try {
+        await queryRunner.connect();
+
+        await queryRunner.startTransaction();
+
+        const userRepository = queryRunner.manager.getRepository(User);
+
         const writer = await userRepository.findOne({ where: { id: user.id } });
 
         if (writer && hashtags.length >= 1 && memberTypes.length >= 1) {
@@ -310,15 +311,15 @@ router.post(
               .execute();
           }
 
-          res.status(201).json({
+          await queryRunner.commitTransaction();
+
+          return res.status(201).json({
             success: true,
             message: 'success create project',
             data: {
               projectId: projectData.id,
             },
           });
-
-          await queryRunner.commitTransaction();
         }
       } catch (error) {
         await queryRunner.rollbackTransaction();
