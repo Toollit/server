@@ -2,6 +2,8 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { AppDataSource } from '@/data-source';
 import { User } from '@/entity/User';
+import { Profile } from '@/entity/Profile';
+import { ProfileImage } from '@/entity/ProfileImage';
 
 export default () => {
   passport.use(
@@ -51,18 +53,64 @@ export default () => {
             const atSignIndex = email.indexOf('@');
             const initialNickname = email.slice(0, atSignIndex);
 
-            const newUser = new User();
-            newUser.email = email;
-            newUser.signUpType = 'google';
-            newUser.nickname = initialNickname;
-            newUser.lastLoginAt = new Date();
+            const queryRunner = AppDataSource.createQueryRunner();
 
-            await userRepository.save(newUser);
+            try {
+              await queryRunner.connect();
+              await queryRunner.startTransaction();
 
-            return done(null, newUser, {
-              success: true,
-              message: 'firstTime',
-            });
+              const newProfile = await queryRunner.manager
+                .createQueryBuilder()
+                .insert()
+                .into(Profile)
+                .values({})
+                .execute();
+
+              const newProfileImage = await queryRunner.manager
+                .createQueryBuilder()
+                .insert()
+                .into(ProfileImage)
+                .values({})
+                .execute();
+
+              const newUser = await queryRunner.manager
+                .createQueryBuilder()
+                .insert()
+                .into(User)
+                .values({
+                  email,
+                  signUpType: 'google',
+                  nickname: initialNickname,
+                  lastLoginAt: new Date(),
+                  profile: newProfile.identifiers[0].id,
+                  profileImage: newProfileImage.identifiers[0].id,
+                })
+                .execute();
+
+              const user = await queryRunner.manager
+                .getRepository(User)
+                .createQueryBuilder('user')
+                .where('user.id = :id', { id: newUser.identifiers[0].id })
+                .getOne();
+
+              await queryRunner.commitTransaction();
+
+              if (user) {
+                return done(null, user, {
+                  success: true,
+                  message: 'firstTime',
+                });
+              }
+            } catch (error) {
+              await queryRunner.rollbackTransaction();
+
+              return done(null, undefined, {
+                success: false,
+                message: 'error',
+              });
+            } finally {
+              return await queryRunner.release();
+            }
           }
         } catch (error) {
           return done(null, undefined, { success: false, message: 'error' });
