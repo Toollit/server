@@ -325,22 +325,63 @@ router.get('/auth/github/callback', async (req, res, next) => {
         const atSignIndex = userInfo.data.email.indexOf('@');
         const initialNickname = userInfo.data.email.slice(0, atSignIndex);
 
-        const newUser = new User();
-        newUser.email = userInfo.data.email;
-        newUser.signUpType = 'github';
-        newUser.nickname = initialNickname;
-        newUser.lastLoginAt = new Date();
+        const queryRunner = AppDataSource.createQueryRunner();
 
-        const userData = await userRepository.save(newUser);
+        try {
+          await queryRunner.connect();
+          await queryRunner.startTransaction();
 
-        if (userData) {
-          return req.login(newUser, async (err) => {
-            if (err) {
-              return next(err);
-            }
+          const newProfile = await queryRunner.manager
+            .createQueryBuilder()
+            .insert()
+            .into(Profile)
+            .values({})
+            .execute();
 
-            return res.redirect(firstTimeRedirect);
-          });
+          const newProfileImage = await queryRunner.manager
+            .createQueryBuilder()
+            .insert()
+            .into(ProfileImage)
+            .values({})
+            .execute();
+
+          const newUser = await queryRunner.manager
+            .createQueryBuilder()
+            .insert()
+            .into(User)
+            .values({
+              email: userInfo.data.email,
+              signUpType: 'github',
+              nickname: initialNickname,
+              lastLoginAt: new Date(),
+              profile: newProfile.identifiers[0].id,
+              profileImage: newProfileImage.identifiers[0].id,
+            })
+            .execute();
+
+          const user = await queryRunner.manager
+            .getRepository(User)
+            .createQueryBuilder('user')
+            .where('user.id = :id', { id: newUser.identifiers[0].id })
+            .getOne();
+
+          await queryRunner.commitTransaction();
+
+          if (user) {
+            return req.login(user, async (err) => {
+              if (err) {
+                return next(err);
+              }
+
+              return res.redirect(firstTimeRedirect);
+            });
+          }
+        } catch (error) {
+          await queryRunner.rollbackTransaction();
+
+          return res.redirect(failureRedirect);
+        } finally {
+          return await queryRunner.release();
         }
       }
     }
