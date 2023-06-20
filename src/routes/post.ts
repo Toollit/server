@@ -93,6 +93,8 @@ router.get(
           bookmarks: project.bookmarks,
           hashtags: processedHashtagsData,
           memberTypes: processedMemberTypesData,
+          memberNumber: project.memberNumber,
+          recruitNumber: project.recruitNumber,
         };
       });
 
@@ -227,6 +229,7 @@ interface ProjectCreateReqBody {
   imageUrls: string[];
   hashtags: string[];
   memberTypes: ('developer' | 'designer' | 'pm' | 'anyone')[];
+  recruitNumber: number;
 }
 
 router.post(
@@ -244,6 +247,7 @@ router.post(
       imageUrls,
       hashtags,
       memberTypes,
+      recruitNumber,
     } = req.body;
 
     if (user) {
@@ -264,6 +268,7 @@ router.post(
           newProject.contentHTML = contentHTML;
           newProject.contentMarkdown = contentMarkdown;
           newProject.user = writer;
+          newProject.recruitNumber = recruitNumber;
 
           const projectRepository = queryRunner.manager.getRepository(Project);
 
