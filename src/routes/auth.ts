@@ -162,9 +162,13 @@ router.get('/user', async (req: Request, res: Response) => {
   const user = req.user;
   if (user) {
     if (user.tempPassword) {
-      return res
-        .status(200)
-        .json({ success: true, message: 'needResetPassword' });
+      return res.status(200).json({
+        success: true,
+        message: 'needResetPassword',
+        data: {
+          nickname: user.nickname,
+        },
+      });
     }
 
     return res.status(200).json({
