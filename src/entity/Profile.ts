@@ -18,16 +18,19 @@ export class Profile {
   onOffline: string;
 
   @Column({ nullable: true })
-  meetingPlace: string;
+  place: string;
 
   @Column({ nullable: true })
-  meetingTime: string;
+  contactTime: string;
 
   @Column({ nullable: true })
   interests: string;
 
   @Column({ nullable: true })
   career: string;
+
+  @Column({ nullable: true })
+  skills: string;
 
   @CreateDateColumn()
   createdAt: Date;
