@@ -562,9 +562,30 @@ router.post(
   }
 );
 
+interface ProfileRequestParams {
+  nickname: string;
+}
+
+interface ProfileResponseBody {}
+
+interface ProfileRequestBody {}
+
+interface ProfileRequestQuery {
+  tab: 'viewProfile' | 'viewProjects' | 'viewBookmarks';
+}
+// profile info response router
 router.get(
   '/profile/:nickname',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (
+    req: Request<
+      ProfileRequestParams,
+      ProfileResponseBody,
+      ProfileRequestBody,
+      ProfileRequestQuery
+    >,
+    res: Response,
+    next: NextFunction
+  ) => {
     const nickname = req.params.nickname;
     const tab = req.query.tab;
 
@@ -593,14 +614,8 @@ router.get(
           profile,
           profileImage,
         } = existUser;
-        const {
-          introduce,
-          onOffline,
-          meetingPlace,
-          meetingTime,
-          interests,
-          career,
-        } = profile;
+        const { introduce, onOffline, place, contactTime, interests, career } =
+          profile;
         const { url } = profileImage;
         //TODO 본인 확인 여부에따라 데이터 값 다르게 보내도록 분기처리하기
         return res.status(200).json({
@@ -614,8 +629,8 @@ router.get(
             lastLoginAt,
             introduce,
             onOffline,
-            meetingPlace,
-            meetingTime,
+            place,
+            contactTime,
             interests,
             career,
             profileImage: url,
@@ -651,6 +666,7 @@ router.get(
   }
 );
 
+// profile info update router
 router.post(
   '/profile/:category',
   async (req: Request, res: Response, next: NextFunction) => {
@@ -661,6 +677,7 @@ router.post(
     console.log({ category, data });
 
     try {
+      // update profile nickname
       if (category === 'nickname') {
         const existUser = await AppDataSource.getRepository(User)
           .createQueryBuilder('user')
@@ -715,6 +732,7 @@ router.post(
         }
       }
 
+      // update profile introduce
       if (category === 'introduce') {
         if (data.length > 1000) {
           return res.status(400).json({
@@ -750,6 +768,166 @@ router.post(
           message: null,
           data: {
             introduce: data,
+          },
+        });
+      }
+
+      if (category === 'onOffline') {
+        const existUser = await AppDataSource.getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.id = :id', { id: user?.id })
+          .leftJoinAndSelect('user.profile', 'profile')
+          .getOne();
+
+        if (existUser?.profile.onOffline === data) {
+          return res.status(200).json({
+            success: true,
+            message: null,
+            data: {
+              onOffline: data,
+            },
+          });
+        }
+
+        await AppDataSource.createQueryBuilder()
+          .update(Profile)
+          .set({ onOffline: data })
+          .where('id = :profileId', { profileId: existUser?.profile.id })
+          .execute();
+
+        return res.status(201).json({
+          success: true,
+          message: null,
+          data: {
+            onOffline: data,
+          },
+        });
+      }
+
+      if (category === 'place') {
+        const existUser = await AppDataSource.getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.id = :id', { id: user?.id })
+          .leftJoinAndSelect('user.profile', 'profile')
+          .getOne();
+
+        if (existUser?.profile.onOffline === data) {
+          return res.status(200).json({
+            success: true,
+            message: null,
+            data: {
+              place: data,
+            },
+          });
+        }
+
+        await AppDataSource.createQueryBuilder()
+          .update(Profile)
+          .set({ place: data })
+          .where('id = :profileId', { profileId: existUser?.profile.id })
+          .execute();
+
+        return res.status(201).json({
+          success: true,
+          message: null,
+          data: {
+            place: data,
+          },
+        });
+      }
+
+      if (category === 'contactTime') {
+        const existUser = await AppDataSource.getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.id = :id', { id: user?.id })
+          .leftJoinAndSelect('user.profile', 'profile')
+          .getOne();
+
+        if (existUser?.profile.onOffline === data) {
+          return res.status(200).json({
+            success: true,
+            message: null,
+            data: {
+              contactTime: data,
+            },
+          });
+        }
+
+        await AppDataSource.createQueryBuilder()
+          .update(Profile)
+          .set({ contactTime: data })
+          .where('id = :profileId', { profileId: existUser?.profile.id })
+          .execute();
+
+        return res.status(201).json({
+          success: true,
+          message: null,
+          data: {
+            contactTime: data,
+          },
+        });
+      }
+
+      if (category === 'interests') {
+        const existUser = await AppDataSource.getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.id = :id', { id: user?.id })
+          .leftJoinAndSelect('user.profile', 'profile')
+          .getOne();
+
+        if (existUser?.profile.onOffline === data) {
+          return res.status(200).json({
+            success: true,
+            message: null,
+            data: {
+              interests: data,
+            },
+          });
+        }
+
+        await AppDataSource.createQueryBuilder()
+          .update(Profile)
+          .set({ interests: data })
+          .where('id = :profileId', { profileId: existUser?.profile.id })
+          .execute();
+
+        return res.status(201).json({
+          success: true,
+          message: null,
+          data: {
+            interests: data,
+          },
+        });
+      }
+
+      if (category === 'career') {
+        const existUser = await AppDataSource.getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.id = :id', { id: user?.id })
+          .leftJoinAndSelect('user.profile', 'profile')
+          .getOne();
+
+        if (existUser?.profile.onOffline === data) {
+          return res.status(200).json({
+            success: true,
+            message: null,
+            data: {
+              career: data,
+            },
+          });
+        }
+
+        await AppDataSource.createQueryBuilder()
+          .update(Profile)
+          .set({ career: data })
+          .where('id = :profileId', { profileId: existUser?.profile.id })
+          .execute();
+
+        return res.status(201).json({
+          success: true,
+          message: null,
+          data: {
+            career: data,
           },
         });
       }
