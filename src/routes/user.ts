@@ -614,8 +614,15 @@ router.get(
           profile,
           profileImage,
         } = existUser;
-        const { introduce, onOffline, place, contactTime, interests, career } =
-          profile;
+        const {
+          introduce,
+          onOffline,
+          place,
+          contactTime,
+          interests,
+          career,
+          skills,
+        } = profile;
         const { url } = profileImage;
         //TODO 본인 확인 여부에따라 데이터 값 다르게 보내도록 분기처리하기
         return res.status(200).json({
@@ -633,6 +640,7 @@ router.get(
             contactTime,
             interests,
             career,
+            skills,
             profileImage: url,
           },
         });
@@ -747,6 +755,7 @@ router.post(
           .leftJoinAndSelect('user.profile', 'profile')
           .getOne();
 
+        // If the db data and the request value are the same, return the value without updating
         if (existUser?.profile.introduce === data) {
           return res.status(200).json({
             success: true,
@@ -779,6 +788,7 @@ router.post(
           .leftJoinAndSelect('user.profile', 'profile')
           .getOne();
 
+        // If the db data and the request value are the same, return the value without updating
         if (existUser?.profile.onOffline === data) {
           return res.status(200).json({
             success: true,
@@ -811,7 +821,8 @@ router.post(
           .leftJoinAndSelect('user.profile', 'profile')
           .getOne();
 
-        if (existUser?.profile.onOffline === data) {
+        // If the db data and the request value are the same, return the value without updating
+        if (existUser?.profile.place === data) {
           return res.status(200).json({
             success: true,
             message: null,
@@ -843,7 +854,8 @@ router.post(
           .leftJoinAndSelect('user.profile', 'profile')
           .getOne();
 
-        if (existUser?.profile.onOffline === data) {
+        // If the db data and the request value are the same, return the value without updating
+        if (existUser?.profile.contactTime === data) {
           return res.status(200).json({
             success: true,
             message: null,
@@ -875,7 +887,8 @@ router.post(
           .leftJoinAndSelect('user.profile', 'profile')
           .getOne();
 
-        if (existUser?.profile.onOffline === data) {
+        // If the db data and the request value are the same, return the value without updating
+        if (existUser?.profile.interests === data) {
           return res.status(200).json({
             success: true,
             message: null,
@@ -907,7 +920,8 @@ router.post(
           .leftJoinAndSelect('user.profile', 'profile')
           .getOne();
 
-        if (existUser?.profile.onOffline === data) {
+        // If the db data and the request value are the same, return the value without updating
+        if (existUser?.profile.career === data) {
           return res.status(200).json({
             success: true,
             message: null,
@@ -928,6 +942,39 @@ router.post(
           message: null,
           data: {
             career: data,
+          },
+        });
+      }
+
+      if (category === 'skills') {
+        const existUser = await AppDataSource.getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.id = :id', { id: user?.id })
+          .leftJoinAndSelect('user.profile', 'profile')
+          .getOne();
+
+        // If the db data and the request value are the same, return the value without updating
+        if (existUser?.profile.skills === data) {
+          return res.status(200).json({
+            success: true,
+            message: null,
+            data: {
+              skills: data,
+            },
+          });
+        }
+
+        await AppDataSource.createQueryBuilder()
+          .update(Profile)
+          .set({ skills: data })
+          .where('id = :profileId', { profileId: existUser?.profile.id })
+          .execute();
+
+        return res.status(201).json({
+          success: true,
+          message: null,
+          data: {
+            skills: data,
           },
         });
       }
