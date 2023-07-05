@@ -159,6 +159,7 @@ router.get(
           hashtags,
           memberTypes,
           comments,
+          recruitNumber,
         } = project;
 
         const processedHashtagsData = hashtags.map(
@@ -211,6 +212,7 @@ router.get(
               updatedAt,
               hashtags: processedHashtagsData,
               memberTypes: processedMemberTypesData,
+              recruitNumber,
             },
             comments,
           },
