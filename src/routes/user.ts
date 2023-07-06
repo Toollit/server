@@ -25,6 +25,7 @@ const duplicateRedirect = `${process.env.ORIGIN_URL}/login?duplicate=true`;
 const emptyRedirect = `${process.env.ORIGIN_URL}/login?hasEmailInfo=false`;
 const firstTimeRedirect = `${process.env.ORIGIN_URL}/login?firstTime=true`;
 
+// login page. user login router
 router.post('/login', (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate(
     'local',
@@ -63,6 +64,7 @@ router.post('/login', (req: Request, res: Response, next: NextFunction) => {
   )(req, res, next);
 });
 
+// user logout router
 router.post('/logout', function (req, res, next) {
   return req.logout(function (err) {
     if (err) {
@@ -76,6 +78,7 @@ router.post('/logout', function (req, res, next) {
   });
 });
 
+// user signUp router
 router.post('/signUp', async (req, res, next) => {
   const { email, password, signUpType } = req.body;
 
@@ -85,21 +88,6 @@ router.post('/signUp', async (req, res, next) => {
     await queryRunner.connect();
 
     await queryRunner.startTransaction();
-
-    const userRepository = queryRunner.manager.getRepository(User);
-
-    const isExistedEmail = await userRepository.findOne({
-      where: {
-        email,
-      },
-    });
-
-    if (isExistedEmail) {
-      return res.status(400).json({
-        success: false,
-        message: '가입되어있는 이메일 입니다.',
-      });
-    }
 
     const atSignIndex = email.indexOf('@');
     const initialNickname = email.slice(0, atSignIndex);
@@ -192,6 +180,7 @@ router.post('/signUp', async (req, res, next) => {
   }
 });
 
+// login page. social login with google
 router.get(
   '/login/google',
   passport.authenticate('google', {
@@ -199,6 +188,7 @@ router.get(
   })
 );
 
+// login page. social login with google auth callback
 router.get(
   '/auth/google/callback',
   (req: Request, res: Response, next: NextFunction) => {
@@ -246,12 +236,14 @@ router.get(
   }
 );
 
+// login page. social login with github
 router.get('/login/github', (req, res, next) => {
   return res.redirect(
     `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user:email&redirect_uri=${process.env.GITHUB_CALLBACK_URL}`
   );
 });
 
+// login page. social login with github auth callback
 router.get('/auth/github/callback', async (req, res, next) => {
   const userCode = req.query.code;
 
@@ -390,6 +382,7 @@ router.get('/auth/github/callback', async (req, res, next) => {
   }
 });
 
+// pwInquiry page find password and issuance of temporary password router
 router.post('/pwInquiry', async (req, res, next) => {
   const email = req.body.email;
 
@@ -482,6 +475,7 @@ router.post('/pwInquiry', async (req, res, next) => {
   }
 });
 
+// resetpassword page password reset router
 router.post(
   '/resetpassword',
   (req: Request, res: Response, next: NextFunction) => {
@@ -573,7 +567,8 @@ interface ProfileRequestBody {}
 interface ProfileRequestQuery {
   tab: 'viewProfile' | 'viewProjects' | 'viewBookmarks';
 }
-// profile info response router
+
+// profile page profile info response router
 router.get(
   '/profile/:nickname',
   async (
@@ -614,6 +609,7 @@ router.get(
           profile,
           profileImage,
         } = existUser;
+
         const {
           introduce,
           onOffline,
@@ -623,6 +619,7 @@ router.get(
           career,
           skills,
         } = profile;
+
         const { url } = profileImage;
         //TODO 본인 확인 여부에따라 데이터 값 다르게 보내도록 분기처리하기
         return res.status(200).json({
@@ -674,7 +671,7 @@ router.get(
   }
 );
 
-// profile info update router
+// profile page. profile info update router
 router.post(
   '/profile/:category',
   async (req: Request, res: Response, next: NextFunction) => {
