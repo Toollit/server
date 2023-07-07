@@ -684,23 +684,34 @@ router.post(
     try {
       // update profile nickname
       if (category === 'nickname') {
-        const existUser = await AppDataSource.getRepository(User)
-          .createQueryBuilder('user')
-          .where('user.nickname = :nickname', { nickname: data })
-          .getOne();
+        const requestUser = user;
+        const existNickname = requestUser?.nickname;
+        const newNickname = data;
 
-        if (existUser?.nickname === data) {
+        if (existNickname === newNickname) {
           return res.status(200).json({
             success: true,
-            message: null,
+            message: 'request same nickname',
             data: {
               nickname: data,
             },
           });
         }
 
-        if (data.length < 4 || data.length > 20) {
-          return res.status(404).json({
+        const isExistSameNickname = await AppDataSource.getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.nickname = :nickname', { nickname: newNickname })
+          .getOne();
+
+        if (isExistSameNickname) {
+          return res.status(400).json({
+            success: false,
+            message: '이미 사용 중인 닉네임입니다.',
+          });
+        }
+
+        if (newNickname.length < 4 || newNickname.length > 20) {
+          return res.status(400).json({
             success: false,
             message: '닉네임은 4~20자 이어야 합니다.',
           });
@@ -708,33 +719,26 @@ router.post(
 
         const koEnNumRegex = /^[0-9|a-zA-Z|ㄱ-ㅎ|ㅏ-ㅣ|가-힣]+$/;
 
-        if (!koEnNumRegex.test(data)) {
-          return res.status(404).json({
+        if (!koEnNumRegex.test(newNickname)) {
+          return res.status(400).json({
             success: false,
             message: '한글, 숫자, 영어만 사용 가능합니다. 공백 불가.',
           });
         }
 
-        if (existUser === null) {
-          await AppDataSource.createQueryBuilder()
-            .update(User)
-            .set({ nickname: data })
-            .where('id = :id', { id: user?.id })
-            .execute();
+        await AppDataSource.createQueryBuilder()
+          .update(User)
+          .set({ nickname: newNickname })
+          .where('id = :id', { id: user?.id })
+          .execute();
 
-          return res.status(201).json({
-            success: true,
-            message: null,
-            data: {
-              nickname: data,
-            },
-          });
-        } else {
-          return res.status(404).json({
-            success: false,
-            message: '중복된 닉네임입니다.',
-          });
-        }
+        return res.status(201).json({
+          success: true,
+          message: null,
+          data: {
+            nickname: newNickname,
+          },
+        });
       }
 
       // update profile introduce
