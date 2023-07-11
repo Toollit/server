@@ -581,6 +581,7 @@ router.get(
     res: Response,
     next: NextFunction
   ) => {
+    const user = req.user;
     const nickname = req.params.nickname;
     const tab = req.query.tab;
 
@@ -593,7 +594,7 @@ router.get(
         .getOne();
 
       if (!existUser) {
-        return res.status(404).json({
+        return res.status(400).json({
           success: false,
           message: '존재하지 않는 유저 입니다.',
         });
@@ -621,26 +622,49 @@ router.get(
         } = profile;
 
         const { url } = profileImage;
-        //TODO 본인 확인 여부에따라 데이터 값 다르게 보내도록 분기처리하기
-        return res.status(200).json({
-          success: true,
-          message: null,
-          data: {
-            email,
-            nickname,
-            signUpType,
-            createdAt,
-            lastLoginAt,
-            introduce,
-            onOffline,
-            place,
-            contactTime,
-            interests,
-            career,
-            skills,
-            profileImage: url,
-          },
-        });
+
+        // Look up user's own profile
+        if (user?.nickname === nickname) {
+          return res.status(200).json({
+            success: true,
+            message: null,
+            data: {
+              email,
+              nickname,
+              signUpType,
+              createdAt,
+              lastLoginAt,
+              introduce,
+              onOffline,
+              place,
+              contactTime,
+              interests,
+              career,
+              skills,
+              profileImage: url,
+            },
+          });
+        }
+
+        // Look up other user's profile
+        if (user?.nickname !== nickname) {
+          return res.status(200).json({
+            success: true,
+            message: null,
+            data: {
+              nickname,
+              lastLoginAt,
+              introduce,
+              onOffline,
+              place,
+              contactTime,
+              interests,
+              career,
+              skills,
+              profileImage: url,
+            },
+          });
+        }
       }
 
       if (tab === 'viewProjects') {
