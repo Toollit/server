@@ -706,6 +706,13 @@ router.post(
 
     console.log({ category, data });
 
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'inappropriate approach',
+      });
+    }
+
     try {
       // update profile nickname
       if (category === 'nickname') {
@@ -792,9 +799,11 @@ router.post(
           });
         }
 
+        const newData = data === '' ? null : data;
+
         await AppDataSource.createQueryBuilder()
           .update(Profile)
-          .set({ introduce: data })
+          .set({ introduce: newData })
           .where('id = :profileId', { profileId: existUser?.profile.id })
           .execute();
 
@@ -858,9 +867,11 @@ router.post(
           });
         }
 
+        const newData = data === '' ? null : data;
+
         await AppDataSource.createQueryBuilder()
           .update(Profile)
-          .set({ place: data })
+          .set({ place: newData })
           .where('id = :profileId', { profileId: existUser?.profile.id })
           .execute();
 
@@ -891,9 +902,11 @@ router.post(
           });
         }
 
+        const newData = data === '' ? null : data;
+
         await AppDataSource.createQueryBuilder()
           .update(Profile)
-          .set({ contactTime: data })
+          .set({ contactTime: newData })
           .where('id = :profileId', { profileId: existUser?.profile.id })
           .execute();
 
@@ -924,9 +937,11 @@ router.post(
           });
         }
 
+        const newData = data === '' ? null : data;
+
         await AppDataSource.createQueryBuilder()
           .update(Profile)
-          .set({ interests: data })
+          .set({ interests: newData })
           .where('id = :profileId', { profileId: existUser?.profile.id })
           .execute();
 
@@ -957,9 +972,11 @@ router.post(
           });
         }
 
+        const newData = data === '' ? null : data;
+
         await AppDataSource.createQueryBuilder()
           .update(Profile)
-          .set({ career: data })
+          .set({ career: newData })
           .where('id = :profileId', { profileId: existUser?.profile.id })
           .execute();
 
@@ -990,9 +1007,11 @@ router.post(
           });
         }
 
+        const newData = data === '' ? null : data;
+
         await AppDataSource.createQueryBuilder()
           .update(Profile)
-          .set({ skills: data })
+          .set({ skills: newData })
           .where('id = :profileId', { profileId: existUser?.profile.id })
           .execute();
 
