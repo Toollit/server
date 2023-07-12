@@ -653,6 +653,7 @@ router.get(
             message: null,
             data: {
               nickname,
+              createdAt,
               lastLoginAt,
               introduce,
               onOffline,
