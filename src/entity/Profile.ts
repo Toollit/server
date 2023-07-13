@@ -11,6 +11,9 @@ export class Profile {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ nullable: true })
+  profileImage: string;
+
   @Column({ nullable: true, length: 1000 })
   introduce: string;
 
