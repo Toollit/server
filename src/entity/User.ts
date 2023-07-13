@@ -9,7 +9,6 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Project } from './Project';
-import { ProfileImage } from './ProfileImage';
 import { Profile } from './Profile';
 
 @Entity()
@@ -55,10 +54,6 @@ export class User {
 
   @OneToMany(() => Project, (project) => project.user)
   projects: Project[];
-
-  @OneToOne(() => ProfileImage)
-  @JoinColumn()
-  profileImage: ProfileImage;
 
   @OneToOne(() => Profile)
   @JoinColumn()
