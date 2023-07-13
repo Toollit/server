@@ -15,7 +15,6 @@ import ejs from 'ejs';
 import { User } from '@/entity/User';
 import { Project } from '@/entity/Project';
 import { Profile } from '@/entity/Profile';
-import { ProfileImage } from '@/entity/ProfileImage';
 import multer from 'multer';
 import multerS3 from 'multer-s3';
 import { S3Client } from '@aws-sdk/client-s3';
@@ -137,13 +136,6 @@ router.post('/signUp', async (req, res, next) => {
               .values({})
               .execute();
 
-            const newProfileImage = await queryRunner.manager
-              .createQueryBuilder()
-              .insert()
-              .into(ProfileImage)
-              .values({})
-              .execute();
-
             const newUser = await queryRunner.manager
               .createQueryBuilder()
               .insert()
@@ -156,7 +148,6 @@ router.post('/signUp', async (req, res, next) => {
                 nickname: initialNickname,
                 lastLoginAt: new Date(),
                 profile: newProfile.identifiers[0].id,
-                profileImage: newProfileImage.identifiers[0].id,
               })
               .execute();
 
@@ -349,13 +340,6 @@ router.get('/auth/github/callback', async (req, res, next) => {
             .values({})
             .execute();
 
-          const newProfileImage = await queryRunner.manager
-            .createQueryBuilder()
-            .insert()
-            .into(ProfileImage)
-            .values({})
-            .execute();
-
           const newUser = await queryRunner.manager
             .createQueryBuilder()
             .insert()
@@ -366,7 +350,6 @@ router.get('/auth/github/callback', async (req, res, next) => {
               nickname: initialNickname,
               lastLoginAt: new Date(),
               profile: newProfile.identifiers[0].id,
-              profileImage: newProfileImage.identifiers[0].id,
             })
             .execute();
 
@@ -609,7 +592,6 @@ router.get(
         .createQueryBuilder('user')
         .where('user.nickname = :nickname', { nickname })
         .leftJoinAndSelect('user.profile', 'profile')
-        .leftJoinAndSelect('user.profileImage', 'profileImage')
         .getOne();
 
       if (!existUser) {
@@ -620,15 +602,8 @@ router.get(
       }
 
       if (tab === 'viewProfile') {
-        const {
-          email,
-          nickname,
-          signUpType,
-          createdAt,
-          lastLoginAt,
-          profile,
-          profileImage,
-        } = existUser;
+        const { email, nickname, signUpType, createdAt, lastLoginAt, profile } =
+          existUser;
 
         const {
           introduce,
@@ -638,9 +613,8 @@ router.get(
           interests,
           career,
           skills,
+          profileImage,
         } = profile;
-
-        const { url } = profileImage;
 
         // Look up user's own profile
         if (user?.nickname === nickname) {
@@ -660,7 +634,7 @@ router.get(
               interests,
               career,
               skills,
-              profileImage: url,
+              profileImage,
             },
           });
         }
@@ -681,7 +655,7 @@ router.get(
               interests,
               career,
               skills,
-              profileImage: url,
+              profileImage,
             },
           });
         }

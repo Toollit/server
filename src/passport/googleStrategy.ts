@@ -3,7 +3,6 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { AppDataSource } from '@/data-source';
 import { User } from '@/entity/User';
 import { Profile } from '@/entity/Profile';
-import { ProfileImage } from '@/entity/ProfileImage';
 
 export default () => {
   passport.use(
@@ -66,13 +65,6 @@ export default () => {
                 .values({})
                 .execute();
 
-              const newProfileImage = await queryRunner.manager
-                .createQueryBuilder()
-                .insert()
-                .into(ProfileImage)
-                .values({})
-                .execute();
-
               const newUser = await queryRunner.manager
                 .createQueryBuilder()
                 .insert()
@@ -83,7 +75,6 @@ export default () => {
                   nickname: initialNickname,
                   lastLoginAt: new Date(),
                   profile: newProfile.identifiers[0].id,
-                  profileImage: newProfileImage.identifiers[0].id,
                 })
                 .execute();
 
