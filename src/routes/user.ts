@@ -724,7 +724,6 @@ interface MulterRequest extends Request {
 router.post(
   '/profile/:category',
   filterRequest,
-
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
     const { category } = req.params;
@@ -745,10 +744,16 @@ router.post(
 
         const newProfileImageUrl = multerS3File.location;
 
+        const existUser = await AppDataSource.getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.id = :id', { id: user?.id })
+          .leftJoinAndSelect('user.profile', 'profile')
+          .getOne();
+
         await AppDataSource.createQueryBuilder()
           .update(Profile)
           .set({ profileImage: newProfileImageUrl })
-          .where('id = :id', { id: user?.id })
+          .where('id = :profileId', { profileId: existUser?.profile.id })
           .execute();
 
         return res.status(201).json({
