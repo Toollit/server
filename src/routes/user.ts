@@ -676,8 +676,13 @@ router.get(
 
 const filterRequest = (req: Request, res: Response, next: NextFunction) => {
   const { category } = req.params;
+  const { data } = req.body;
 
   if (category !== 'profileImage') {
+    return next();
+  }
+
+  if (data === 'delete') {
     return next();
   }
 
@@ -714,27 +719,50 @@ router.post(
       if (category === 'profileImage') {
         const multerS3File = (req as MulterRequest).file;
 
-        const newProfileImageUrl = multerS3File.location;
+        // delete profile image
+        if (multerS3File === undefined) {
+          const existUser = await AppDataSource.getRepository(User)
+            .createQueryBuilder('user')
+            .where('user.id = :id', { id: user?.id })
+            .leftJoinAndSelect('user.profile', 'profile')
+            .getOne();
 
-        const existUser = await AppDataSource.getRepository(User)
-          .createQueryBuilder('user')
-          .where('user.id = :id', { id: user?.id })
-          .leftJoinAndSelect('user.profile', 'profile')
-          .getOne();
+          await AppDataSource.createQueryBuilder()
+            .update(Profile)
+            .set({ profileImage: null })
+            .where('id = :profileId', { profileId: existUser?.profile.id })
+            .execute();
 
-        await AppDataSource.createQueryBuilder()
-          .update(Profile)
-          .set({ profileImage: newProfileImageUrl })
-          .where('id = :profileId', { profileId: existUser?.profile.id })
-          .execute();
+          return res.status(201).json({
+            success: true,
+            message: null,
+          });
+        }
 
-        return res.status(201).json({
-          success: true,
-          message: null,
-          data: {
-            url: multerS3File.location,
-          },
-        });
+        // update profile image
+        if (multerS3File) {
+          const newProfileImageUrl = multerS3File.location;
+
+          const existUser = await AppDataSource.getRepository(User)
+            .createQueryBuilder('user')
+            .where('user.id = :id', { id: user?.id })
+            .leftJoinAndSelect('user.profile', 'profile')
+            .getOne();
+
+          await AppDataSource.createQueryBuilder()
+            .update(Profile)
+            .set({ profileImage: newProfileImageUrl })
+            .where('id = :profileId', { profileId: existUser?.profile.id })
+            .execute();
+
+          return res.status(201).json({
+            success: true,
+            message: null,
+            data: {
+              url: multerS3File.location,
+            },
+          });
+        }
       }
 
       // update profile nickname
