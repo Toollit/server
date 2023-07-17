@@ -15,25 +15,10 @@ import ejs from 'ejs';
 import { User } from '@/entity/User';
 import { Project } from '@/entity/Project';
 import { Profile } from '@/entity/Profile';
-import multer from 'multer';
-import multerS3 from 'multer-s3';
-import { S3Client } from '@aws-sdk/client-s3';
+import { uploadS3 } from '@/middleware/uploadS3';
 import dotenv from 'dotenv';
 
 dotenv.config();
-
-const S3_ACCESS_KEY_ID = process.env.S3_ACCESS_KEY_ID;
-const S3_SECRET_ACCESS_KEY = process.env.S3_SECRET_ACCESS_KEY;
-const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME;
-const S3_BUCKET_REGION = process.env.S3_BUCKET_REGION;
-
-const s3 = new S3Client({
-  credentials: {
-    accessKeyId: S3_ACCESS_KEY_ID,
-    secretAccessKey: S3_SECRET_ACCESS_KEY,
-  },
-  region: S3_BUCKET_REGION,
-});
 
 const router = express.Router();
 
@@ -689,23 +674,6 @@ router.get(
   }
 );
 
-const upload = multer({
-  storage: multerS3({
-    s3: s3,
-    bucket: S3_BUCKET_NAME,
-    key(req, file, callback) {
-      const userNickname = req.user?.nickname;
-      const newFileName = `${userNickname}-${new Date().getTime()}-${
-        file.originalname
-      }`;
-      const fullPath = `profileImage/${userNickname}/${newFileName}`;
-
-      callback(null, fullPath);
-    },
-  }),
-  limits: { fileSize: 10 * 1024 * 1204 }, // 10MB
-});
-
 const filterRequest = (req: Request, res: Response, next: NextFunction) => {
   const { category } = req.params;
 
@@ -713,7 +681,11 @@ const filterRequest = (req: Request, res: Response, next: NextFunction) => {
     return next();
   }
 
-  upload.single('profileImage')(req, res, next);
+  uploadS3({
+    path: 'profileImage',
+    option: 'single',
+    data: { fieldName: 'profileImage' },
+  })(req, res, next);
 };
 
 interface MulterRequest extends Request {
