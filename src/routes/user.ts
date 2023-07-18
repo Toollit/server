@@ -586,6 +586,17 @@ router.get(
         });
       }
 
+      if (tab === undefined) {
+        const { profile } = existUser;
+        const { profileImage: url } = profile;
+
+        return res.status(201).json({
+          success: true,
+          message: null,
+          data: { profileImage: url },
+        });
+      }
+
       if (tab === 'viewProfile') {
         const { email, nickname, signUpType, createdAt, lastLoginAt, profile } =
           existUser;
@@ -598,7 +609,6 @@ router.get(
           interests,
           career,
           skills,
-          profileImage,
         } = profile;
 
         // Look up user's own profile
@@ -619,7 +629,6 @@ router.get(
               interests,
               career,
               skills,
-              profileImage,
             },
           });
         }
@@ -640,7 +649,6 @@ router.get(
               interests,
               career,
               skills,
-              profileImage,
             },
           });
         }
