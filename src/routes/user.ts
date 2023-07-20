@@ -658,12 +658,68 @@ router.get(
         const projects = await AppDataSource.getRepository(Project)
           .createQueryBuilder('project')
           .where('project.user = :userId', { userId: existUser.id })
+          .leftJoinAndSelect('project.memberTypes', 'memberTypes')
+          .leftJoinAndSelect('project.hashtags', 'hashtags')
+          .orderBy('project.id', 'DESC')
+          .take(10)
           .getMany();
+
+        if (!projects) {
+          return res.status(200).json({
+            success: true,
+            message: null,
+            data: null,
+          });
+        }
+
+        const processedData = projects.map((project) => {
+          const processedHashtagsData = project.hashtags.map(
+            (hashtag) => hashtag.tagName
+          );
+
+          const processedMemberTypesData = project.memberTypes.map(
+            (memberType) => memberType.type
+          );
+
+          // developer, designer, pm, anyone 순으로 정렬
+          processedMemberTypesData.sort(function (a, b) {
+            return (
+              (a === 'developer'
+                ? -3
+                : a === 'designer'
+                ? -2
+                : a === 'pm'
+                ? -1
+                : a === 'anyone'
+                ? 0
+                : 1) -
+              (b === 'developer'
+                ? -3
+                : b === 'designer'
+                ? -2
+                : b === 'pm'
+                ? -1
+                : b === 'anyone'
+                ? 0
+                : 1)
+            );
+          });
+
+          return {
+            id: project.id,
+            title: project.title,
+            views: project.views,
+            hashtags: processedHashtagsData,
+            memberTypes: processedMemberTypesData,
+            memberNumber: project.memberNumber,
+            recruitNumber: project.recruitNumber,
+          };
+        });
 
         return res.status(200).json({
           success: true,
           message: null,
-          data: { projects },
+          data: processedData,
         });
       }
 
