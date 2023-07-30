@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '@/data-source';
 import { Project } from '@/entity/Project';
 import { User } from '@/entity/User';
+import { Profile } from '@/entity/Profile';
 import { ProjectImage } from '@/entity/ProjectImage';
 import { Hashtag } from '@/entity/Hashtag';
 import { MemberType } from '@/entity/MemberType';
@@ -105,6 +106,7 @@ router.get(
     const modifyRequest = req.headers.modify;
 
     const projectRepository = AppDataSource.getRepository(Project);
+    const userRepository = AppDataSource.getRepository(User);
 
     try {
       // 조회시 조회수 1증가
@@ -179,6 +181,11 @@ router.get(
           );
         });
 
+        const writer = await userRepository.findOne({
+          where: { id: user.id },
+          relations: { profile: true },
+        });
+
         return res.status(200).json({
           success: true,
           message: null,
@@ -186,7 +193,7 @@ router.get(
             writer: {
               nickname: user.nickname,
               lastLoginAt: user.lastLoginAt,
-              profileImage: user.profileImage,
+              profileImage: writer?.profile.profileImage,
             },
             content: {
               title,
