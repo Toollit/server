@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Project } from './Project';
 import { Profile } from './Profile';
+import { Bookmark } from './Bookmark';
 
 @Entity()
 export class User {
@@ -58,4 +59,7 @@ export class User {
   @OneToOne(() => Profile)
   @JoinColumn()
   profile: Profile;
+
+  @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
+  bookmarks: Bookmark[];
 }
