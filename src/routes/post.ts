@@ -2,13 +2,12 @@ import express, { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '@/data-source';
 import { Project } from '@/entity/Project';
 import { User } from '@/entity/User';
-import { Profile } from '@/entity/Profile';
 import { ProjectImage } from '@/entity/ProjectImage';
 import { Hashtag } from '@/entity/Hashtag';
 import { MemberType } from '@/entity/MemberType';
 import { uploadS3 } from '@/middleware/uploadS3';
-import dotenv from 'dotenv';
 import { Bookmark } from '@/entity/Bookmark';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -896,6 +895,58 @@ router.post(
       return next(error);
     } finally {
       await queryRunner.release();
+    }
+  }
+);
+
+router.get(
+  '/project/:postId/checkBookmark',
+  async (req: Request, res: Response, next: NextFunction) => {
+    const requestUser = req.user;
+    const postId = Number(req.params.postId);
+
+    const userRepository = AppDataSource.getRepository(User);
+
+    if (!requestUser) {
+      return res.status(200).json({
+        success: true,
+        message: null,
+        data: {
+          bookmark: false,
+        },
+      });
+    }
+
+    try {
+      const isBookmark = await userRepository.findOne({
+        where: {
+          id: requestUser.id,
+          bookmarks: {
+            bookmarkProjectId: postId,
+          },
+        },
+        relations: { bookmarks: true },
+      });
+
+      if (isBookmark) {
+        return res.status(200).json({
+          success: true,
+          message: null,
+          data: {
+            bookmark: true,
+          },
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: null,
+        data: {
+          bookmark: false,
+        },
+      });
+    } catch (error) {
+      next(error);
     }
   }
 );
