@@ -951,4 +951,68 @@ router.get(
   }
 );
 
+router.get(
+  '/projects/checkBookmarks',
+  async (req: Request, res: Response, next: NextFunction) => {
+    const requestUser = req.user;
+
+    if (!requestUser) {
+      return res.status(200).json({
+        success: true,
+        message: null,
+        data: {
+          bookmarks: null,
+        },
+      });
+    }
+
+    const userRepository = AppDataSource.getRepository(User);
+
+    try {
+      const userInfoWithBookmarks = await userRepository.findOne({
+        where: { id: requestUser.id },
+        relations: { bookmarks: true },
+      });
+
+      const bookmarks = userInfoWithBookmarks?.bookmarks;
+
+      if (!bookmarks) {
+        return res.status(200).json({
+          success: true,
+          message: null,
+          data: {
+            bookmarks: null,
+          },
+        });
+      }
+
+      const hashBookmark = bookmarks.length >= 1;
+
+      const bookmarkIds = bookmarks.map(
+        (bookmark) => bookmark.bookmarkProjectId
+      );
+
+      if (hashBookmark) {
+        return res.status(200).json({
+          success: true,
+          message: null,
+          data: {
+            bookmarks: bookmarkIds,
+          },
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: null,
+        data: {
+          bookmarks: null,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 export default router;
