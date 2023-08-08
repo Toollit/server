@@ -8,6 +8,7 @@ import { Hashtag } from '@/entity/Hashtag';
 import { MemberType } from '@/entity/MemberType';
 import { uploadS3 } from '@/middleware/uploadS3';
 import dotenv from 'dotenv';
+import { Bookmark } from '@/entity/Bookmark';
 
 dotenv.config();
 
@@ -809,6 +810,92 @@ router.post(
       }
     } else {
       next(new Error('not loggedIn'));
+    }
+  }
+);
+
+interface ProjectBookmarkReqBody {
+  postId: number;
+}
+
+router.post(
+  '/project/bookmark',
+  async (
+    req: Request<{}, {}, ProjectBookmarkReqBody>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const postId = req.body.postId;
+    const user = req.user;
+
+    if (!user) {
+      return next(new Error('not loggedIn'));
+    }
+
+    const queryRunner = AppDataSource.createQueryRunner();
+
+    try {
+      await queryRunner.connect();
+
+      await queryRunner.startTransaction();
+
+      const userRepository = queryRunner.manager.getRepository(User);
+
+      const writer = await userRepository.findOne({ where: { id: user.id } });
+
+      if (!writer) {
+        return res.status(500).json({
+          success: false,
+          message: 'server error',
+        });
+      }
+
+      const existBookmark = await queryRunner.manager
+        .getRepository(Bookmark)
+        .createQueryBuilder()
+        .where('user = :writer', { writer })
+        .where('bookmarkProjectId = :postId', { postId })
+        .getOne();
+
+      if (existBookmark) {
+        // cancel exist bookmark
+        await queryRunner.manager
+          .createQueryBuilder()
+          .delete()
+          .from(Bookmark)
+          .where('id = :id', { id: existBookmark.id })
+          .execute();
+
+        await queryRunner.commitTransaction();
+
+        return res.status(200).json({
+          success: true,
+          message: 'cancel',
+        });
+      }
+
+      if (!existBookmark) {
+        // save new bookmark
+        await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into(Bookmark)
+          .values([{ user: writer, bookmarkProjectId: postId }])
+          .execute();
+
+        await queryRunner.commitTransaction();
+
+        return res.status(200).json({
+          success: true,
+          message: 'save',
+        });
+      }
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+
+      return next(error);
+    } finally {
+      await queryRunner.release();
     }
   }
 );
