@@ -24,6 +24,7 @@ router.get(
     const skip = (page - 1) * postsPerPage;
 
     const projectRepository = AppDataSource.getRepository(Project);
+    const bookmarkRepository = AppDataSource.getRepository(Bookmark);
 
     try {
       const projects = await projectRepository.find({
@@ -39,50 +40,58 @@ router.get(
 
       const totalPage = Math.ceil(projectsTotalCount / postsPerPage);
 
-      const processedData = projects.map((project) => {
-        const processedHashtagsData = project.hashtags.map(
-          (hashtag) => hashtag.tagName
-        );
-
-        const processedMemberTypesData = project.memberTypes.map(
-          (memberType) => memberType.type
-        );
-
-        // developer, designer, pm, anyone 순으로 정렬
-        processedMemberTypesData.sort(function (a, b) {
-          return (
-            (a === 'developer'
-              ? -3
-              : a === 'designer'
-              ? -2
-              : a === 'pm'
-              ? -1
-              : a === 'anyone'
-              ? 0
-              : 1) -
-            (b === 'developer'
-              ? -3
-              : b === 'designer'
-              ? -2
-              : b === 'pm'
-              ? -1
-              : b === 'anyone'
-              ? 0
-              : 1)
+      const processedData = await Promise.all(
+        projects.map(async (project) => {
+          const processedHashtagsData = project.hashtags.map(
+            (hashtag) => hashtag.tagName
           );
-        });
 
-        return {
-          id: project.id,
-          title: project.title,
-          views: project.views,
-          bookmarks: project.bookmarks,
-          hashtags: processedHashtagsData,
-          memberTypes: processedMemberTypesData,
-          memberNumber: project.memberNumber,
-          recruitNumber: project.recruitNumber,
-        };
-      });
+          const processedMemberTypesData = project.memberTypes.map(
+            (memberType) => memberType.type
+          );
+
+          // developer, designer, pm, anyone 순으로 정렬
+          processedMemberTypesData.sort(function (a, b) {
+            return (
+              (a === 'developer'
+                ? -3
+                : a === 'designer'
+                ? -2
+                : a === 'pm'
+                ? -1
+                : a === 'anyone'
+                ? 0
+                : 1) -
+              (b === 'developer'
+                ? -3
+                : b === 'designer'
+                ? -2
+                : b === 'pm'
+                ? -1
+                : b === 'anyone'
+                ? 0
+                : 1)
+            );
+          });
+
+          const bookmarks = await bookmarkRepository.find({
+            where: {
+              bookmarkProjectId: project.id,
+            },
+          });
+
+          return {
+            id: project.id,
+            title: project.title,
+            views: project.views,
+            bookmarks: bookmarks.length,
+            hashtags: processedHashtagsData,
+            memberTypes: processedMemberTypesData,
+            memberNumber: project.memberNumber,
+            recruitNumber: project.recruitNumber,
+          };
+        })
+      );
 
       return res.status(200).json({
         success: true,
