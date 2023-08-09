@@ -961,7 +961,7 @@ router.get(
 );
 
 router.get(
-  '/projects/checkBookmarks',
+  '/projects/checkBookmark',
   async (req: Request, res: Response, next: NextFunction) => {
     const requestUser = req.user;
 
