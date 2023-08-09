@@ -837,7 +837,10 @@ router.post(
     const user = req.user;
 
     if (!user) {
-      return next(new Error('not loggedIn'));
+      return res.status(400).json({
+        success: false,
+        message: null,
+      });
     }
 
     const queryRunner = AppDataSource.createQueryRunner();
@@ -849,29 +852,36 @@ router.post(
 
       const userRepository = queryRunner.manager.getRepository(User);
 
-      const writer = await userRepository.findOne({ where: { id: user.id } });
+      const accessUser = await userRepository.findOne({
+        where: { id: user.id },
+        relations: {
+          bookmarks: true,
+        },
+      });
 
-      if (!writer) {
-        return res.status(500).json({
+      if (!accessUser) {
+        return res.status(400).json({
           success: false,
-          message: 'server error',
+          message: null,
         });
       }
 
-      const existBookmark = await queryRunner.manager
-        .getRepository(Bookmark)
-        .createQueryBuilder()
-        .where('user = :writer', { writer })
-        .where('bookmarkProjectId = :postId', { postId })
-        .getOne();
+      let existBookmarkId: null | number = null;
 
-      if (existBookmark) {
+      for (let obj of accessUser.bookmarks) {
+        if (obj['bookmarkProjectId'] === postId) {
+          existBookmarkId = obj['id'];
+        }
+      }
+
+      if (existBookmarkId) {
         // cancel exist bookmark
+
         await queryRunner.manager
           .createQueryBuilder()
           .delete()
           .from(Bookmark)
-          .where('id = :id', { id: existBookmark.id })
+          .where('id = :id', { id: existBookmarkId })
           .execute();
 
         await queryRunner.commitTransaction();
@@ -882,13 +892,13 @@ router.post(
         });
       }
 
-      if (!existBookmark) {
+      if (!existBookmarkId) {
         // save new bookmark
         await queryRunner.manager
           .createQueryBuilder()
           .insert()
           .into(Bookmark)
-          .values([{ user: writer, bookmarkProjectId: postId }])
+          .values([{ user: accessUser, bookmarkProjectId: postId }])
           .execute();
 
         await queryRunner.commitTransaction();
