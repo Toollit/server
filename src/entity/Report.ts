@@ -36,6 +36,9 @@ export class Report {
   reason: string;
 
   @Column()
+  url: string;
+
+  @Column({ default: 'pending' })
   resolved: 'pending' | 'fulfilled';
 
   @CreateDateColumn()
