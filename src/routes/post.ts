@@ -920,7 +920,7 @@ router.post(
 );
 
 router.get(
-  '/project/:postId/checkBookmark',
+  '/project/:postId/bookmarkStatus',
   async (req: Request, res: Response, next: NextFunction) => {
     const requestUser = req.user;
     const postId = Number(req.params.postId);
@@ -972,7 +972,7 @@ router.get(
 );
 
 router.get(
-  '/projects/checkBookmark',
+  '/projects/bookmarkStatus',
   async (req: Request, res: Response, next: NextFunction) => {
     const requestUser = req.user;
 
