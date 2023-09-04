@@ -50,14 +50,27 @@ const upload = (path: string) => {
     storage: multerS3({
       s3: s3,
       bucket: S3_BUCKET_NAME,
-      key(req, file, callback) {
-        const userNickname = req.user?.nickname;
-        const newFileName = `${userNickname}-${new Date().getTime()}-${
-          file.originalname
-        }`;
-        const fullPath = `${path}/${userNickname}/${newFileName}`;
+      key(req, file, cb) {
+        const userId = req.user?.id;
+        const newFileName = new Date().getTime();
 
-        callback(null, fullPath);
+        let extname: string | null = null;
+
+        if (file.mimetype === 'image/jpeg') {
+          extname = '.jpg';
+        }
+
+        if (file.mimetype === 'image/jpg') {
+          extname = '.jpg';
+        }
+
+        if (file.mimetype === 'image/png') {
+          extname = '.png';
+        }
+
+        const imageUrl = `${path}/${userId}/${newFileName}${extname}`;
+
+        cb(null, imageUrl);
       },
     }),
     limits: { fileSize: 10 * 1024 * 1204 }, // 10MB
