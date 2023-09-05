@@ -19,34 +19,17 @@ const s3 = new S3Client({
   region: S3_BUCKET_REGION,
 });
 
-interface UploadSingle {
-  path: string;
-  option: 'single';
-  data: {
-    fieldName: string;
-  };
-}
-
-interface UploadArray {
-  path: string;
-  option: 'array';
-  data: {
-    fieldName: string;
-    maxCount?: number;
-  };
-}
-
-interface UploadFields {
-  path: string;
-  option: 'fields';
-  data: {
-    name: string;
-    maxCount: number;
-  }[];
-}
-
 const upload = (path: string) => {
   return multer({
+    fileFilter(req, file, cb) {
+      if (file.mimetype === 'application/json') {
+        // To reject this file pass `false`,
+        cb(null, false);
+      } else {
+        // To accept the file pass `true`,
+        cb(null, true);
+      }
+    },
     storage: multerS3({
       s3: s3,
       bucket: S3_BUCKET_NAME,
@@ -77,33 +60,58 @@ const upload = (path: string) => {
   });
 };
 
-export const uploadS3 = ({
-  path,
-  option,
-  data,
-}: UploadSingle | UploadArray | UploadFields) => {
+interface SingleType {
+  name: string;
+}
+
+interface ArrayType {
+  name: string;
+  maxCount?: number;
+}
+
+interface FieldsType {
+  name: string;
+  maxCount?: number;
+}
+
+interface Upload {
+  path: string;
+  option: 'single' | 'array' | 'fields';
+  data: SingleType | ArrayType | ReadonlyArray<FieldsType>;
+}
+
+const isSingleType = (data: Upload['data']): data is SingleType => {
+  const keys = Object.keys(data);
+  const found = keys.find((key) => key === 'maxCount');
+
+  return found === undefined;
+};
+
+const isArrayType = (data: Upload['data']): data is ArrayType => {
+  const keys = Object.keys(data);
+  const found = keys.find((key) => key === 'maxCount');
+
+  return found !== undefined && !Array.isArray(data);
+};
+
+const isFieldsType = (
+  data: Upload['data']
+): data is ReadonlyArray<FieldsType> => {
+  return Array.isArray(data);
+};
+
+export const uploadS3 = ({ path, option, data }: Upload) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (option === 'single') {
-      return upload(path).single((data as { fieldName: string }).fieldName)(
-        req,
-        res,
-        next
-      );
+    if (option === 'single' && isSingleType(data)) {
+      return upload(path).single(data.name)(req, res, next);
     }
 
-    if (option === 'array') {
-      return upload(path).array(
-        (data as { fieldName: string; maxCount?: number }).fieldName,
-        (data as { fieldName: string; maxCount?: number }).maxCount
-      )(req, res, next);
+    if (option === 'array' && isArrayType(data)) {
+      return upload(path).array(data.name, data.maxCount)(req, res, next);
     }
 
-    if (option === 'fields') {
-      return upload(path).fields(data as { name: string; maxCount: number }[])(
-        req,
-        res,
-        next
-      );
+    if (option === 'fields' && isFieldsType(data)) {
+      return upload(path).fields(data)(req, res, next);
     }
   };
 };
