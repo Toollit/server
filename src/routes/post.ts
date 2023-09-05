@@ -354,9 +354,9 @@ router.post(
 router.post(
   '/project/content/uploadImage',
   uploadS3({
-    path: 'postImage',
+    path: 'projectContentImage',
     option: 'single',
-    data: { fieldName: 'postImage' },
+    data: { name: 'projectContentImage' },
   }),
   (req: Request, res: Response, next: NextFunction) => {
     const multerS3File = (req as MulterRequest).file;
