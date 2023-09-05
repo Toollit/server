@@ -42,6 +42,9 @@ export class Project {
   @Column()
   recruitNumber: number;
 
+  @Column()
+  representativeImage: string;
+
   @CreateDateColumn()
   createdAt: Date;
 
