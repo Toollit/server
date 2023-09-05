@@ -10,6 +10,10 @@ import { Bookmark } from '@/entity/Bookmark';
 import { Report } from '@/entity/Report';
 import dotenv from 'dotenv';
 
+interface MulterRequest extends Request {
+  file: any;
+}
+
 dotenv.config();
 
 const router = express.Router();
@@ -238,11 +242,17 @@ interface ProjectCreateReqBody {
 
 router.post(
   '/project/create',
-  async (
-    req: Request<{}, {}, ProjectCreateReqBody>,
-    res: Response,
-    next: NextFunction
-  ) => {
+  uploadS3({
+    path: 'projectRepresentativeImage',
+    option: 'single',
+    data: { name: 'projectRepresentativeImage' },
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    const jsonDataFieldName = 'data';
+    const multerS3File = (req as MulterRequest).file;
+    const representativeImageUrls = multerS3File.location;
+    const content = JSON.parse(req.body[jsonDataFieldName]);
+
     const user = req.user;
     const {
       title,
@@ -252,7 +262,7 @@ router.post(
       hashtags,
       memberTypes,
       recruitNumber,
-    } = req.body;
+    } = content as ProjectCreateReqBody;
 
     if (user) {
       const queryRunner = AppDataSource.createQueryRunner();
@@ -273,6 +283,7 @@ router.post(
           newProject.contentMarkdown = contentMarkdown;
           newProject.user = writer;
           newProject.recruitNumber = recruitNumber;
+          newProject.representativeImage = representativeImageUrls;
 
           const projectRepository = queryRunner.manager.getRepository(Project);
 
@@ -339,10 +350,6 @@ router.post(
     }
   }
 );
-
-interface MulterRequest extends Request {
-  file: any;
-}
 
 router.post(
   '/project/content/uploadImage',
