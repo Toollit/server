@@ -375,11 +375,20 @@ router.post(
   (req: Request, res: Response, next: NextFunction) => {
     const multerS3File = (req as MulterRequest).file;
 
+    const contentImageUrl = multerS3File?.location;
+
+    if (contentImageUrl === undefined) {
+      return res.status(500).json({
+        success: false,
+        message: 'contentImageUrl is undefined',
+      });
+    }
+
     return res.status(201).json({
       success: true,
       message: null,
       data: {
-        url: multerS3File.location,
+        url: contentImageUrl,
       },
     });
   }
