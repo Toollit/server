@@ -11,7 +11,13 @@ import { Report } from '@/entity/Report';
 import dotenv from 'dotenv';
 
 interface MulterRequest extends Request {
-  file: any;
+  file?: Express.MulterS3.File | undefined;
+  files?:
+    | {
+        [fieldname: string]: Express.MulterS3.File[];
+      }
+    | Express.MulterS3.File[]
+    | undefined;
 }
 
 dotenv.config();
@@ -250,8 +256,16 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     const jsonDataFieldName = 'data';
     const multerS3File = (req as MulterRequest).file;
-    const representativeImageUrls = multerS3File.location;
+
+    const representativeImageUrl = multerS3File?.location;
     const content = JSON.parse(req.body[jsonDataFieldName]);
+
+    if (representativeImageUrl === undefined) {
+      return res.status(500).json({
+        success: false,
+        message: 'representativeImageUrl is undefined',
+      });
+    }
 
     const user = req.user;
     const {
@@ -283,7 +297,7 @@ router.post(
           newProject.contentMarkdown = contentMarkdown;
           newProject.user = writer;
           newProject.recruitNumber = recruitNumber;
-          newProject.representativeImage = representativeImageUrls;
+          newProject.representativeImage = representativeImageUrl;
 
           const projectRepository = queryRunner.manager.getRepository(Project);
 
