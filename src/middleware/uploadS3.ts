@@ -84,14 +84,17 @@ const isSingleType = (data: Upload['data']): data is SingleType => {
   const keys = Object.keys(data);
   const found = keys.find((key) => key === 'maxCount');
 
-  return found === undefined;
+  return found === undefined && !Array.isArray(data);
 };
 
 const isArrayType = (data: Upload['data']): data is ArrayType => {
   const keys = Object.keys(data);
   const found = keys.find((key) => key === 'maxCount');
 
-  return found !== undefined && !Array.isArray(data);
+  return (
+    (found !== undefined && !Array.isArray(data)) ||
+    (found === undefined && !Array.isArray(data))
+  );
 };
 
 const isFieldsType = (
