@@ -254,16 +254,22 @@ router.post(
     data: { name: 'projectRepresentativeImage' },
   }),
   async (req: Request, res: Response, next: NextFunction) => {
+    const isSettingDefaultImage = Boolean(req.body['defaultImage']);
+
     const jsonDataFieldName = 'data';
+
     const multerS3File = (req as MulterRequest).file;
 
-    const representativeImageUrl = multerS3File?.location;
+    const representativeImageUrl = isSettingDefaultImage
+      ? null
+      : multerS3File?.location;
+
     const content = JSON.parse(req.body[jsonDataFieldName]);
 
     if (representativeImageUrl === undefined) {
       return res.status(500).json({
         success: false,
-        message: 'representativeImageUrl is undefined',
+        message: 'representative image url is undefined',
       });
     }
 
