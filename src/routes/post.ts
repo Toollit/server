@@ -255,7 +255,9 @@ router.post(
     data: { name: 'projectRepresentativeImage' },
   }),
   async (req: Request, res: Response, next: NextFunction) => {
-    const isSettingDefaultImage = Boolean(req.body['defaultImage']);
+    const isSettingDefaultImage = Boolean(
+      req.body['projectRepresentativeImage']
+    );
 
     const jsonDataFieldName = 'data';
 
