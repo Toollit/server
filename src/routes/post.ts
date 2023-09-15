@@ -100,6 +100,7 @@ router.get(
             memberTypes: processedMemberTypesData,
             memberNumber: project.memberNumber,
             recruitNumber: project.recruitNumber,
+            representativeImage: project.representativeImage,
           };
         })
       );
