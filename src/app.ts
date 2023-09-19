@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import express, { Application, Request, Response, NextFunction } from 'express';
-import postRouter from './routes/post';
+import postRouter from './routes/post/index';
 import userRouter from './routes/user';
 import authRouter from './routes/auth';
 import { AppDataSource } from './data-source';
