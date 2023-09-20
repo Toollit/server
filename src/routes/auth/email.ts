@@ -6,6 +6,7 @@ import { createClient } from 'redis';
 import dotenv from 'dotenv';
 import { AppDataSource } from '@/data-source';
 import { User } from '@/entity/User';
+
 dotenv.config();
 
 const redisClient = createClient({
@@ -20,8 +21,9 @@ redisClient.on('error', (err) => {
   console.error('Redis Client Error', err);
 });
 
-// await redisClient.connect();
-redisClient.connect().then();
+(async () => {
+  await redisClient.connect();
+})();
 
 const router = express.Router();
 
@@ -30,7 +32,7 @@ interface EmailAuthCodeReqBody {
 }
 
 router.post(
-  '/email',
+  '/issueAuthCode',
   async (
     req: Request<{}, {}, EmailAuthCodeReqBody>,
     res: Response,
@@ -63,7 +65,7 @@ router.post(
 
     const appDir = path
       .resolve(__dirname)
-      .replace('routes', '/template/authMail.ejs');
+      .replace('routes/auth', '/template/authMail.ejs');
 
     ejs.renderFile(appDir, { authCode }, function (err, data) {
       if (err) {
@@ -98,7 +100,7 @@ router.post(
       console.log('finish sending email : ' + info.response);
 
       try {
-        // redis cache expires in 5 minutes
+        // save authCode to redis. redis cache expires in 5 minutes
         await redisClient.v4.set(userEmail, authCode, { EX: 60 * 5 });
 
         return res.status(200).json({
@@ -130,7 +132,6 @@ router.post(
 
     try {
       const redisAuthCode = await redisClient.v4.get(email);
-      // console.log('redis key value test ===>', { email, redisAuthCode });
 
       if (redisAuthCode === null) {
         return res.status(500).json({
@@ -157,36 +158,5 @@ router.post(
     }
   }
 );
-
-router.get('/user', async (req: Request, res: Response) => {
-  const user = req.user;
-  if (user) {
-    if (user.tempPassword) {
-      return res.status(200).json({
-        success: true,
-        message: 'needResetPassword',
-        data: {
-          nickname: user.nickname,
-        },
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: null,
-      data: {
-        nickname: user.nickname,
-      },
-    });
-  } else {
-    return res.status(200).json({
-      success: false,
-      message: null,
-      data: {
-        nickname: null,
-      },
-    });
-  }
-});
 
 export default router;
