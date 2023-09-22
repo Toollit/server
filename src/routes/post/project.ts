@@ -60,82 +60,87 @@ router.get(
         },
       });
 
-      if (project) {
-        const {
-          title,
-          contentHTML,
-          contentMarkdown,
-          views,
-          createdAt,
-          updatedAt,
-          user,
-          hashtags,
-          memberTypes,
-          comments,
-          recruitNumber,
-        } = project;
-
-        const processedHashtagsData = hashtags.map(
-          (hashtag) => hashtag.tagName
-        );
-
-        // developer, designer, pm, anyone 순으로 정렬
-        const processedMemberTypesData = memberTypes.map(
-          (memberType) => memberType.type
-        );
-
-        processedMemberTypesData.sort(function (a, b) {
-          return (
-            (a === 'developer'
-              ? -3
-              : a === 'designer'
-              ? -2
-              : a === 'pm'
-              ? -1
-              : a === 'anyone'
-              ? 0
-              : 1) -
-            (b === 'developer'
-              ? -3
-              : b === 'designer'
-              ? -2
-              : b === 'pm'
-              ? -1
-              : b === 'anyone'
-              ? 0
-              : 1)
-          );
-        });
-
-        const writer = await userRepository.findOne({
-          where: { id: user.id },
-          relations: { profile: true },
-        });
-
-        return res.status(200).json({
+      if (!project) {
+        return res.status(404).json({
           success: true,
           message: null,
-          data: {
-            writer: {
-              nickname: user.nickname,
-              lastLoginAt: user.lastLoginAt,
-              profileImage: writer?.profile.profileImage,
-            },
-            content: {
-              title,
-              contentHTML,
-              contentMarkdown,
-              views,
-              createdAt,
-              updatedAt,
-              hashtags: processedHashtagsData,
-              memberTypes: processedMemberTypesData,
-              recruitNumber,
-            },
-            comments,
-          },
         });
       }
+
+      const {
+        title,
+        contentHTML,
+        contentMarkdown,
+        views,
+        createdAt,
+        updatedAt,
+        user,
+        hashtags,
+        memberTypes,
+        comments,
+        recruitNumber,
+        representativeImage,
+      } = project;
+
+      const processedHashtagsData = hashtags.map((hashtag) => hashtag.tagName);
+
+      // developer, designer, pm, anyone 순으로 정렬
+      const processedMemberTypesData = memberTypes.map(
+        (memberType) => memberType.type
+      );
+
+      processedMemberTypesData.sort(function (a, b) {
+        return (
+          (a === 'developer'
+            ? -3
+            : a === 'designer'
+            ? -2
+            : a === 'pm'
+            ? -1
+            : a === 'anyone'
+            ? 0
+            : 1) -
+          (b === 'developer'
+            ? -3
+            : b === 'designer'
+            ? -2
+            : b === 'pm'
+            ? -1
+            : b === 'anyone'
+            ? 0
+            : 1)
+        );
+      });
+
+      const writer = await userRepository.findOne({
+        where: { id: user.id },
+        relations: { profile: true },
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: null,
+        data: {
+          writer: {
+            nickname: user.nickname,
+            lastLoginAt: user.lastLoginAt,
+            profileImage: writer?.profile.profileImage,
+          },
+          content: {
+            title,
+            contentHTML,
+            contentMarkdown,
+            views,
+            createdAt,
+            updatedAt,
+            hashtags: processedHashtagsData,
+            memberTypes: processedMemberTypesData,
+            recruitNumber,
+            representativeImage,
+          },
+          comments,
+        },
+      });
     } catch (error) {
       return next(error);
     }
