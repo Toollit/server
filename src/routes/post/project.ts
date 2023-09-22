@@ -170,7 +170,7 @@ router.post(
     const multerS3File = (req as MulterRequest).file;
 
     const representativeImageUrl = isSettingDefaultImage
-      ? null
+      ? 'defaultImage'
       : multerS3File?.location;
 
     const content = JSON.parse(req.body[jsonDataFieldName]);
