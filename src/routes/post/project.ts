@@ -148,6 +148,21 @@ router.get(
   }
 );
 
+const handleReqProjectRepresentativeImage = (req: Request) => {
+  const isSettingDefaultImage = Boolean(req.body['projectRepresentativeImage']);
+
+  const jsonDataFieldName = 'data';
+
+  const multerS3File = (req as MulterRequest).file;
+
+  const representativeImageUrl = isSettingDefaultImage
+    ? 'defaultImage'
+    : multerS3File?.location;
+
+  const content = JSON.parse(req.body[jsonDataFieldName]);
+
+  return { representativeImageUrl, content };
+};
 interface ProjectCreateReqBody {
   title: string;
   contentHTML: string;
@@ -161,25 +176,15 @@ interface ProjectCreateReqBody {
 // Project create api
 router.post(
   '/create',
+  isLoggedIn,
   uploadS3({
     path: 'projectRepresentativeImage',
     option: 'single',
     data: { name: 'projectRepresentativeImage' },
   }),
   async (req: Request, res: Response, next: NextFunction) => {
-    const isSettingDefaultImage = Boolean(
-      req.body['projectRepresentativeImage']
-    );
-
-    const jsonDataFieldName = 'data';
-
-    const multerS3File = (req as MulterRequest).file;
-
-    const representativeImageUrl = isSettingDefaultImage
-      ? 'defaultImage'
-      : multerS3File?.location;
-
-    const content = JSON.parse(req.body[jsonDataFieldName]);
+    const { representativeImageUrl, content } =
+      handleReqProjectRepresentativeImage(req);
 
     if (representativeImageUrl === undefined) {
       return res.status(500).json({
@@ -189,6 +194,7 @@ router.post(
     }
 
     const user = req.user;
+
     const {
       title,
       contentHTML,
@@ -199,71 +205,65 @@ router.post(
       recruitNumber,
     } = content as ProjectCreateReqBody;
 
-    if (user) {
-      const queryRunner = AppDataSource.createQueryRunner();
+    const queryRunner = AppDataSource.createQueryRunner();
 
-      try {
-        await queryRunner.connect();
+    try {
+      await queryRunner.connect();
 
-        await queryRunner.startTransaction();
+      await queryRunner.startTransaction();
 
-        const userRepository = queryRunner.manager.getRepository(User);
+      const userRepository = queryRunner.manager.getRepository(User);
 
-        const writer = await userRepository.findOne({ where: { id: user.id } });
+      const writer = await userRepository.findOne({ where: { id: user?.id } });
 
-        if (writer && hashtags.length >= 1 && memberTypes.length >= 1) {
-          const newProject = new Project();
-          newProject.title = title;
-          newProject.contentHTML = contentHTML;
-          newProject.contentMarkdown = contentMarkdown;
-          newProject.user = writer;
-          newProject.recruitNumber = recruitNumber;
-          newProject.representativeImage = representativeImageUrl;
+      if (writer && hashtags.length >= 1 && memberTypes.length >= 1) {
+        const newProject = new Project();
+        newProject.title = title;
+        newProject.contentHTML = contentHTML;
+        newProject.contentMarkdown = contentMarkdown;
+        newProject.user = writer;
+        newProject.recruitNumber = recruitNumber;
+        newProject.representativeImage = representativeImageUrl;
 
-          const projectRepository = queryRunner.manager.getRepository(Project);
+        const projectRepository = queryRunner.manager.getRepository(Project);
 
+        try {
           const projectData = await projectRepository.save(newProject);
 
-          if (projectData) {
-            const projectImageRepository =
-              queryRunner.manager.getRepository(ProjectImage);
+          const projectImageRepository =
+            queryRunner.manager.getRepository(ProjectImage);
 
-            const imgSaveRequests = imageUrls.map((url: string) => {
-              const newProjectImage = new ProjectImage();
-              newProjectImage.url = url;
-              newProjectImage.project = projectData;
+          const imgSaveRequests = imageUrls.map((url: string) => {
+            const newProjectImage = new ProjectImage();
+            newProjectImage.url = url;
+            newProjectImage.project = projectData;
 
-              projectImageRepository.save(newProjectImage);
-            });
+            projectImageRepository.save(newProjectImage);
+          });
 
-            Promise.all(imgSaveRequests).then((responses) =>
-              responses.forEach((response) =>
-                console.log('save image urls', response)
-              )
-            );
+          await Promise.all(imgSaveRequests);
 
-            const addProcessedHashtags = hashtags.map((hashtag) => {
-              return { tagName: hashtag, project: projectData };
-            });
+          const addProcessedHashtags = hashtags.map((hashtag) => {
+            return { tagName: hashtag, project: projectData };
+          });
 
-            await queryRunner.manager
-              .createQueryBuilder()
-              .insert()
-              .into(Hashtag)
-              .values([...addProcessedHashtags])
-              .execute();
+          await queryRunner.manager
+            .createQueryBuilder()
+            .insert()
+            .into(Hashtag)
+            .values([...addProcessedHashtags])
+            .execute();
 
-            const addProcessedMemberTypes = memberTypes.map((memberType) => {
-              return { type: memberType, project: projectData };
-            });
+          const addProcessedMemberTypes = memberTypes.map((memberType) => {
+            return { type: memberType, project: projectData };
+          });
 
-            await queryRunner.manager
-              .createQueryBuilder()
-              .insert()
-              .into(MemberType)
-              .values([...addProcessedMemberTypes])
-              .execute();
-          }
+          await queryRunner.manager
+            .createQueryBuilder()
+            .insert()
+            .into(MemberType)
+            .values([...addProcessedMemberTypes])
+            .execute();
 
           await queryRunner.commitTransaction();
 
@@ -274,14 +274,16 @@ router.post(
               projectId: projectData.id,
             },
           });
+        } catch (error) {
+          return next(error);
         }
-      } catch (error) {
-        await queryRunner.rollbackTransaction();
-
-        return next(error);
-      } finally {
-        await queryRunner.release();
       }
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+
+      return next(error);
+    } finally {
+      await queryRunner.release();
     }
   }
 );
@@ -326,22 +328,6 @@ interface ProjectUpdateReqBody {
   memberTypes: ('developer' | 'designer' | 'pm' | 'anyone')[];
   recruitNumber: number;
 }
-
-const handleReqProjectRepresentativeImage = (req: Request) => {
-  const isSettingDefaultImage = Boolean(req.body['projectRepresentativeImage']);
-
-  const jsonDataFieldName = 'data';
-
-  const multerS3File = (req as MulterRequest).file;
-
-  const representativeImageUrl = isSettingDefaultImage
-    ? 'defaultImage'
-    : multerS3File?.location;
-
-  const content = JSON.parse(req.body[jsonDataFieldName]);
-
-  return { representativeImageUrl, content };
-};
 
 // Update project post information api
 router.post(
