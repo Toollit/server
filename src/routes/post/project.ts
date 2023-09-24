@@ -319,7 +319,7 @@ router.post(
 );
 
 interface ProjectUpdateReqBody {
-  projectId: string;
+  postId: string;
   title: string;
   contentHTML: string;
   contentMarkdown: string;
@@ -350,7 +350,7 @@ router.post(
     }
 
     const {
-      projectId,
+      postId,
       title: modifiedTitle,
       contentHTML: modifiedContentHTML,
       contentMarkdown: modifiedContentMarkdown,
@@ -371,7 +371,7 @@ router.post(
 
       const existProject = await projectRepository.findOne({
         where: {
-          id: Number(projectId),
+          id: Number(postId),
         },
       });
 
@@ -442,7 +442,7 @@ router.post(
             .getRepository(ProjectImage)
             .createQueryBuilder()
             .where('projectImage.projectId = :postId', {
-              postId: Number(projectId),
+              postId: Number(postId),
             })
             .getMany();
 
@@ -473,7 +473,7 @@ router.post(
               .createQueryBuilder()
               .delete()
               .from(ProjectImage)
-              .where('projectId = :postId', { postId: Number(projectId) })
+              .where('projectId = :postId', { postId: Number(postId) })
               .andWhere('url = :url', { url })
               .execute();
 
@@ -502,7 +502,7 @@ router.post(
           const existProjectHashtags = await queryRunner.manager
             .getRepository(Hashtag)
             .createQueryBuilder()
-            .where('hashtag.projectId = :postId', { postId: Number(projectId) })
+            .where('hashtag.projectId = :postId', { postId: Number(postId) })
             .getMany();
 
           const existHashtags = existProjectHashtags.map((hashtag) => {
@@ -535,7 +535,7 @@ router.post(
               .createQueryBuilder()
               .delete()
               .from(Hashtag)
-              .where('projectId = :postId', { postId: Number(projectId) })
+              .where('projectId = :postId', { postId: Number(postId) })
               .andWhere('tagName = :tagName', { tagName })
               .execute();
 
@@ -564,7 +564,7 @@ router.post(
           .getRepository(MemberType)
           .createQueryBuilder()
           .where('memberType.projectId = :postId', {
-            postId: Number(projectId),
+            postId: Number(postId),
           })
           .getMany();
 
@@ -593,7 +593,7 @@ router.post(
               .createQueryBuilder()
               .delete()
               .from(MemberType)
-              .where('projectId = :postId', { postId: Number(projectId) })
+              .where('projectId = :postId', { postId: Number(postId) })
               .andWhere('type = :type', { type })
               .execute();
 
@@ -643,7 +643,7 @@ router.post(
             .createQueryBuilder()
             .update(Project)
             .set({ recruitNumber: modifiedRecruitNumber })
-            .where('id = :postId', { postId: Number(projectId) })
+            .where('id = :postId', { postId: Number(postId) })
             .execute();
         } catch (error) {
           next(error);
@@ -674,7 +674,7 @@ router.post(
             .createQueryBuilder()
             .update(Project)
             .set({ representativeImage: representativeImageUrl })
-            .where('id = :postId', { postId: Number(projectId) })
+            .where('id = :postId', { postId: Number(postId) })
             .execute();
         } catch (error) {
           next(error);
@@ -699,7 +699,7 @@ router.post(
           success: true,
           message: 'nothing change',
           data: {
-            projectId: Number(projectId),
+            postId: Number(postId),
           },
         });
       } else {
@@ -707,7 +707,7 @@ router.post(
           success: true,
           message: 'project updated successfully',
           data: {
-            projectId: Number(projectId),
+            postId: Number(postId),
           },
         });
       }
