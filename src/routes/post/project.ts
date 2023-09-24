@@ -24,11 +24,11 @@ dotenv.config();
 
 const router = express.Router();
 
-// Project details inquiry api
+// Project detail api
 router.get(
-  '/:projectId',
+  '/:postId',
   async (req: Request, res: Response, next: NextFunction) => {
-    const projectId = Number(req.params.projectId);
+    const postId = Number(req.params.postId);
 
     const modifyRequest = req.headers.modify;
 
@@ -43,11 +43,11 @@ router.get(
           views: () => (modifyRequest ? 'views' : 'views + 1'),
           updatedAt: () => 'updatedAt',
         })
-        .where('id = :id', { id: projectId })
+        .where('id = :id', { id: postId })
         .execute();
 
       const project = await projectRepository.findOne({
-        where: { id: projectId },
+        where: { id: postId },
         relations: {
           user: true,
           hashtags: true,
@@ -271,7 +271,7 @@ router.post(
             success: true,
             message: 'success create project',
             data: {
-              projectId: projectData.id,
+              postId: projectData.id,
             },
           });
         } catch (error) {
@@ -291,6 +291,7 @@ router.post(
 // API to upload images included in project post
 router.post(
   '/content/uploadImage',
+  isLoggedIn,
   uploadS3({
     path: 'projectContentImage',
     option: 'single',
@@ -729,6 +730,7 @@ interface PostDeleteReqBody {
 // Delete project post api
 router.post(
   '/delete',
+  isLoggedIn,
   async (
     req: Request<{}, {}, PostDeleteReqBody>,
     res: Response,
@@ -800,6 +802,7 @@ interface ProjectBookmarkReqBody {
 // Project bookmark api
 router.post(
   '/bookmark',
+  isLoggedIn,
   async (
     req: Request<{}, {}, ProjectBookmarkReqBody>,
     res: Response,
