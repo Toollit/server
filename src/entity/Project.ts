@@ -22,24 +22,24 @@ export class Project {
   @Column({ length: 100 })
   title: string;
 
-  // 컨텐츠 보여주기용
+  // use contentHTML column data when displaying content
   @Column({ type: 'text' })
   contentHTML: string;
 
-  // 작성자 수정용
+  // use contentMarkdown column data when modifying content
   @Column({ type: 'text' })
   contentMarkdown: string;
 
   @Column({ default: 0 })
-  views: number = 0;
+  views: number;
 
   @Column({ default: 0 })
-  bookmarks: number = 0;
+  bookmarks: number;
 
   @Column({ default: 0 })
   memberNumber: number;
 
-  @Column()
+  @Column({ default: 0 })
   recruitNumber: number;
 
   @Column()
@@ -49,7 +49,7 @@ export class Project {
   createdAt: Date;
 
   @UpdateDateColumn({ nullable: true, default: null })
-  updatedAt: Date | null = null;
+  updatedAt: Date | null;
 
   @ManyToOne(() => User, (user) => user.projects)
   user: User;
