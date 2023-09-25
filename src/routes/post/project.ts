@@ -7,8 +7,9 @@ import { Hashtag } from '@/entity/Hashtag';
 import { MemberType } from '@/entity/MemberType';
 import { uploadS3 } from '@/middleware/uploadS3';
 import { Bookmark } from '@/entity/Bookmark';
-import dotenv from 'dotenv';
 import { isLoggedIn } from '@/middleware/loginCheck';
+import { ProjectMember } from '@/entity/ProjectMember';
+import dotenv from 'dotenv';
 
 interface MulterRequest extends Request {
   file?: Express.MulterS3.File | undefined;
@@ -229,6 +230,18 @@ router.post(
 
         try {
           const projectData = await projectRepository.save(newProject);
+
+          await queryRunner.manager
+            .createQueryBuilder()
+            .insert()
+            .into(ProjectMember)
+            .values({
+              projectId: projectData.id,
+              memberId: user?.id,
+              memberNickname: user?.nickname,
+              updatedAt: null,
+            })
+            .execute();
 
           const projectImageRepository =
             queryRunner.manager.getRepository(ProjectImage);
