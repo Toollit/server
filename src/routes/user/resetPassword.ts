@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '@/data-source';
 import crypto from 'crypto';
 import { User } from '@/entity/User';
+import { isLoggedIn } from '@/middleware/loginCheck';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -9,33 +10,36 @@ dotenv.config();
 const router = express.Router();
 
 // resetPassword page password reset router
-router.post('/', (req: Request, res: Response, next: NextFunction) => {
-  const userInfo = req.user;
-  const newPassword = req.body.password;
+router.post(
+  '/',
+  isLoggedIn,
+  (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    const newPassword = req.body.password;
 
-  if (userInfo?.tempPassword) {
-    userInfo;
-    const salt = Buffer.from(userInfo.salt, 'hex');
+    if (user?.tempPassword) {
+      const salt = Buffer.from(user.salt, 'hex');
 
-    crypto.pbkdf2(
-      newPassword,
-      salt,
-      310000,
-      64,
-      'sha512',
-      async function (err, hashedPassword) {
-        if (err) {
-          return next(err);
-        }
+      crypto.pbkdf2(
+        newPassword,
+        salt,
+        310000,
+        64,
+        'sha512',
+        async function (err, hashedPassword) {
+          if (err) {
+            return next(err);
+          }
 
-        const userPassword = Buffer.from(userInfo.password, 'hex');
+          const userPassword = Buffer.from(user.password, 'hex');
 
-        if (crypto.timingSafeEqual(userPassword, hashedPassword)) {
-          return res.status(400).json({
-            success: false,
-            message: '이전과 동일한 비밀번호는 다시 사용할 수 없습니다.',
-          });
-        } else {
+          if (crypto.timingSafeEqual(userPassword, hashedPassword)) {
+            return res.status(400).json({
+              success: false,
+              message: '이전과 동일한 비밀번호는 다시 사용할 수 없습니다.',
+            });
+          }
+
           const newSalt = crypto.randomBytes(64);
 
           crypto.pbkdf2(
@@ -59,9 +63,9 @@ router.post('/', (req: Request, res: Response, next: NextFunction) => {
                     salt: saltString,
                     password: hashedString,
                     tempPassword: null,
-                    loginFailedCounts: 0,
+                    loginFailedCount: 0,
                   })
-                  .where('id = :id', { id: userInfo.id })
+                  .where('id = :id', { id: user.id })
                   .execute();
 
                 return res.status(201).json({
@@ -75,15 +79,15 @@ router.post('/', (req: Request, res: Response, next: NextFunction) => {
             }
           );
         }
-      }
-    );
-  } else {
-    // 임시 비밀번호로 로그인하지 않고 잘못된 접근으로 비밀번호 재설정을 하려는 경우
-    return res.status(400).json({
-      success: false,
-      message: '잘못된 접근 입니다.',
-    });
+      );
+    } else {
+      // wrong access without logged in with a temporary password
+      return res.status(400).json({
+        success: false,
+        message: '잘못된 접근 입니다.',
+      });
+    }
   }
-});
+);
 
 export default router;
