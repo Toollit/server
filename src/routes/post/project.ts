@@ -2,7 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '@/data-source';
 import { Project } from '@/entity/Project';
 import { User } from '@/entity/User';
-import { ProjectImage } from '@/entity/ProjectImage';
+import { ProjectContentImage } from '@/entity/ProjectContentImage';
 import { Hashtag } from '@/entity/Hashtag';
 import { MemberType } from '@/entity/MemberType';
 import { uploadS3 } from '@/middleware/uploadS3';
@@ -243,15 +243,15 @@ router.post(
             })
             .execute();
 
-          const projectImageRepository =
-            queryRunner.manager.getRepository(ProjectImage);
+          const projectContentImageRepository =
+            queryRunner.manager.getRepository(ProjectContentImage);
 
           const imgSaveRequests = imageUrls.map((url: string) => {
-            const newProjectImage = new ProjectImage();
-            newProjectImage.url = url;
-            newProjectImage.project = projectData;
+            const newProjectContentImage = new ProjectContentImage();
+            newProjectContentImage.url = url;
+            newProjectContentImage.project = projectData;
 
-            projectImageRepository.save(newProjectImage);
+            projectContentImageRepository.save(newProjectContentImage);
           });
 
           await Promise.all(imgSaveRequests);
@@ -453,9 +453,9 @@ router.post(
       const updateProjectContentImages = async () => {
         try {
           const existProjectContentImages = await queryRunner.manager
-            .getRepository(ProjectImage)
+            .getRepository(ProjectContentImage)
             .createQueryBuilder()
-            .where('projectImage.projectId = :postId', {
+            .where('ProjectContentImage.projectId = :postId', {
               postId: Number(postId),
             })
             .getMany();
@@ -486,7 +486,7 @@ router.post(
             const request = queryRunner.manager
               .createQueryBuilder()
               .delete()
-              .from(ProjectImage)
+              .from(ProjectContentImage)
               .where('projectId = :postId', { postId: Number(postId) })
               .andWhere('url = :url', { url })
               .execute();
@@ -496,15 +496,17 @@ router.post(
 
           await Promise.all(deleteImageRequests);
 
-          const addProcessedProjectImages = toBeAddedImages.map((url) => {
-            return { url, project: existProject };
-          });
+          const addProcessedProjectContentImages = toBeAddedImages.map(
+            (url) => {
+              return { url, project: existProject };
+            }
+          );
 
           await queryRunner.manager
             .createQueryBuilder()
             .insert()
-            .into(ProjectImage)
-            .values([...addProcessedProjectImages])
+            .into(ProjectContentImage)
+            .values([...addProcessedProjectContentImages])
             .execute();
         } catch (error) {
           next(error);
@@ -760,7 +762,7 @@ router.post(
       await queryRunner.manager
         .createQueryBuilder()
         .delete()
-        .from(ProjectImage)
+        .from(ProjectContentImage)
         .where('projectId = :postId', { postId })
         .execute();
 

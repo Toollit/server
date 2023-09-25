@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
   CreateDateColumn,
 } from 'typeorm';
-import { ProjectImage } from './ProjectImage';
+import { ProjectContentImage } from './ProjectContentImage';
 import { User } from './User';
 import { Hashtag } from './Hashtag';
 import { Comment } from './Comment';
@@ -54,8 +54,11 @@ export class Project {
   @ManyToOne(() => User, (user) => user.projects)
   user: User;
 
-  @OneToMany(() => ProjectImage, (projectImage) => projectImage.project)
-  images: ProjectImage[];
+  @OneToMany(
+    () => ProjectContentImage,
+    (ProjectContentImage) => ProjectContentImage.project
+  )
+  images: ProjectContentImage[];
 
   @OneToMany(() => Hashtag, (hashtag) => hashtag.project)
   hashtags: Hashtag[];
