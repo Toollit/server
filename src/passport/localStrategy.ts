@@ -18,25 +18,29 @@ export default () =>
           where: { email },
         });
 
+        // not exist user
         if (!user) {
           return cb(null, false, {
-            message: '회원가입되어 있지 않은 이메일입니다.',
+            message: '회원 이메일 또는 비밀번호가 일치하지 않습니다.',
           });
         }
 
+        // social login user
         if (user.signUpType !== 'email') {
           return cb(null, false, {
             message: '소셜 로그인을 통해 가입이 이루어진 계정입니다.',
           });
         }
 
+        // tempPassword login user
         if (user.tempPassword === password) {
           return cb(null, user, {
             message: 'resetPassword',
           });
         }
 
-        if (user.loginFailedCounts >= 5) {
+        // login failed more than 5 user
+        if (user.loginFailedCount >= 5) {
           return cb(null, false, {
             message: `비밀번호 5회 연속 오류로 서비스 이용이 불가합니다.\n(*고객센터 - 공지사항 - 비밀번호 5회 연속 오류 공지 확인)`,
           });
@@ -63,58 +67,75 @@ export default () =>
             );
 
             if (isPasswordMatch) {
+              // Resetting a temporary password if user received a temporary password but logged in with an existing password
               if (user.tempPassword) {
-                // Resetting a temporary password if user received a temporary password but logged in with an existing password
+                try {
+                  await AppDataSource.createQueryBuilder()
+                    .update(User)
+                    .set({
+                      loginFailedCount: 0,
+                      tempPassword: null,
+                      lastLoginAt: new Date(),
+                      updatedAt: () => 'updatedAt',
+                    })
+                    .where('id = :id', { id: user.id })
+                    .execute();
+
+                  return cb(null, user);
+                } catch (error) {
+                  return cb(error);
+                }
+              }
+
+              // Logged in with the original password
+              if (!user.tempPassword) {
+                try {
+                  await AppDataSource.createQueryBuilder()
+                    .update(User)
+                    .set({
+                      loginFailedCount: 0,
+                      lastLoginAt: new Date(),
+                      updatedAt: () => 'updatedAt',
+                    })
+                    .where('id = :id', { id: user.id })
+                    .execute();
+
+                  return cb(null, user);
+                } catch (error) {
+                  return cb(error);
+                }
+              }
+            }
+
+            if (!isPasswordMatch) {
+              try {
                 await AppDataSource.createQueryBuilder()
                   .update(User)
                   .set({
-                    loginFailedCounts: 0,
-                    tempPassword: null,
-                    lastLoginAt: new Date(),
+                    loginFailedCount: () => 'loginFailedCount + 1',
                     updatedAt: () => 'updatedAt',
                   })
                   .where('id = :id', { id: user.id })
                   .execute();
 
-                return cb(null, user);
-              } else {
-                // logged in with the original password
-                await AppDataSource.createQueryBuilder()
-                  .update(User)
-                  .set({
-                    loginFailedCounts: 0,
-                    lastLoginAt: new Date(),
-                  })
-                  .where('id = :id', { id: user.id })
-                  .execute();
+                const loginTryUser = await AppDataSource.getRepository(User)
+                  .createQueryBuilder('user')
+                  .where('user.id = :id', { id: user.id })
+                  .getOne();
 
-                return cb(null, user);
+                const loginFailedCount = loginTryUser?.loginFailedCount;
+
+                return cb(null, false, {
+                  message: `비밀번호가 일치하지 않습니다.\n5회 이상 오류시 서비스 이용이 제한됩니다.\n(누적오류입력 ${loginFailedCount}회)`,
+                });
+              } catch (error) {
+                return cb(error);
               }
-            } else {
-              await AppDataSource.createQueryBuilder()
-                .update(User)
-                .set({
-                  loginFailedCounts: () => 'loginFailedCounts + 1',
-                  updatedAt: () => 'updatedAt',
-                })
-                .where('id = :id', { id: user.id })
-                .execute();
-
-              const loginTryUser = await AppDataSource.getRepository(User)
-                .createQueryBuilder('user')
-                .where('user.id = :id', { id: user.id })
-                .getOne();
-
-              const loginFailedCounts = loginTryUser?.loginFailedCounts;
-
-              return cb(null, false, {
-                message: `비밀번호가 일치하지 않습니다.\n5회 이상 오류시 서비스 이용이 제한됩니다.\n(누적오류입력 ${loginFailedCounts}회)`,
-              });
             }
           }
         );
       } catch (error) {
-        cb(error);
+        return cb(error);
       }
     })
   );
