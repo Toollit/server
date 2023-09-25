@@ -1,12 +1,13 @@
 export interface UserData {
   id: number;
+  role: number;
   email: string;
   password: string;
-  tempPassword: string | null;
+  tempPassword: string;
   salt: string;
   signUpType: 'email' | 'google' | 'github';
-  nickname: string | null;
-  username: string | null;
+  nickname: string;
+  loginFailedCount: number;
   createdAt: Date;
   updatedAt: Date | null;
   lastLoginAt: Date | null;
