@@ -27,7 +27,7 @@ export class User {
   password: string;
 
   @Column({ type: 'text', nullable: true })
-  tempPassword: string | null;
+  tempPassword: string;
 
   @Column({ nullable: true })
   salt: string;
@@ -35,20 +35,17 @@ export class User {
   @Column()
   signUpType: 'google' | 'github' | 'email';
 
-  @Column({ nullable: true, length: 20 })
+  @Column({ length: 20 })
   nickname: string;
 
-  @Column({ nullable: true, length: 20 })
-  username: string;
-
   @Column({ default: 0 })
-  loginFailedCounts: number = 0;
+  loginFailedCount: number;
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn({ nullable: true, default: null })
-  updatedAt: Date | null = null;
+  updatedAt: Date;
 
   @Column({ type: 'timestamp', nullable: true })
   lastLoginAt: Date;
