@@ -10,7 +10,7 @@ export interface UserData {
   loginFailedCount: number;
   createdAt: Date;
   updatedAt: Date | null;
-  lastLoginAt: Date | null;
+  lastLoginAt: Date;
 }
 type PassportLocalError = Error | null;
 
