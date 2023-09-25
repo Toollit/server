@@ -737,7 +737,6 @@ router.post(
 
 interface PostDeleteReqBody {
   postId: string;
-  postType: 'project' | 'free' | 'question';
 }
 
 // Delete project post api
@@ -749,61 +748,62 @@ router.post(
     res: Response,
     next: NextFunction
   ) => {
-    const { postType, postId } = req.body;
+    const { postId } = req.body;
 
-    if (req.user) {
-      const queryRunner = AppDataSource.createQueryRunner();
+    const queryRunner = AppDataSource.createQueryRunner();
 
-      if (postType === 'project') {
-        try {
-          await queryRunner.connect();
+    try {
+      await queryRunner.connect();
 
-          await queryRunner.startTransaction();
+      await queryRunner.startTransaction();
 
-          await queryRunner.manager
-            .createQueryBuilder()
-            .delete()
-            .from(ProjectImage)
-            .where('projectId = :postId', { postId })
-            .execute();
+      await queryRunner.manager
+        .createQueryBuilder()
+        .delete()
+        .from(ProjectImage)
+        .where('projectId = :postId', { postId })
+        .execute();
 
-          await queryRunner.manager
-            .createQueryBuilder()
-            .delete()
-            .from(Hashtag)
-            .where('projectId = :postId', { postId })
-            .execute();
+      await queryRunner.manager
+        .createQueryBuilder()
+        .delete()
+        .from(Hashtag)
+        .where('projectId = :postId', { postId })
+        .execute();
 
-          await queryRunner.manager
-            .createQueryBuilder()
-            .delete()
-            .from(MemberType)
-            .where('projectId = :postId', { postId })
-            .execute();
+      await queryRunner.manager
+        .createQueryBuilder()
+        .delete()
+        .from(MemberType)
+        .where('projectId = :postId', { postId })
+        .execute();
 
-          await queryRunner.manager
-            .createQueryBuilder()
-            .delete()
-            .from(Project)
-            .where('id = :postId', { postId })
-            .execute();
+      await queryRunner.manager
+        .createQueryBuilder()
+        .delete()
+        .from(ProjectMember)
+        .where('projectId = :postId', { postId })
+        .execute();
 
-          await queryRunner.commitTransaction();
+      await queryRunner.manager
+        .createQueryBuilder()
+        .delete()
+        .from(Project)
+        .where('id = :postId', { postId })
+        .execute();
 
-          return res.status(200).json({
-            success: true,
-            message: 'resource deleted successfully',
-          });
-        } catch (error) {
-          await queryRunner.rollbackTransaction();
+      await queryRunner.commitTransaction();
 
-          return next(error);
-        } finally {
-          await queryRunner.release();
-        }
-      }
-    } else {
-      next(new Error('not loggedIn'));
+      return res.status(200).json({
+        success: true,
+        message: 'resource deleted successfully',
+      });
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+
+      return next(error);
+    } finally {
+      await queryRunner.release();
     }
   }
 );
