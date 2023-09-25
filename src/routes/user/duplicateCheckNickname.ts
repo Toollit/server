@@ -29,10 +29,10 @@ router.post(
       });
     }
 
-    if (nickname.length > 20) {
+    if (nickname.length < 2 || nickname.length > 20) {
       return res.status(400).json({
         success: false,
-        message: '닉네임은 최대 20자까지 가능합니다.',
+        message: '닉네임은 2자 이상 20자 이하까지 가능합니다.',
       });
     }
 
