@@ -26,7 +26,7 @@ export class ProjectMember {
   createdAt: Date;
 
   @UpdateDateColumn({ nullable: true, default: null })
-  updatedAt: Date | null = null;
+  updatedAt: Date | null;
 
   @ManyToOne(() => Project, (project) => project.memberId)
   project: Project;
