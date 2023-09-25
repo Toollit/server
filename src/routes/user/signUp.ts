@@ -59,6 +59,7 @@ router.post('/', async (req, res, next) => {
                 salt: saltString,
                 signUpType,
                 nickname: initialNickname,
+                updatedAt: null,
                 lastLoginAt: new Date(),
                 profile: newProfile.identifiers[0].id,
               })
