@@ -20,7 +20,7 @@ export class User {
   @Column({ nullable: true })
   role: number;
 
-  @Column({ unique: true, length: 200 })
+  @Column({ unique: true, length: 200, nullable: false })
   email: string;
 
   @Column({ nullable: true })
@@ -35,7 +35,7 @@ export class User {
   @Column()
   signUpType: 'google' | 'github' | 'email';
 
-  @Column({ length: 20 })
+  @Column({ length: 20, nullable: true })
   nickname: string;
 
   @Column({ default: 0 })
@@ -45,9 +45,9 @@ export class User {
   createdAt: Date;
 
   @UpdateDateColumn({ nullable: true, default: null })
-  updatedAt: Date;
+  updatedAt: Date | null;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'timestamp' })
   lastLoginAt: Date;
 
   @OneToMany(() => Project, (project) => project.user)
