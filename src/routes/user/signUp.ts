@@ -12,7 +12,7 @@ const router = express.Router();
 
 // user email signUp router
 router.post('/', async (req, res, next) => {
-  const { email, password, signUpType, nickname } = req.body;
+  const { email, password, signUpType } = req.body;
 
   const queryRunner = AppDataSource.createQueryRunner();
 
@@ -21,7 +21,7 @@ router.post('/', async (req, res, next) => {
 
     await queryRunner.startTransaction();
 
-    if (!email || !password || !signUpType || !nickname) {
+    if (!email || !password || !signUpType) {
       throw new Error();
     }
 
@@ -60,7 +60,6 @@ router.post('/', async (req, res, next) => {
                 password: hashedString,
                 salt: saltString,
                 signUpType,
-                nickname,
                 updatedAt: null,
                 lastLoginAt: new Date(),
                 profile: newProfile.identifiers[0].id,
