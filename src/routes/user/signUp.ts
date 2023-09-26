@@ -4,14 +4,15 @@ import crypto from 'crypto';
 import { User } from '@/entity/User';
 import { Profile } from '@/entity/Profile';
 import dotenv from 'dotenv';
+import { isLoggedIn } from '@/middleware/loginCheck';
 
 dotenv.config();
 
 const router = express.Router();
 
-// user signUp router
+// user email signUp router
 router.post('/', async (req, res, next) => {
-  const { email, password, signUpType } = req.body;
+  const { email, password, signUpType, nickname } = req.body;
 
   const queryRunner = AppDataSource.createQueryRunner();
 
@@ -20,8 +21,9 @@ router.post('/', async (req, res, next) => {
 
     await queryRunner.startTransaction();
 
-    const atSignIndex = email.indexOf('@');
-    const initialNickname = email.slice(0, atSignIndex);
+    if (!email || !password || !signUpType || !nickname) {
+      throw new Error();
+    }
 
     const salt = crypto.randomBytes(64);
 
@@ -58,7 +60,7 @@ router.post('/', async (req, res, next) => {
                 password: hashedString,
                 salt: saltString,
                 signUpType,
-                nickname: initialNickname,
+                nickname,
                 updatedAt: null,
                 lastLoginAt: new Date(),
                 profile: newProfile.identifiers[0].id,
