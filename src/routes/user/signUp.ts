@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '@/data-source';
 import crypto from 'crypto';
 import { User } from '@/entity/User';
@@ -105,5 +105,54 @@ router.post('/', async (req, res, next) => {
     await queryRunner.release();
   }
 });
+
+// social login user nickname setting router
+router.post(
+  '/socialLogin/update/nickname',
+  isLoggedIn,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { nickname } = req.body;
+
+    const user = req.user;
+
+    if (!nickname) {
+      res.status(400).json({
+        success: false,
+        message: 'nickname is empty',
+      });
+    }
+
+    const queryRunner = AppDataSource.createQueryRunner();
+
+    try {
+      await queryRunner.connect();
+
+      await queryRunner.startTransaction();
+
+      await queryRunner.manager
+        .createQueryBuilder()
+        .update(User)
+        .set({
+          nickname,
+          updatedAt: null,
+        })
+        .where('id = :id', { id: user?.id })
+        .execute();
+
+      await queryRunner.commitTransaction();
+
+      return res.status(201).json({
+        success: true,
+        message: 'nickname is updated',
+      });
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+
+      return next(error);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+);
 
 export default router;
