@@ -15,11 +15,15 @@ dotenv.config();
 
 const router = express.Router();
 
-const successRedirect = process.env.ORIGIN_URL;
-const failureRedirect = `${process.env.ORIGIN_URL}/login?error=true`;
-const duplicateRedirect = `${process.env.ORIGIN_URL}/login?duplicate=true`;
-const emptyRedirect = `${process.env.ORIGIN_URL}/login?hasEmailInfo=false`;
-const firstTimeRedirect = `${process.env.ORIGIN_URL}/login?firstTime=true`;
+const SUCCESS_REDIRECT = process.env.ORIGIN_URL;
+const FAILURE_REDIRECT = `${process.env.ORIGIN_URL}/login?error=true`;
+const DUPLICATE_REDIRECT = `${process.env.ORIGIN_URL}/login?duplicate=true`;
+const EMPTY_REDIRECT = `${process.env.ORIGIN_URL}/login?hasEmailInfo=false`;
+const FIRST_TIME_REDIRECT = `${process.env.ORIGIN_URL}/login?firstTime=true`;
+
+const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+const GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL;
+const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
 // login page. user login router
 router.post('/email', (req: Request, res: Response, next: NextFunction) => {
@@ -94,21 +98,21 @@ router.get(
 
             if (user) {
               if (info.message === 'firstTime') {
-                return res.redirect(firstTimeRedirect);
+                return res.redirect(FIRST_TIME_REDIRECT);
               }
 
-              return res.redirect(successRedirect);
+              return res.redirect(SUCCESS_REDIRECT);
             }
           });
         } else {
           if (info.message === 'empty') {
-            return res.redirect(emptyRedirect);
+            return res.redirect(EMPTY_REDIRECT);
           }
           if (info.message === 'duplicate') {
-            return res.redirect(duplicateRedirect);
+            return res.redirect(DUPLICATE_REDIRECT);
           }
           if (info.message === 'error') {
-            return res.redirect(failureRedirect);
+            return res.redirect(FAILURE_REDIRECT);
           }
         }
       }
@@ -119,7 +123,7 @@ router.get(
 // login page. social login with github
 router.get('/github', (req, res, next) => {
   return res.redirect(
-    `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user:email&redirect_uri=${process.env.GITHUB_CALLBACK_URL}`
+    `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=user:email&redirect_uri=${GITHUB_CALLBACK_URL}`
   );
 });
 
@@ -129,7 +133,7 @@ router.get('/auth/github/callback', async (req, res, next) => {
 
   try {
     const userIdentity = await axios.post(
-      `https://github.com/login/oauth/access_token?client_id=${process.env.GITHUB_CLIENT_ID}&client_secret=${process.env.GITHUB_CLIENT_SECRET}&code=${userCode}`
+      `https://github.com/login/oauth/access_token?client_id=${GITHUB_CLIENT_ID}&client_secret=${GITHUB_CLIENT_SECRET}&code=${userCode}`
     );
 
     const userAuthorizeIdentityString = userIdentity.data;
@@ -152,21 +156,17 @@ router.get('/auth/github/callback', async (req, res, next) => {
       },
     });
 
-    const hasEmailInfo = userInfo.data.email;
+    const email = userInfo.data.email;
 
     // github 계정에 등록된 이메일 정보가 없는경우
-    if (!hasEmailInfo) {
-      return res.redirect(emptyRedirect);
+    if (!email) {
+      return res.redirect(EMPTY_REDIRECT);
     }
 
     // github 계정에 등록된 이메일 정보가 있는 경우
-    if (hasEmailInfo) {
+    if (email) {
       const userRepository = AppDataSource.getRepository(User);
-      const user = await userRepository.findOne({
-        where: {
-          email: userInfo.data.email,
-        },
-      });
+      const user = await userRepository.findOne({ where: { email } });
 
       // 이미 가입한 사용자 로그인
       if (user && user.signUpType === 'github') {
@@ -182,21 +182,18 @@ router.get('/auth/github/callback', async (req, res, next) => {
               return next(err);
             }
 
-            return res.redirect(successRedirect);
+            return res.redirect(SUCCESS_REDIRECT);
           });
         }
       }
 
       // 동일한 이메일의 다른 가입 정보가 있는 경우
       if (user && user.signUpType !== 'github') {
-        return res.redirect(duplicateRedirect);
+        return res.redirect(DUPLICATE_REDIRECT);
       }
 
       // 중복된 이메일이 없는 경우 DB저장(최초가입)
       if (!user) {
-        const atSignIndex = userInfo.data.email.indexOf('@');
-        const initialNickname = userInfo.data.email.slice(0, atSignIndex);
-
         const queryRunner = AppDataSource.createQueryRunner();
 
         try {
@@ -217,7 +214,6 @@ router.get('/auth/github/callback', async (req, res, next) => {
             .values({
               email: userInfo.data.email,
               signUpType: 'github',
-              nickname: initialNickname,
               lastLoginAt: new Date(),
               profile: newProfile.identifiers[0].id,
             })
@@ -237,20 +233,20 @@ router.get('/auth/github/callback', async (req, res, next) => {
                 return next(err);
               }
 
-              return res.redirect(firstTimeRedirect);
+              return res.redirect(FIRST_TIME_REDIRECT);
             });
           }
         } catch (error) {
           await queryRunner.rollbackTransaction();
 
-          return res.redirect(failureRedirect);
+          return res.redirect(FAILURE_REDIRECT);
         } finally {
           return await queryRunner.release();
         }
       }
     }
   } catch (error) {
-    return res.redirect(failureRedirect);
+    return res.redirect(FAILURE_REDIRECT);
   }
 });
 

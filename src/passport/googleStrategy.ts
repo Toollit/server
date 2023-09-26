@@ -3,20 +3,25 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { AppDataSource } from '@/data-source';
 import { User } from '@/entity/User';
 import { Profile } from '@/entity/Profile';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const GOOGLE_CLIENT_ID = process.env['GOOGLE_CLIENT_ID'];
+const GOOGLE_CLIENT_SECRET = process.env['GOOGLE_CLIENT_SECRET'];
+const GOOGLE_CALLBACK_URL = process.env['GOOGLE_CALLBACK_URL'];
 
 export default () => {
   passport.use(
     new GoogleStrategy(
       {
-        clientID: process.env['GOOGLE_CLIENT_ID'],
-        clientSecret: process.env['GOOGLE_CLIENT_SECRET'],
-        callbackURL: process.env['GOOGLE_CALLBACK_URL'],
+        clientID: GOOGLE_CLIENT_ID,
+        clientSecret: GOOGLE_CLIENT_SECRET,
+        callbackURL: GOOGLE_CALLBACK_URL,
         passReqToCallback: true,
         scope: ['profile', 'email'],
       },
       async function (request, accessToken, refreshToken, profile, done) {
-        // console.log('user profile ===>', profile);
-
         const email = profile.emails?.[0]?.value;
 
         // 이메일 정보가 없는 경우
@@ -49,9 +54,6 @@ export default () => {
 
           // 중복된 이메일이 없는 경우 DB저장(최초가입)
           if (!user) {
-            const atSignIndex = email.indexOf('@');
-            const initialNickname = email.slice(0, atSignIndex);
-
             const queryRunner = AppDataSource.createQueryRunner();
 
             try {
@@ -72,7 +74,6 @@ export default () => {
                 .values({
                   email,
                   signUpType: 'google',
-                  nickname: initialNickname,
                   lastLoginAt: new Date(),
                   profile: newProfile.identifiers[0].id,
                 })
