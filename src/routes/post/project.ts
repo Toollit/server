@@ -150,20 +150,23 @@ router.get(
 );
 
 const handleReqProjectRepresentativeImage = (req: Request) => {
-  const isSettingDefaultImage = Boolean(req.body['projectRepresentativeImage']);
+  // If isStringImageData is true, it is the s3 image url or "defaultImage" string. If it is false, the newly delivered image file data is received by putting the file object in the req through the uploadS3 middleware.
+  const isStringImageData = Boolean(req.body['projectRepresentativeImage']);
+  const imageData = req.body['projectRepresentativeImage'];
 
   const jsonDataFieldName = 'data';
 
   const multerS3File = (req as MulterRequest).file;
 
-  const representativeImageUrl = isSettingDefaultImage
-    ? 'defaultImage'
+  const representativeImageUrl = isStringImageData
+    ? imageData
     : multerS3File?.location;
 
   const content = JSON.parse(req.body[jsonDataFieldName]);
 
   return { representativeImageUrl, content };
 };
+
 interface ProjectCreateReqBody {
   title: string;
   contentHTML: string;
