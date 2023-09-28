@@ -19,9 +19,6 @@ export class ProjectMember {
   @Column()
   memberId: number;
 
-  @Column()
-  memberNickname: string;
-
   @CreateDateColumn()
   createdAt: Date;
 

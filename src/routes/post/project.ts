@@ -238,7 +238,6 @@ router.post(
             .values({
               projectId: projectData.id,
               memberId: user?.id,
-              memberNickname: user?.nickname,
               updatedAt: null,
             })
             .execute();
@@ -859,7 +858,7 @@ router.post(
       let existBookmarkId: null | number = null;
 
       for (let obj of accessUser.bookmarks) {
-        if (obj['bookmarkProjectId'] === postId) {
+        if (obj['projectId'] === postId) {
           existBookmarkId = obj['id'];
         }
       }
@@ -888,7 +887,7 @@ router.post(
           .createQueryBuilder()
           .insert()
           .into(Bookmark)
-          .values([{ user: accessUser, bookmarkProjectId: postId }])
+          .values([{ user: accessUser, projectId: postId }])
           .execute();
 
         await queryRunner.commitTransaction();
@@ -932,7 +931,7 @@ router.get(
         where: {
           id: requestUser.id,
           bookmarks: {
-            bookmarkProjectId: postId,
+            projectId: postId,
           },
         },
         relations: { bookmarks: true },
@@ -960,5 +959,7 @@ router.get(
     }
   }
 );
+
+router.post('/join', (req: Request, res: Response, next: NextFunction) => {});
 
 export default router;

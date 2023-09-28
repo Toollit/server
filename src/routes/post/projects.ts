@@ -71,7 +71,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
         const bookmarks = await bookmarkRepository.find({
           where: {
-            bookmarkProjectId: project.id,
+            projectId: project.id,
           },
         });
 
@@ -140,9 +140,7 @@ router.get(
 
       const hashBookmark = bookmarks.length >= 1;
 
-      const bookmarkIds = bookmarks.map(
-        (bookmark) => bookmark.bookmarkProjectId
-      );
+      const bookmarkIds = bookmarks.map((bookmark) => bookmark.projectId);
 
       if (hashBookmark) {
         return res.status(200).json({

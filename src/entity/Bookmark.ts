@@ -14,13 +14,13 @@ export class Bookmark {
   id: number;
 
   @Column()
-  bookmarkProjectId: number;
+  projectId: number;
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn({ nullable: true, default: null })
-  updatedAt: Date | null = null;
+  updatedAt: Date | null;
 
   @ManyToOne(() => User, (user) => user.bookmarks)
   user: User;
