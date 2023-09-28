@@ -4,8 +4,8 @@
     "target": "es5",
     "module": "commonjs",
     "moduleResolution": "node",
-    "baseUrl": "./src",
-    "rootDir": "./src",
+    "baseUrl": ".",
+    "rootDir": ".",
     "outDir": "./dist",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
@@ -16,7 +16,7 @@
     "strictPropertyInitialization": false,
     "skipLibCheck": true,
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["src/*"]
     }
   },
   "ts-node": { "files": true },

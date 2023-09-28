@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "typeorm-ts-node-commonjs schema:sync -d dist/data-source && cross-env NODE_ENV=production TS_NODE_BASEURL=./dist node -r ts-node/register/transpile-only -r tsconfig-paths/register dist/app.js",
+    "start": "typeorm-ts-node-commonjs schema:sync -d ./dist/src/data-source.js && cross-env NODE_ENV=production TS_NODE_BASEURL=./dist node -r ts-node/register/transpile-only -r tsconfig-paths/register ./dist/src/app.js",
     "dev": "npm run typeorm && cross-env NODE_ENV=development nodemon",
     "build": "rm -rf dist && npx tsc -p .",
     "typeorm": "typeorm-ts-node-commonjs schema:sync -d src/data-source",
