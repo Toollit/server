@@ -54,6 +54,7 @@ router.get(
           hashtags: true,
           memberTypes: true,
           comments: true,
+          members: true,
         },
         order: {
           memberTypes: {
@@ -79,10 +80,15 @@ router.get(
         user,
         hashtags,
         memberTypes,
-        comments,
         recruitNumber,
         representativeImage,
+        members,
       } = project;
+
+      const writer = await userRepository.findOne({
+        where: { id: user.id },
+        relations: { profile: true },
+      });
 
       const processedHashtagsData = hashtags.map((hashtag) => hashtag.tagName);
 
@@ -114,9 +120,22 @@ router.get(
         );
       });
 
-      const writer = await userRepository.findOne({
-        where: { id: user.id },
-        relations: { profile: true },
+      const getMembersDetailInfos = members.map((member) => {
+        const user = userRepository.findOne({
+          where: { id: member.memberId },
+          relations: { profile: true },
+        });
+
+        return user;
+      });
+
+      const memberDetailInfos = await Promise.all(getMembersDetailInfos);
+
+      const memberProfiles = memberDetailInfos.map((user) => {
+        return {
+          nickname: user?.nickname,
+          profileImage: user?.profile.profileImage,
+        };
       });
 
       return res.status(200).json({
@@ -140,7 +159,9 @@ router.get(
             recruitNumber,
             representativeImage,
           },
-          comments,
+          member: {
+            profiles: memberProfiles,
+          },
         },
       });
     } catch (error) {
