@@ -984,6 +984,75 @@ router.get(
   }
 );
 
-router.post('/join', (req: Request, res: Response, next: NextFunction) => {});
+router.post(
+  '/join',
+  isLoggedIn,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const requestUser = req.user;
+    const { postId } = req.body;
+
+    if (!requestUser) {
+      return res.status(403).json({
+        success: false,
+        message: '로그인이 후 이용 가능합니다.',
+      });
+    }
+
+    try {
+      const projectRepository = AppDataSource.getRepository(Project);
+
+      const project = await projectRepository.findOne({
+        where: {
+          id: postId,
+        },
+        relations: { user: true },
+      });
+
+      if (!project) {
+        throw new Error('project does not exist');
+      }
+
+      const isMyPost = requestUser?.id === project?.user.id;
+
+      if (isMyPost) {
+        return res.status(403).json({
+          success: false,
+          message: '내가 작성한 게시글 입니다.',
+        });
+      }
+
+      const isExistMember = await AppDataSource.getRepository(ProjectMember)
+        .createQueryBuilder('projectMember')
+        .where('projectMember.memberId = :memberId', {
+          memberId: requestUser.id,
+        })
+        .getOne();
+
+      if (isExistMember) {
+        return res.status(403).json({
+          success: false,
+          message: '참여 중인 프로젝트입니다.',
+        });
+      }
+
+      await AppDataSource.createQueryBuilder()
+        .insert()
+        .into(ProjectMember)
+        .values({
+          projectId: postId,
+          memberId: requestUser.id,
+          updatedAt: null,
+        })
+        .execute();
+
+      return res.status(200).json({
+        success: true,
+        message: null,
+      });
+    } catch (error) {
+      return next(error);
+    }
+  }
+);
 
 export default router;
