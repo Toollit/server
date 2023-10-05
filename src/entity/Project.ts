@@ -70,5 +70,5 @@ export class Project {
   memberTypes: MemberType[];
 
   @OneToMany(() => ProjectMember, (projectMember) => projectMember.project)
-  memberId: MemberType[];
+  members: ProjectMember[];
 }
