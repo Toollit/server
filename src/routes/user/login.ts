@@ -53,10 +53,12 @@ router.post('/email', (req: Request, res: Response, next: NextFunction) => {
         if (user) {
           return res.status(200).json({
             success: true,
-            message:
-              info?.message === 'resetPassword'
-                ? 'resetPassword'
-                : 'login success',
+            message: null,
+            data: {
+              nickname: user.nickname,
+              needResetPassword:
+                info?.message === 'resetPassword' ? true : false,
+            },
           });
         }
       });

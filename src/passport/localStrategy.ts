@@ -3,6 +3,12 @@ import passportLocal from 'passport-local';
 import crypto from 'crypto';
 import { AppDataSource } from '@/data-source';
 import { User } from '@/entity/User';
+import {
+  CLIENT_ERROR_EXIST_SIGNUP_SOCIAL_LOGIN,
+  CLIENT_ERROR_MISMATCH_EMAIL_PASSWORD,
+  CLIENT_ERROR_LOGIN_FAILED_COUNT,
+  CLIENT_ERROR_LOGIN_LIMIT,
+} from '@/message/error';
 
 const LocalStrategy = passportLocal.Strategy;
 
@@ -21,14 +27,14 @@ export default () =>
         // not exist user
         if (!user) {
           return cb(null, false, {
-            message: '회원 이메일 또는 비밀번호가 일치하지 않습니다.',
+            message: CLIENT_ERROR_MISMATCH_EMAIL_PASSWORD,
           });
         }
 
         // social login user
         if (user.signUpType !== 'email') {
           return cb(null, false, {
-            message: '소셜 로그인을 통해 가입이 이루어진 계정입니다.',
+            message: CLIENT_ERROR_EXIST_SIGNUP_SOCIAL_LOGIN,
           });
         }
 
@@ -42,7 +48,7 @@ export default () =>
         // login failed more than 5 user
         if (user.loginFailedCount >= 5) {
           return cb(null, false, {
-            message: `비밀번호 5회 연속 오류로 서비스 이용이 불가합니다.\n(*고객센터 - 공지사항 - 비밀번호 5회 연속 오류 공지 확인)`,
+            message: CLIENT_ERROR_LOGIN_LIMIT,
           });
         }
 
@@ -126,7 +132,10 @@ export default () =>
                 const loginFailedCount = loginTryUser?.loginFailedCount;
 
                 return cb(null, false, {
-                  message: `비밀번호가 일치하지 않습니다.\n5회 이상 오류시 서비스 이용이 제한됩니다.\n(누적오류입력 ${loginFailedCount}회)`,
+                  message: CLIENT_ERROR_LOGIN_FAILED_COUNT.replace(
+                    '{loginFailedCount}',
+                    String(loginFailedCount)
+                  ),
                 });
               } catch (error) {
                 return cb(error);
