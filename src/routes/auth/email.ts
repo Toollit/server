@@ -6,6 +6,11 @@ import { createClient } from 'redis';
 import dotenv from 'dotenv';
 import { AppDataSource } from '@/data-source';
 import { User } from '@/entity/User';
+import {
+  CLIENT_ERROR_EXIST_EMAIL,
+  CLIENT_ERROR_MISMATCH_AUTH_CODE,
+  CLIENT_ERROR_EXPIRE_AUTH_TIME,
+} from '@/message/error';
 
 dotenv.config();
 
@@ -50,9 +55,9 @@ router.post(
       });
 
       if (isExistedEmail) {
-        return res.status(400).json({
+        return res.status(409).json({
           success: false,
-          message: '가입되어있는 이메일 입니다.',
+          message: CLIENT_ERROR_EXIST_EMAIL,
         });
       }
     } catch (error) {
@@ -97,7 +102,9 @@ router.post(
         transporter.close();
         return next(error);
       }
-      console.log('finish sending email : ' + info.response);
+      console.log(
+        `[${info.accepted}] - finish sending email : ` + info.response
+      );
 
       try {
         // save authCode to redis. redis cache expires in 5 minutes
@@ -105,7 +112,7 @@ router.post(
 
         return res.status(200).json({
           success: true,
-          message: 'sending email success',
+          message: null,
         });
       } catch (error) {
         return next(error);
@@ -134,23 +141,23 @@ router.post(
       const redisAuthCode = await redisClient.v4.get(email);
 
       if (redisAuthCode === null) {
-        return res.status(500).json({
-          success: true,
-          message: '인증시간이 만료되었습니다.',
+        return res.status(401).json({
+          success: false,
+          message: CLIENT_ERROR_EXPIRE_AUTH_TIME,
         });
       }
 
       if (authCode === redisAuthCode) {
         return res.status(200).json({
           success: true,
-          message: 'verify success',
+          message: null,
         });
       }
 
       if (authCode !== redisAuthCode) {
         return res.status(400).json({
-          success: true,
-          message: '인증번호가 일치하지 않습니다.',
+          success: false,
+          message: CLIENT_ERROR_MISMATCH_AUTH_CODE,
         });
       }
     } catch (error) {
