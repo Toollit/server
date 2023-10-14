@@ -85,28 +85,14 @@ router.get(
         user: User,
         info: {
           success: boolean;
-          message: 'empty' | 'duplicate' | 'error' | 'firstTime';
+          message: 'empty' | 'duplicate' | 'error' | 'firstTime' | null;
         }
       ) => {
         if (err) {
           return next(err);
         }
 
-        if (info.success) {
-          return req.login(user, async (err) => {
-            if (err) {
-              return next(err);
-            }
-
-            if (user) {
-              if (info.message === 'firstTime') {
-                return res.redirect(FIRST_TIME_REDIRECT);
-              }
-
-              return res.redirect(SUCCESS_REDIRECT);
-            }
-          });
-        } else {
+        if (!user) {
           if (info.message === 'empty') {
             return res.redirect(EMPTY_REDIRECT);
           }
@@ -117,6 +103,22 @@ router.get(
             return res.redirect(FAILURE_REDIRECT);
           }
         }
+
+        return req.login(user, async (err) => {
+          if (err) {
+            return next(err);
+          }
+
+          // first time login user
+          if (info.message === 'firstTime') {
+            return res.redirect(FIRST_TIME_REDIRECT);
+          }
+
+          // exist user login
+          if (info.message === null) {
+            return res.redirect(SUCCESS_REDIRECT);
+          }
+        });
       }
     )(req, res, next);
   }

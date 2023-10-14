@@ -24,9 +24,9 @@ export default () => {
       async function (request, accessToken, refreshToken, profile, done) {
         const email = profile.emails?.[0]?.value;
 
-        // 이메일 정보가 없는 경우
+        // Profile does not have email info
         if (!email) {
-          return done(null, undefined, { success: false, message: 'empty' });
+          return done(null, undefined, { message: 'empty' });
         }
 
         const userRepository = AppDataSource.getRepository(User);
@@ -34,7 +34,7 @@ export default () => {
         try {
           const user = await userRepository.findOne({ where: { email } });
 
-          // 이미 가입한 사용자 로그인
+          // Already a joined user and run login logic
           if (user && user.signUpType === 'google') {
             const isUpdated = await AppDataSource.createQueryBuilder()
               .update(User)
@@ -43,16 +43,16 @@ export default () => {
               .execute();
 
             if (isUpdated) {
-              return done(null, user, { success: true });
+              return done(null, user, { message: null });
             }
           }
 
-          // 동일한 이메일의 다른 가입 정보가 있는 경우
+          // There is different registration information for the same email address.
           if (user && user.signUpType !== 'google') {
-            return done(null, user, { success: false, message: 'duplicate' });
+            return done(null, undefined, { message: 'duplicate' });
           }
 
-          // 중복된 이메일이 없는 경우 DB저장(최초가입)
+          // Sign up logic. There are no duplicate emails. first time joining
           if (!user) {
             const queryRunner = AppDataSource.createQueryRunner();
 
@@ -88,18 +88,12 @@ export default () => {
               await queryRunner.commitTransaction();
 
               if (user) {
-                return done(null, user, {
-                  success: true,
-                  message: 'firstTime',
-                });
+                return done(null, user, { message: 'firstTime' });
               }
             } catch (error) {
               await queryRunner.rollbackTransaction();
 
-              return done(null, undefined, {
-                success: false,
-                message: 'error',
-              });
+              return done(null, undefined, { message: 'error' });
             } finally {
               return await queryRunner.release();
             }
