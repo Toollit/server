@@ -9,6 +9,13 @@ import { uploadS3 } from '@/middleware/uploadS3';
 import { Bookmark } from '@/entity/Bookmark';
 import { isLoggedIn } from '@/middleware/loginCheck';
 import { ProjectMember } from '@/entity/ProjectMember';
+import {
+  CLIENT_ERROR_LOGIN_REQUIRED,
+  CLIENT_ERROR_MEMBER_OF_PROJECT,
+  CLIENT_ERROR_NOT_FOUND,
+  CLIENT_ERROR_WRITTEN_BY_ME,
+  SERVER_ERROR_DEFAULT,
+} from '@/message/error';
 import dotenv from 'dotenv';
 
 interface MulterRequest extends Request {
@@ -65,8 +72,8 @@ router.get(
 
       if (!project) {
         return res.status(404).json({
-          success: true,
-          message: null,
+          success: false,
+          message: CLIENT_ERROR_NOT_FOUND,
         });
       }
 
@@ -214,7 +221,7 @@ router.post(
     if (representativeImageUrl === undefined) {
       return res.status(500).json({
         success: false,
-        message: 'representative image url is undefined',
+        message: SERVER_ERROR_DEFAULT,
       });
     }
 
@@ -305,7 +312,7 @@ router.post(
 
           return res.status(201).json({
             success: true,
-            message: 'success create project',
+            message: null,
             data: {
               postId: projectData.id,
             },
@@ -341,7 +348,7 @@ router.post(
     if (contentImageUrl === undefined) {
       return res.status(500).json({
         success: false,
-        message: 'contentImageUrl is undefined',
+        message: SERVER_ERROR_DEFAULT,
       });
     }
 
@@ -382,7 +389,7 @@ router.post(
     if (representativeImageUrl === undefined) {
       return res.status(500).json({
         success: false,
-        message: 'representative image url is undefined',
+        message: SERVER_ERROR_DEFAULT,
       });
     }
 
@@ -720,7 +727,7 @@ router.post(
         }
       };
 
-      const responses = await Promise.all([
+      await Promise.all([
         updateTitleContentFields(),
         updateProjectContentImages(),
         updateProjectHashtags(),
@@ -731,25 +738,11 @@ router.post(
 
       await queryRunner.commitTransaction();
 
-      const isContentNotChanged = responses.every((value) => value === null);
-
-      if (isContentNotChanged) {
-        return res.status(200).json({
-          success: true,
-          message: 'nothing change',
-          data: {
-            postId: Number(postId),
-          },
-        });
-      } else {
-        return res.status(200).json({
-          success: true,
-          message: 'project updated successfully',
-          data: {
-            postId: Number(postId),
-          },
-        });
-      }
+      return res.status(200).json({
+        success: true,
+        message: null,
+        data: { postId },
+      });
     } catch (error) {
       await queryRunner.rollbackTransaction();
 
@@ -821,7 +814,7 @@ router.post(
 
       return res.status(200).json({
         success: true,
-        message: 'resource deleted successfully',
+        message: null,
       });
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -850,9 +843,9 @@ router.post(
     const user = req.user;
 
     if (!user) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
-        message: null,
+        message: CLIENT_ERROR_LOGIN_REQUIRED,
       });
     }
 
@@ -873,10 +866,7 @@ router.post(
       });
 
       if (!accessUser) {
-        return res.status(400).json({
-          success: false,
-          message: null,
-        });
+        throw new Error();
       }
 
       let existBookmarkId: null | number = null;
@@ -992,9 +982,9 @@ router.post(
     const { postId } = req.body;
 
     if (!requestUser) {
-      return res.status(403).json({
+      return res.status(401).json({
         success: false,
-        message: '로그인이 후 이용 가능합니다.',
+        message: CLIENT_ERROR_LOGIN_REQUIRED,
       });
     }
 
@@ -1017,7 +1007,7 @@ router.post(
       if (isMyPost) {
         return res.status(403).json({
           success: false,
-          message: '내가 작성한 게시글 입니다.',
+          message: CLIENT_ERROR_WRITTEN_BY_ME,
         });
       }
 
@@ -1031,7 +1021,7 @@ router.post(
       if (isExistMember) {
         return res.status(403).json({
           success: false,
-          message: '참여 중인 프로젝트입니다.',
+          message: CLIENT_ERROR_MEMBER_OF_PROJECT,
         });
       }
 
