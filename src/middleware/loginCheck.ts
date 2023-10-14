@@ -1,4 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
+import {
+  CLIENT_ERROR_ABNORMAL_ACCESS,
+  CLIENT_ERROR_LOGIN_REQUIRED,
+} from '@/message/error';
 
 /** login check middleware */
 
@@ -9,9 +13,9 @@ const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
   if (req.isAuthenticated()) {
     next();
   } else {
-    res.status(500).json({
+    res.status(401).json({
       success: false,
-      message: '로그인이 후 이용 가능합니다.',
+      message: CLIENT_ERROR_LOGIN_REQUIRED,
     });
   }
 };
@@ -23,9 +27,9 @@ const isNotLoggedIn = (req: Request, res: Response, next: NextFunction) => {
   if (!req.isAuthenticated()) {
     next();
   } else {
-    res.status(500).json({
+    res.status(401).json({
       success: false,
-      message: '비정상적인 접근입니다.',
+      message: CLIENT_ERROR_ABNORMAL_ACCESS,
     });
   }
 };
