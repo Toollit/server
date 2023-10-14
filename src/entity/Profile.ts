@@ -39,5 +39,5 @@ export class Profile {
   createdAt: Date;
 
   @UpdateDateColumn({ nullable: true, default: null })
-  updatedAt: Date | null = null;
+  updatedAt: Date | null;
 }

@@ -45,5 +45,5 @@ export class Report {
   createdAt: Date;
 
   @UpdateDateColumn({ nullable: true, default: null })
-  updatedAt: Date | null = null;
+  updatedAt: Date | null;
 }
