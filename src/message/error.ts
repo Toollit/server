@@ -33,7 +33,7 @@ export const CLIENT_ERROR_MEMBER_OF_PROJECT = '참여 중인 프로젝트입니�
 export const CLIENT_ERROR_EXIST_REPORT = '이미 신고한 게시글 입니다.';
 
 export const CLIENT_ERROR_NICKNAME_ONLY_NO_SPACE_ENGLISH_NUMBER =
-  '닉네임은 영어, 숫자 조합으로만 가능합니다. 공백 불가.';
+  '닉네임은 공백 없이 영어, 숫자 조합으로만 가능합니다.';
 
 export const CLIENT_ERROR_NICKNAME_LENGTH_TWO_TO_TWENTY =
   '닉네임은 2자 이상 20자 이하까지 가능합니다.';
@@ -51,6 +51,8 @@ export const CLIENT_ERROR_NOT_EXIST_EMAIL =
 
 export const CLIENT_ERROR_SAME_PASSWORD_IMPOSSIBLE =
   '이전과 동일한 비밀번호로 변경할 수 없습니다.';
+
+export const CLIENT_ERROR_PENDING_APPROVAL = '승인 대기 중 입니다.';
 
 // # Server error responses status code 500 ~
 export const SERVER_ERROR_DEFAULT =

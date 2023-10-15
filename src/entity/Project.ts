@@ -13,6 +13,7 @@ import { Hashtag } from './Hashtag';
 import { Comment } from './Comment';
 import { MemberType } from './MemberType';
 import { ProjectMember } from './ProjectMember';
+import { ProjectJoinRequest } from './ProjectJoinRequest';
 
 @Entity()
 export class Project {
@@ -35,9 +36,6 @@ export class Project {
 
   @Column({ default: 0 })
   bookmarks: number;
-
-  @Column({ default: 0 })
-  memberNumber: number;
 
   @Column({ default: 0 })
   recruitNumber: number;
@@ -71,4 +69,10 @@ export class Project {
 
   @OneToMany(() => ProjectMember, (projectMember) => projectMember.project)
   members: ProjectMember[];
+
+  @OneToMany(
+    () => ProjectJoinRequest,
+    (projectJoinRequest) => projectJoinRequest.project
+  )
+  joinRequests: ProjectJoinRequest[];
 }

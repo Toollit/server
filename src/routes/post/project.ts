@@ -9,10 +9,12 @@ import { uploadS3 } from '@/middleware/uploadS3';
 import { Bookmark } from '@/entity/Bookmark';
 import { isLoggedIn } from '@/middleware/loginCheck';
 import { ProjectMember } from '@/entity/ProjectMember';
+import { ProjectJoinRequest } from '@/entity/ProjectJoinRequest';
 import {
   CLIENT_ERROR_LOGIN_REQUIRED,
   CLIENT_ERROR_MEMBER_OF_PROJECT,
   CLIENT_ERROR_NOT_FOUND,
+  CLIENT_ERROR_PENDING_APPROVAL,
   CLIENT_ERROR_WRITTEN_BY_ME,
   SERVER_ERROR_DEFAULT,
 } from '@/message/error';
@@ -1030,12 +1032,26 @@ router.post(
         });
       }
 
+      const isExistJoinRequest = await AppDataSource.getRepository(
+        ProjectJoinRequest
+      )
+        .createQueryBuilder('projectJoinRequest')
+        .where('projectJoinRequest.joinProjectId = :id', { id: postId })
+        .getOne();
+
+      if (isExistJoinRequest) {
+        return res.status(400).json({
+          success: false,
+          message: CLIENT_ERROR_PENDING_APPROVAL,
+        });
+      }
+
       await AppDataSource.createQueryBuilder()
         .insert()
-        .into(ProjectMember)
+        .into(ProjectJoinRequest)
         .values({
-          projectId: postId,
-          memberId: requestUser.id,
+          joinProjectId: postId,
+          requestUserId: requestUser.id,
           updatedAt: null,
         })
         .execute();
