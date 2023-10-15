@@ -827,7 +827,7 @@ router.post(
 );
 
 interface ProjectBookmarkReqBody {
-  postId: number;
+  postId: string;
 }
 
 // Project bookmark api
@@ -872,14 +872,13 @@ router.post(
       let existBookmarkId: null | number = null;
 
       for (let obj of accessUser.bookmarks) {
-        if (obj['projectId'] === postId) {
+        if (obj['projectId'] === Number(postId)) {
           existBookmarkId = obj['id'];
         }
       }
 
+      // cancel exist bookmark
       if (existBookmarkId) {
-        // cancel exist bookmark
-
         await queryRunner.manager
           .createQueryBuilder()
           .delete()
@@ -891,24 +890,30 @@ router.post(
 
         return res.status(200).json({
           success: true,
-          message: 'cancel',
+          message: null,
+          data: {
+            status: 'cancel',
+          },
         });
       }
 
+      // save new bookmark
       if (!existBookmarkId) {
-        // save new bookmark
         await queryRunner.manager
           .createQueryBuilder()
           .insert()
           .into(Bookmark)
-          .values([{ user: accessUser, projectId: postId }])
+          .values([{ user: accessUser, projectId: Number(postId) }])
           .execute();
 
         await queryRunner.commitTransaction();
 
         return res.status(200).json({
           success: true,
-          message: 'save',
+          message: null,
+          data: {
+            status: 'save',
+          },
         });
       }
     } catch (error) {
