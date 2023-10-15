@@ -5,6 +5,7 @@ import { User } from '@/entity/User';
 import { Profile } from '@/entity/Profile';
 import dotenv from 'dotenv';
 import { isLoggedIn } from '@/middleware/loginCheck';
+import { CLIENT_ERROR_DEFAULT } from '@/message/error';
 
 dotenv.config();
 
@@ -82,7 +83,7 @@ router.post('/', async (req, res, next) => {
 
                 return res.status(201).json({
                   success: true,
-                  message: 'signup success',
+                  message: null,
                 });
               });
             }
@@ -117,7 +118,7 @@ router.post(
     if (!nickname) {
       res.status(400).json({
         success: false,
-        message: 'nickname is empty',
+        message: CLIENT_ERROR_DEFAULT,
       });
     }
 
@@ -142,7 +143,7 @@ router.post(
 
       return res.status(201).json({
         success: true,
-        message: 'nickname is updated',
+        message: null,
       });
     } catch (error) {
       await queryRunner.rollbackTransaction();

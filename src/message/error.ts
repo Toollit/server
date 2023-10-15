@@ -32,7 +32,25 @@ export const CLIENT_ERROR_MEMBER_OF_PROJECT = '참여 중인 프로젝트입니�
 
 export const CLIENT_ERROR_EXIST_REPORT = '이미 신고한 게시글 입니다.';
 
-export const CLIENT_ERROR_ = '';
+export const CLIENT_ERROR_NICKNAME_ONLY_NO_SPACE_ENGLISH_NUMBER =
+  '닉네임은 영어, 숫자 조합으로만 가능합니다. 공백 불가.';
+
+export const CLIENT_ERROR_NICKNAME_LENGTH_TWO_TO_TWENTY =
+  '닉네임은 2자 이상 20자 이하까지 가능합니다.';
+
+export const CLIENT_ERROR_NICKNAME_ALREADY_EXIST =
+  '이미 존재하는 닉네임입니다. 다른 닉네임을 입력해 주세요.';
+
+export const CLIENT_ERROR_NOT_EXIST_USER = '존재하지 않는 유저 입니다.';
+
+export const CLIENT_ERROR_INTRODUCE_LENGTH_LIMIT =
+  '자기소개는 {lengthLimit}자 이하여야 합니다.';
+
+export const CLIENT_ERROR_NOT_EXIST_EMAIL =
+  '가입된 이메일 정보가 존재하지 않습니다.';
+
+export const CLIENT_ERROR_SAME_PASSWORD_IMPOSSIBLE =
+  '이전과 동일한 비밀번호로 변경할 수 없습니다.';
 
 // # Server error responses status code 500 ~
 export const SERVER_ERROR_DEFAULT =

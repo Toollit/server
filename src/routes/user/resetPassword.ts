@@ -4,6 +4,10 @@ import crypto from 'crypto';
 import { User } from '@/entity/User';
 import { isLoggedIn } from '@/middleware/loginCheck';
 import dotenv from 'dotenv';
+import {
+  CLIENT_ERROR_ABNORMAL_ACCESS,
+  CLIENT_ERROR_SAME_PASSWORD_IMPOSSIBLE,
+} from '@/message/error';
 
 dotenv.config();
 
@@ -36,7 +40,7 @@ router.post(
           if (crypto.timingSafeEqual(userPassword, hashedPassword)) {
             return res.status(400).json({
               success: false,
-              message: '이전과 동일한 비밀번호는 다시 사용할 수 없습니다.',
+              message: CLIENT_ERROR_SAME_PASSWORD_IMPOSSIBLE,
             });
           }
 
@@ -70,8 +74,7 @@ router.post(
 
                 return res.status(201).json({
                   success: true,
-                  message:
-                    '비밀번호 변경이 완료되었습니다. 새로운 비밀번호로 다시 로그인해주세요.',
+                  message: null,
                 });
               } catch (error) {
                 return next(error);
@@ -84,7 +87,7 @@ router.post(
       // wrong access without logged in with a temporary password
       return res.status(400).json({
         success: false,
-        message: '잘못된 접근 입니다.',
+        message: CLIENT_ERROR_ABNORMAL_ACCESS,
       });
     }
   }

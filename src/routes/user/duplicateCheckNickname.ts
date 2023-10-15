@@ -1,6 +1,12 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '@/data-source';
 import { User } from '@/entity/User';
+import { isLoggedIn } from '@/middleware/loginCheck';
+import {
+  CLIENT_ERROR_NICKNAME_ALREADY_EXIST,
+  CLIENT_ERROR_NICKNAME_LENGTH_TWO_TO_TWENTY,
+  CLIENT_ERROR_NICKNAME_ONLY_NO_SPACE_ENGLISH_NUMBER,
+} from '@/message/error';
 
 const router = express.Router();
 
@@ -11,6 +17,7 @@ interface RequestBody {
 // user nickname duplicate check router
 router.post(
   '/',
+  isLoggedIn,
   async (
     req: Request<{}, {}, RequestBody>,
     res: Response,
@@ -25,14 +32,14 @@ router.post(
     if (!isOnlyEnglishNumber) {
       return res.status(400).json({
         success: false,
-        message: '닉네임은 영어, 숫자 조합으로만 가능합니다.',
+        message: CLIENT_ERROR_NICKNAME_ONLY_NO_SPACE_ENGLISH_NUMBER,
       });
     }
 
     if (nickname.length < 2 || nickname.length > 20) {
       return res.status(400).json({
         success: false,
-        message: '닉네임은 2자 이상 20자 이하까지 가능합니다.',
+        message: CLIENT_ERROR_NICKNAME_LENGTH_TWO_TO_TWENTY,
       });
     }
 
@@ -45,7 +52,7 @@ router.post(
     if (isExistNickname) {
       return res.status(400).json({
         success: false,
-        message: '이미 존재하는 닉네임입니다. 다른 닉네임을 입력해 주세요.',
+        message: CLIENT_ERROR_NICKNAME_ALREADY_EXIST,
       });
     } else {
       return res.status(200).json({

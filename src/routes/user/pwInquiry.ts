@@ -1,11 +1,15 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '@/data-source';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidV4 } from 'uuid';
 import path from 'path';
 import nodemailer from 'nodemailer';
 import ejs from 'ejs';
 import { User } from '@/entity/User';
 import dotenv from 'dotenv';
+import {
+  CLIENT_ERROR_EXIST_SIGNUP_SOCIAL_LOGIN,
+  CLIENT_ERROR_NOT_EXIST_EMAIL,
+} from '@/message/error';
 
 dotenv.config();
 
@@ -28,11 +32,11 @@ router.post('/', async (req, res, next) => {
       if (user.signUpType !== 'email') {
         return res.status(400).json({
           success: false,
-          message: '소셜 로그인으로 가입한 사용자입니다.',
+          message: CLIENT_ERROR_EXIST_SIGNUP_SOCIAL_LOGIN,
         });
       }
 
-      const tempPassword = uuidv4().slice(0, 8);
+      const tempPassword = uuidV4().slice(0, 8);
 
       const isUpdated = await AppDataSource.createQueryBuilder()
         .update(User)
@@ -80,14 +84,15 @@ router.post('/', async (req, res, next) => {
             transporter.close();
             return next(error);
           }
-          console.log('finish sending email : ' + info.response);
+          console.log(
+            `[${info.accepted}] - finish sending email : ` + info.response
+          );
 
           transporter.close();
 
           return res.status(201).json({
             success: true,
-            message: '해당 이메일로 임시 비밀번호를 발급했습니다.',
-            tempPassword,
+            message: null,
           });
         });
       }
@@ -96,7 +101,7 @@ router.post('/', async (req, res, next) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: '가입된 이메일 정보가 존재하지 않습니다.',
+        message: CLIENT_ERROR_NOT_EXIST_EMAIL,
       });
     }
   } catch (error) {
