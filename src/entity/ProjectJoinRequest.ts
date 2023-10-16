@@ -14,7 +14,7 @@ export class ProjectJoinRequest {
   id: number;
 
   @Column()
-  joinProjectId: string;
+  projectId: number;
 
   @Column()
   requestUserId: number;

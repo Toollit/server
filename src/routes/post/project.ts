@@ -986,7 +986,7 @@ router.post(
   isLoggedIn,
   async (req: Request, res: Response, next: NextFunction) => {
     const requestUser = req.user;
-    const { postId } = req.body;
+    const postId = Number(req.body.postId);
 
     if (!requestUser) {
       return res.status(401).json({
@@ -1036,7 +1036,7 @@ router.post(
         ProjectJoinRequest
       )
         .createQueryBuilder('projectJoinRequest')
-        .where('projectJoinRequest.joinProjectId = :id', { id: postId })
+        .where('projectJoinRequest.projectId = :id', { id: postId })
         .getOne();
 
       if (isExistJoinRequest) {
@@ -1050,7 +1050,7 @@ router.post(
         .insert()
         .into(ProjectJoinRequest)
         .values({
-          joinProjectId: postId,
+          projectId: postId,
           requestUserId: requestUser.id,
           updatedAt: null,
         })
