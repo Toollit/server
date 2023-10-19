@@ -6,6 +6,7 @@ import { Profile } from '@/entity/Profile';
 import { uploadS3 } from '@/middleware/uploadS3';
 import dotenv from 'dotenv';
 import { isLoggedIn } from '@/middleware/loginCheck';
+import { Bookmark } from '@/entity/Bookmark';
 import {
   CLIENT_ERROR_ABNORMAL_ACCESS,
   CLIENT_ERROR_INTRODUCE_LENGTH_LIMIT,
@@ -173,9 +174,10 @@ router.get(
           .where('project.user = :userId', { userId: existUser.id })
           .leftJoinAndSelect('project.memberTypes', 'memberTypes')
           .leftJoinAndSelect('project.hashtags', 'hashtags')
+          .leftJoinAndSelect('project.members', 'members')
           .orderBy('project.id', 'DESC')
-          .skip(count ? count - 10 : 0)
-          .take(10)
+          .skip(count ? count - 5 : 0)
+          .take(5)
           .getMany();
 
         if (projects.length < 1) {
@@ -223,12 +225,23 @@ router.get(
               );
             });
 
+            const bookmarkRepository = AppDataSource.getRepository(Bookmark);
+            const bookmarks = await bookmarkRepository.find({
+              where: {
+                projectId: project.id,
+              },
+            });
+
+            const memberNumber = project.members.length - 1; // Exclude project writer
+
             return {
               id: project.id,
               title: project.title,
               views: project.views,
+              bookmarks: bookmarks.length,
               hashtags: extractTagNames,
               memberTypes: orderedMemberTypes,
+              memberNumber,
               recruitNumber: project.recruitNumber,
             };
           })
