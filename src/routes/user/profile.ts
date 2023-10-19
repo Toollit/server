@@ -5,6 +5,15 @@ import { Project } from '@/entity/Project';
 import { Profile } from '@/entity/Profile';
 import { uploadS3 } from '@/middleware/uploadS3';
 import dotenv from 'dotenv';
+import { isLoggedIn } from '@/middleware/loginCheck';
+import {
+  CLIENT_ERROR_ABNORMAL_ACCESS,
+  CLIENT_ERROR_INTRODUCE_LENGTH_LIMIT,
+  CLIENT_ERROR_NICKNAME_ALREADY_EXIST,
+  CLIENT_ERROR_NICKNAME_LENGTH_TWO_TO_TWENTY,
+  CLIENT_ERROR_NICKNAME_ONLY_NO_SPACE_ENGLISH_NUMBER,
+  CLIENT_ERROR_NOT_EXIST_USER,
+} from '@/message/error';
 
 dotenv.config();
 
@@ -35,9 +44,9 @@ router.get(
       .getOne();
 
     if (!existUser) {
-      return res.status(400).json({
+      return res.status(404).json({
         success: false,
-        message: '존재하지 않는 유저 입니다.',
+        message: CLIENT_ERROR_NOT_EXIST_USER,
         data: {
           existUser: false,
         },
@@ -68,7 +77,6 @@ router.get(
     next: NextFunction
   ) => {
     const user = req.user;
-    console.log('🚀 ~ file: user.ts:573 ~ user:', user);
     const nickname = req.params.nickname;
     const { tab, count } = req.query;
 
@@ -80,9 +88,9 @@ router.get(
         .getOne();
 
       if (!existUser) {
-        return res.status(400).json({
+        return res.status(404).json({
           success: false,
-          message: '존재하지 않는 유저 입니다.',
+          message: CLIENT_ERROR_NOT_EXIST_USER,
         });
       }
 
@@ -181,49 +189,50 @@ router.get(
           });
         }
 
-        const processedData = projects.map((project) => {
-          const processedHashtagsData = project.hashtags.map(
-            (hashtag) => hashtag.tagName
-          );
-
-          const processedMemberTypesData = project.memberTypes.map(
-            (memberType) => memberType.type
-          );
-
-          // developer, designer, pm, anyone 순으로 정렬
-          processedMemberTypesData.sort(function (a, b) {
-            return (
-              (a === 'developer'
-                ? -3
-                : a === 'designer'
-                ? -2
-                : a === 'pm'
-                ? -1
-                : a === 'anyone'
-                ? 0
-                : 1) -
-              (b === 'developer'
-                ? -3
-                : b === 'designer'
-                ? -2
-                : b === 'pm'
-                ? -1
-                : b === 'anyone'
-                ? 0
-                : 1)
+        const processedData = await Promise.all(
+          projects.map(async (project) => {
+            const extractTagNames = project.hashtags.map(
+              (hashtag) => hashtag.tagName
             );
-          });
 
-          return {
-            id: project.id,
-            title: project.title,
-            views: project.views,
-            hashtags: processedHashtagsData,
-            memberTypes: processedMemberTypesData,
-            memberNumber: project.memberNumber,
-            recruitNumber: project.recruitNumber,
-          };
-        });
+            const extractMemberTypes = project.memberTypes.map(
+              (memberType) => memberType.type
+            );
+
+            // developer, designer, pm, anyone 순으로 정렬
+            const orderedMemberTypes = extractMemberTypes.sort(function (a, b) {
+              return (
+                (a === 'developer'
+                  ? -3
+                  : a === 'designer'
+                  ? -2
+                  : a === 'pm'
+                  ? -1
+                  : a === 'anyone'
+                  ? 0
+                  : 1) -
+                (b === 'developer'
+                  ? -3
+                  : b === 'designer'
+                  ? -2
+                  : b === 'pm'
+                  ? -1
+                  : b === 'anyone'
+                  ? 0
+                  : 1)
+              );
+            });
+
+            return {
+              id: project.id,
+              title: project.title,
+              views: project.views,
+              hashtags: extractTagNames,
+              memberTypes: orderedMemberTypes,
+              recruitNumber: project.recruitNumber,
+            };
+          })
+        );
 
         return res.status(200).json({
           success: true,
@@ -276,6 +285,7 @@ interface MulterRequest extends Request {
 // profile page. profile info update router
 router.post(
   '/:category',
+  isLoggedIn,
   filterRequest,
   async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
@@ -286,7 +296,7 @@ router.post(
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: 'inappropriate approach',
+        message: CLIENT_ERROR_ABNORMAL_ACCESS,
       });
     }
 
@@ -347,10 +357,11 @@ router.post(
         const existNickname = requestUser?.nickname;
         const newNickname = data;
 
+        // request same nickname
         if (existNickname === newNickname) {
           return res.status(200).json({
             success: true,
-            message: 'request same nickname',
+            message: null,
             data: {
               nickname: data,
             },
@@ -365,23 +376,30 @@ router.post(
         if (isExistSameNickname) {
           return res.status(400).json({
             success: false,
-            message: '이미 사용 중인 닉네임입니다.',
+            message: CLIENT_ERROR_NICKNAME_ALREADY_EXIST,
           });
         }
 
-        if (newNickname.length < 4 || newNickname.length > 20) {
+        if (newNickname.length < 2 || newNickname.length > 20) {
           return res.status(400).json({
             success: false,
-            message: '닉네임은 4~20자 이어야 합니다.',
+            message: CLIENT_ERROR_NICKNAME_LENGTH_TWO_TO_TWENTY,
           });
         }
 
-        const koEnNumRegex = /^[0-9|a-zA-Z|ㄱ-ㅎ|ㅏ-ㅣ|가-힣]+$/;
+        // only korean, number, english is possible. white spaces impossible.
+        // const koEnNumRegex = /^[0-9|a-zA-Z|ㄱ-ㅎ|ㅏ-ㅣ|가-힣]+$/;
 
-        if (!koEnNumRegex.test(newNickname)) {
+        // only english, number is possible. white spaces impossible.
+        const onlyNoSpaceEnglishNumber = /^[a-zA-Z0-9]+$/;
+
+        const isOnlyNoSpaceEnglishNumber =
+          onlyNoSpaceEnglishNumber.test(newNickname);
+
+        if (!isOnlyNoSpaceEnglishNumber) {
           return res.status(400).json({
             success: false,
-            message: '한글, 숫자, 영어만 사용 가능합니다. 공백 불가.',
+            message: CLIENT_ERROR_NICKNAME_ONLY_NO_SPACE_ENGLISH_NUMBER,
           });
         }
 
@@ -405,7 +423,10 @@ router.post(
         if (data.length > 1000) {
           return res.status(400).json({
             success: false,
-            message: '자기소개는 1000자 이하여야 합니다.',
+            message: CLIENT_ERROR_INTRODUCE_LENGTH_LIMIT.replace(
+              '{lengthLimit}',
+              String(1000)
+            ),
           });
         }
 
