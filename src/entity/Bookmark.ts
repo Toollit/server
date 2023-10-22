@@ -5,13 +5,19 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToOne,
+  JoinColumn,
 } from 'typeorm';
 import { User } from './User';
+import { Project } from './Project';
 
 @Entity()
 export class Bookmark {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column()
+  userId: number;
 
   @Column()
   projectId: number;
@@ -24,4 +30,8 @@ export class Bookmark {
 
   @ManyToOne(() => User, (user) => user.bookmarks)
   user: User;
+
+  @OneToOne(() => Project)
+  @JoinColumn()
+  project: Project;
 }
