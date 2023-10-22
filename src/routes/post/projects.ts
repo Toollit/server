@@ -81,7 +81,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
           id: project.id,
           title: project.title,
           views: project.views,
-          bookmarks: bookmarks.length,
+          bookmarkCount: bookmarks.length,
           hashtags: extractTagNames,
           memberTypes: orderedMemberTypes,
           memberCount,
