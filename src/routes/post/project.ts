@@ -842,10 +842,10 @@ router.post(
     res: Response,
     next: NextFunction
   ) => {
-    const postId = req.body.postId;
-    const user = req.user;
+    const postId = Number(req.body.postId);
+    const requestUser = req.user;
 
-    if (!user) {
+    if (!requestUser) {
       return res.status(401).json({
         success: false,
         message: CLIENT_ERROR_LOGIN_REQUIRED,
@@ -859,34 +859,19 @@ router.post(
 
       await queryRunner.startTransaction();
 
-      const userRepository = queryRunner.manager.getRepository(User);
+      const existBookmark = await queryRunner.manager
+        .getRepository(Bookmark)
+        .findOne({
+          where: { userId: requestUser.id, projectId: postId },
+        });
 
-      const accessUser = await userRepository.findOne({
-        where: { id: user.id },
-        relations: {
-          bookmarks: true,
-        },
-      });
-
-      if (!accessUser) {
-        throw new Error();
-      }
-
-      let existBookmarkId: null | number = null;
-
-      for (let obj of accessUser.bookmarks) {
-        if (obj['projectId'] === Number(postId)) {
-          existBookmarkId = obj['id'];
-        }
-      }
-
-      // cancel exist bookmark
-      if (existBookmarkId) {
+      // Cancel exist bookmark
+      if (existBookmark) {
         await queryRunner.manager
           .createQueryBuilder()
           .delete()
           .from(Bookmark)
-          .where('id = :id', { id: existBookmarkId })
+          .where('id = :id', { id: existBookmark.id })
           .execute();
 
         await queryRunner.commitTransaction();
@@ -900,13 +885,13 @@ router.post(
         });
       }
 
-      // save new bookmark
-      if (!existBookmarkId) {
+      // Save new bookmark
+      if (!existBookmark) {
         await queryRunner.manager
           .createQueryBuilder()
           .insert()
           .into(Bookmark)
-          .values([{ user: accessUser, projectId: Number(postId) }])
+          .values([{ userId: requestUser.id, projectId: postId }])
           .execute();
 
         await queryRunner.commitTransaction();
