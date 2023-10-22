@@ -14,6 +14,7 @@ import { Comment } from './Comment';
 import { MemberType } from './MemberType';
 import { ProjectMember } from './ProjectMember';
 import { ProjectJoinRequest } from './ProjectJoinRequest';
+import { Bookmark } from './Bookmark';
 
 @Entity()
 export class Project {
@@ -33,9 +34,6 @@ export class Project {
 
   @Column({ default: 0 })
   views: number;
-
-  @Column({ default: 0 })
-  bookmarks: number;
 
   @Column({ default: 0 })
   recruitNumber: number;
@@ -75,4 +73,7 @@ export class Project {
     (projectJoinRequest) => projectJoinRequest.project
   )
   joinRequests: ProjectJoinRequest[];
+
+  @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
+  bookmarks: Bookmark[];
 }

@@ -5,8 +5,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
-  OneToOne,
-  JoinColumn,
 } from 'typeorm';
 import { User } from './User';
 import { Project } from './Project';
@@ -31,7 +29,6 @@ export class Bookmark {
   @ManyToOne(() => User, (user) => user.bookmarks)
   user: User;
 
-  @OneToOne(() => Project)
-  @JoinColumn()
+  @ManyToOne(() => Project, (project) => project.bookmarks)
   project: Project;
 }
