@@ -78,24 +78,38 @@ router.get(
     next: NextFunction
   ) => {
     const user = req.user;
-    const nickname = req.params.nickname;
+    const profileNickname = req.params.nickname;
     const { tab, count } = req.query;
 
     try {
-      const existUser = await AppDataSource.getRepository(User)
-        .createQueryBuilder('user')
-        .where('user.nickname = :nickname', { nickname })
-        .leftJoinAndSelect('user.profile', 'profile')
-        .getOne();
+      // const existUser = await AppDataSource.getRepository(User)
+      //   .createQueryBuilder('user')
+      //   .where('user.nickname = :nickname', { nickname })
+      //   .leftJoinAndSelect('user.profile', 'profile')
+      //   .leftJoinAndSelect('user.bookmarks', 'bookmarks')
+      //   .getOne();
 
-      if (!existUser) {
-        return res.status(404).json({
-          success: false,
-          message: CLIENT_ERROR_NOT_EXIST_USER,
-        });
-      }
+      // if (!existUser) {
+      //   return res.status(404).json({
+      //     success: false,
+      //     message: CLIENT_ERROR_NOT_EXIST_USER,
+      //   });
+      // }
 
       if (tab === undefined) {
+        const existUser = await AppDataSource.getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.nickname = :nickname', { nickname: profileNickname })
+          .leftJoinAndSelect('user.profile', 'profile')
+          .getOne();
+
+        if (!existUser) {
+          return res.status(404).json({
+            success: false,
+            message: CLIENT_ERROR_NOT_EXIST_USER,
+          });
+        }
+
         const { profile } = existUser;
         const { profileImage: url } = profile;
 
@@ -107,6 +121,19 @@ router.get(
       }
 
       if (tab === 'viewProfile') {
+        const existUser = await AppDataSource.getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.nickname = :nickname', { nickname: profileNickname })
+          .leftJoinAndSelect('user.profile', 'profile')
+          .getOne();
+
+        if (!existUser) {
+          return res.status(404).json({
+            success: false,
+            message: CLIENT_ERROR_NOT_EXIST_USER,
+          });
+        }
+
         const { email, nickname, signUpType, createdAt, lastLoginAt, profile } =
           existUser;
 
@@ -164,10 +191,22 @@ router.get(
       }
 
       if (tab === 'viewProjects') {
-        const projectCount = await AppDataSource.getRepository(Project)
+        const existUser = await AppDataSource.getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.nickname = :nickname', { nickname: profileNickname })
+          .getOne();
+
+        if (!existUser) {
+          return res.status(404).json({
+            success: false,
+            message: CLIENT_ERROR_NOT_EXIST_USER,
+          });
+        }
+
+        const projectTotalCount = await AppDataSource.getRepository(Project)
           .createQueryBuilder('project')
           .where('project.user = :userId', { userId: existUser.id })
-          .getMany();
+          .getCount();
 
         const projects = await AppDataSource.getRepository(Project)
           .createQueryBuilder('project')
@@ -186,7 +225,7 @@ router.get(
             message: null,
             data: {
               projects, // projects is empty array []
-              total: projectCount.length,
+              total: projectTotalCount,
             },
           });
         }
@@ -252,17 +291,121 @@ router.get(
           message: null,
           data: {
             projects: processedData,
-            total: projectCount.length,
+            total: projectTotalCount,
           },
         });
       }
 
       if (tab === 'viewBookmarks') {
+        const profileUser = await AppDataSource.getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.nickname = :nickname', { nickname: profileNickname })
+          .getOne();
+
+        if (!profileUser) {
+          return res.status(404).json({
+            success: false,
+            message: CLIENT_ERROR_NOT_EXIST_USER,
+          });
+        }
+
+        const bookmarkTotalCount = await AppDataSource.getRepository(Bookmark)
+          .createQueryBuilder('bookmark')
+          .where('bookmark.userId = :userId', { userId: profileUser.id })
+          .getCount();
+
+        const bookmarks = await AppDataSource.getRepository(Bookmark)
+          .createQueryBuilder('bookmark')
+          .where('bookmark.userId = :userId', { userId: profileUser.id })
+          .leftJoinAndSelect('bookmark.project', 'project')
+          .leftJoinAndSelect('project.hashtags', 'hashtags')
+          .leftJoinAndSelect('project.memberTypes', 'memberTypes')
+          .leftJoinAndSelect('project.members', 'members')
+          .orderBy('project.id', 'DESC')
+          .skip(count ? count - 5 : 0)
+          .take(5)
+          .getMany();
+
+        const bookmarkProjects = bookmarks.map((v) => {
+          return v.project;
+        });
+
+        if (bookmarks.length < 1) {
+          return res.status(200).json({
+            success: true,
+            message: null,
+            data: {
+              bookmarkProjects, // projects is empty array []
+              total: bookmarkTotalCount,
+            },
+          });
+        }
+
+        const processedData = await Promise.all(
+          bookmarkProjects.map(async (project) => {
+            const extractTagNames = project?.hashtags.map(
+              (hashtag) => hashtag.tagName
+            );
+
+            const extractMemberTypes = project?.memberTypes.map(
+              (memberType) => memberType.type
+            );
+
+            // developer, designer, pm, anyone 순으로 정렬
+            const orderedMemberTypes = extractMemberTypes?.sort(function (
+              a,
+              b
+            ) {
+              return (
+                (a === 'developer'
+                  ? -3
+                  : a === 'designer'
+                  ? -2
+                  : a === 'pm'
+                  ? -1
+                  : a === 'anyone'
+                  ? 0
+                  : 1) -
+                (b === 'developer'
+                  ? -3
+                  : b === 'designer'
+                  ? -2
+                  : b === 'pm'
+                  ? -1
+                  : b === 'anyone'
+                  ? 0
+                  : 1)
+              );
+            });
+
+            const bookmarkRepository = AppDataSource.getRepository(Bookmark);
+            const bookmarks = await bookmarkRepository.find({
+              where: {
+                projectId: project?.id,
+              },
+            });
+
+            const memberNumber = project.members.length - 1; // Exclude project writer
+
+            return {
+              id: project.id,
+              title: project.title,
+              views: project.views,
+              bookmarks: bookmarks.length,
+              hashtags: extractTagNames,
+              memberTypes: orderedMemberTypes,
+              memberNumber,
+              recruitNumber: project.recruitNumber,
+            };
+          })
+        );
+
         return res.status(200).json({
           success: true,
           message: null,
           data: {
-            bookmarks: ['북마크1', '북마크2', '북마크3', '북마크4'],
+            bookmarks: processedData,
+            total: bookmarkTotalCount,
           },
         });
       }
