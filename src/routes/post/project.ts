@@ -89,7 +89,7 @@ router.get(
         user,
         hashtags,
         memberTypes,
-        recruitNumber,
+        recruitCount,
         representativeImage,
         members,
       } = project;
@@ -165,8 +165,8 @@ router.get(
             updatedAt,
             hashtags: processedHashtagsData,
             memberTypes: processedMemberTypesData,
-            memberNumber: members.length,
-            recruitNumber,
+            memberCount: members.length,
+            recruitCount,
             representativeImage,
           },
           member: {
@@ -205,7 +205,7 @@ interface ProjectCreateReqBody {
   imageUrls: string[];
   hashtags: string[];
   memberTypes: ('developer' | 'designer' | 'pm' | 'anyone')[];
-  recruitNumber: number;
+  recruitCount: number;
 }
 
 // Project create api
@@ -237,7 +237,7 @@ router.post(
       imageUrls,
       hashtags,
       memberTypes,
-      recruitNumber,
+      recruitCount,
     } = content as ProjectCreateReqBody;
 
     const queryRunner = AppDataSource.createQueryRunner();
@@ -257,7 +257,7 @@ router.post(
         newProject.contentHTML = contentHTML;
         newProject.contentMarkdown = contentMarkdown;
         newProject.user = writer;
-        newProject.recruitNumber = recruitNumber;
+        newProject.recruitCount = recruitCount;
         newProject.representativeImage = representativeImageUrl;
 
         const projectRepository = queryRunner.manager.getRepository(Project);
@@ -373,7 +373,7 @@ interface ProjectUpdateReqBody {
   imageUrls: string[];
   hashtags: string[];
   memberTypes: ('developer' | 'designer' | 'pm' | 'anyone')[];
-  recruitNumber: number;
+  recruitCount: number;
 }
 
 // Update project post information api
@@ -404,7 +404,7 @@ router.post(
       imageUrls: modifiedImageUrls,
       hashtags: modifiedHashtags,
       memberTypes: modifiedMemberTypes,
-      recruitNumber: modifiedRecruitNumber,
+      recruitCount: modifiedRecruitCount,
     } = content as ProjectUpdateReqBody;
 
     const queryRunner = AppDataSource.createQueryRunner();
@@ -426,8 +426,8 @@ router.post(
         existProject &&
         modifiedHashtags.length >= 1 &&
         modifiedMemberTypes.length >= 1 &&
-        modifiedRecruitNumber >= 1 &&
-        modifiedRecruitNumber <= 100
+        modifiedRecruitCount >= 1 &&
+        modifiedRecruitCount <= 100
       );
 
       if (dataValidationConditions) {
@@ -668,11 +668,11 @@ router.post(
         }
       };
 
-      const updateProjectRecruitNumber = async () => {
+      const updateProjectRecruitCount = async () => {
         try {
-          const existRecruitNumber = existProject?.recruitNumber;
+          const existRecruitCount = existProject?.recruitCount;
 
-          if (!existRecruitNumber) {
+          if (!existRecruitCount) {
             throw new Error();
           }
 
@@ -684,14 +684,14 @@ router.post(
             return true;
           };
 
-          if (isDataEqual(existRecruitNumber, modifiedRecruitNumber)) {
+          if (isDataEqual(existRecruitCount, modifiedRecruitCount)) {
             return null;
           }
 
           await queryRunner.manager
             .createQueryBuilder()
             .update(Project)
-            .set({ recruitNumber: modifiedRecruitNumber })
+            .set({ recruitCount: modifiedRecruitCount })
             .where('id = :postId', { postId: Number(postId) })
             .execute();
         } catch (error) {
@@ -735,7 +735,7 @@ router.post(
         updateProjectContentImages(),
         updateProjectHashtags(),
         updateProjectMemberTypes(),
-        updateProjectRecruitNumber(),
+        updateProjectRecruitCount(),
         updateProjectRepresentativeImage(),
       ]);
 

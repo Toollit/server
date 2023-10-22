@@ -23,30 +23,30 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
   try {
     const projects = await projectRepository.find({
-      relations: { hashtags: true, memberTypes: true },
+      relations: { hashtags: true, memberTypes: true, members: true },
       order: order === 'new' ? { id: 'DESC' } : { views: 'DESC' },
       skip: page >= 2 ? skip : 0,
       take: postsPerPage,
     });
 
-    const projectsTotalCount = await projectRepository
+    const projectTotalCount = await projectRepository
       .createQueryBuilder('projects')
       .getCount();
 
-    const totalPage = Math.ceil(projectsTotalCount / postsPerPage);
+    const totalPage = Math.ceil(projectTotalCount / postsPerPage);
 
     const processedData = await Promise.all(
       projects.map(async (project) => {
-        const processedHashtagsData = project.hashtags.map(
+        const extractTagNames = project.hashtags.map(
           (hashtag) => hashtag.tagName
         );
 
-        const processedMemberTypesData = project.memberTypes.map(
+        const extractMemberTypes = project.memberTypes.map(
           (memberType) => memberType.type
         );
 
         // developer, designer, pm, anyone 순으로 정렬
-        processedMemberTypesData.sort(function (a, b) {
+        const orderedMemberTypes = extractMemberTypes.sort(function (a, b) {
           return (
             (a === 'developer'
               ? -3
@@ -75,15 +75,17 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
           },
         });
 
+        const memberCount = project.members.length - 1; // Exclude project writer
+
         return {
           id: project.id,
           title: project.title,
           views: project.views,
           bookmarks: bookmarks.length,
-          hashtags: processedHashtagsData,
-          memberTypes: processedMemberTypesData,
-          memberNumber: project.memberNumber,
-          recruitNumber: project.recruitNumber,
+          hashtags: extractTagNames,
+          memberTypes: orderedMemberTypes,
+          memberCount,
+          recruitCount: project.recruitCount,
           representativeImage: project.representativeImage,
         };
       })

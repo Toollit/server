@@ -36,7 +36,7 @@ export class Project {
   views: number;
 
   @Column({ default: 0 })
-  recruitNumber: number;
+  recruitCount: number;
 
   @Column()
   representativeImage: string;
