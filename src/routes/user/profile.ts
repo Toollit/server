@@ -33,38 +33,77 @@ interface ProfileRequestQuery {
   count?: number;
 }
 
+// Profile page user exist check router
 router.get(
   '/:nickname/existCheck',
   async (req: Request, res: Response, next: NextFunction) => {
     const nickname = req.params.nickname;
 
-    const existUser = await AppDataSource.getRepository(User)
-      .createQueryBuilder('user')
-      .where('user.nickname = :nickname', { nickname })
-      .leftJoinAndSelect('user.profile', 'profile')
-      .getOne();
+    try {
+      const existUser = await AppDataSource.getRepository(User)
+        .createQueryBuilder('user')
+        .where('user.nickname = :nickname', { nickname })
+        .getOne();
 
-    if (!existUser) {
-      return res.status(404).json({
-        success: false,
-        message: CLIENT_ERROR_NOT_EXIST_USER,
+      if (!existUser) {
+        return res.status(404).json({
+          success: false,
+          message: CLIENT_ERROR_NOT_EXIST_USER,
+          data: {
+            existUser: false,
+          },
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: null,
         data: {
-          existUser: false,
+          existUser: true,
         },
       });
+    } catch (error) {
+      return next(error);
     }
-
-    return res.status(200).json({
-      success: true,
-      message: null,
-      data: {
-        existUser: true,
-      },
-    });
   }
 );
 
-// profile page profile info response router
+// Profile page user profile image router
+router.get(
+  '/:nickname/profileImage',
+  async (req: Request, res: Response, next: NextFunction) => {
+    const profileNickname = req.params.nickname;
+
+    try {
+      const existUser = await AppDataSource.getRepository(User)
+        .createQueryBuilder('user')
+        .where('user.nickname = :nickname', { nickname: profileNickname })
+        .leftJoinAndSelect('user.profile', 'profile')
+        .getOne();
+
+      if (!existUser) {
+        return res.status(404).json({
+          success: false,
+          message: CLIENT_ERROR_NOT_EXIST_USER,
+        });
+      }
+
+      const {
+        profile: { profileImage: url },
+      } = existUser;
+
+      return res.status(200).json({
+        success: true,
+        message: null,
+        data: { profileImage: url },
+      });
+    } catch (error) {
+      return next(error);
+    }
+  }
+);
+
+// Profile page profile info, projects, bookmarks, alarms router
 router.get(
   '/:nickname',
   async (
@@ -77,57 +116,19 @@ router.get(
     res: Response,
     next: NextFunction
   ) => {
-    const user = req.user;
+    const requestUser = req.user;
     const profileNickname = req.params.nickname;
     const { tab, count } = req.query;
 
     try {
-      // const existUser = await AppDataSource.getRepository(User)
-      //   .createQueryBuilder('user')
-      //   .where('user.nickname = :nickname', { nickname })
-      //   .leftJoinAndSelect('user.profile', 'profile')
-      //   .leftJoinAndSelect('user.bookmarks', 'bookmarks')
-      //   .getOne();
-
-      // if (!existUser) {
-      //   return res.status(404).json({
-      //     success: false,
-      //     message: CLIENT_ERROR_NOT_EXIST_USER,
-      //   });
-      // }
-
-      if (tab === undefined) {
-        const existUser = await AppDataSource.getRepository(User)
-          .createQueryBuilder('user')
-          .where('user.nickname = :nickname', { nickname: profileNickname })
-          .leftJoinAndSelect('user.profile', 'profile')
-          .getOne();
-
-        if (!existUser) {
-          return res.status(404).json({
-            success: false,
-            message: CLIENT_ERROR_NOT_EXIST_USER,
-          });
-        }
-
-        const { profile } = existUser;
-        const { profileImage: url } = profile;
-
-        return res.status(200).json({
-          success: true,
-          message: null,
-          data: { profileImage: url },
-        });
-      }
-
       if (tab === 'viewProfile') {
-        const existUser = await AppDataSource.getRepository(User)
+        const user = await AppDataSource.getRepository(User)
           .createQueryBuilder('user')
           .where('user.nickname = :nickname', { nickname: profileNickname })
           .leftJoinAndSelect('user.profile', 'profile')
           .getOne();
 
-        if (!existUser) {
+        if (!user) {
           return res.status(404).json({
             success: false,
             message: CLIENT_ERROR_NOT_EXIST_USER,
@@ -135,7 +136,7 @@ router.get(
         }
 
         const { email, nickname, signUpType, createdAt, lastLoginAt, profile } =
-          existUser;
+          user;
 
         const {
           introduce,
@@ -148,7 +149,7 @@ router.get(
         } = profile;
 
         // Look up user's own profile
-        if (user?.nickname === nickname) {
+        if (requestUser?.nickname === nickname) {
           return res.status(200).json({
             success: true,
             message: null,
@@ -170,7 +171,7 @@ router.get(
         }
 
         // Look up other user's profile
-        if (user?.nickname !== nickname) {
+        if (requestUser?.nickname !== nickname) {
           return res.status(200).json({
             success: true,
             message: null,
@@ -191,26 +192,26 @@ router.get(
       }
 
       if (tab === 'viewProjects') {
-        const existUser = await AppDataSource.getRepository(User)
+        const user = await AppDataSource.getRepository(User)
           .createQueryBuilder('user')
           .where('user.nickname = :nickname', { nickname: profileNickname })
           .getOne();
 
-        if (!existUser) {
+        if (!user) {
           return res.status(404).json({
             success: false,
             message: CLIENT_ERROR_NOT_EXIST_USER,
           });
         }
 
-        const projectTotalCount = await AppDataSource.getRepository(Project)
+        const myProjectTotalCount = await AppDataSource.getRepository(Project)
           .createQueryBuilder('project')
-          .where('project.user = :userId', { userId: existUser.id })
+          .where('project.user = :userId', { userId: user.id })
           .getCount();
 
         const projects = await AppDataSource.getRepository(Project)
           .createQueryBuilder('project')
-          .where('project.user = :userId', { userId: existUser.id })
+          .where('project.user = :userId', { userId: user.id })
           .leftJoinAndSelect('project.memberTypes', 'memberTypes')
           .leftJoinAndSelect('project.hashtags', 'hashtags')
           .leftJoinAndSelect('project.members', 'members')
@@ -224,8 +225,8 @@ router.get(
             success: true,
             message: null,
             data: {
-              projects, // projects is empty array []
-              total: projectTotalCount,
+              projects, // projects is empty array [] if projects length is under 1.
+              total: myProjectTotalCount,
             },
           });
         }
@@ -240,7 +241,7 @@ router.get(
               (memberType) => memberType.type
             );
 
-            // developer, designer, pm, anyone 순으로 정렬
+            // Order of developer, designer, pm, anyone
             const orderedMemberTypes = extractMemberTypes.sort(function (a, b) {
               return (
                 (a === 'developer'
@@ -264,24 +265,25 @@ router.get(
               );
             });
 
-            const bookmarkRepository = AppDataSource.getRepository(Bookmark);
-            const bookmarks = await bookmarkRepository.find({
-              where: {
-                projectId: project.id,
-              },
-            });
+            const projectBookmarkedTotalCount =
+              await AppDataSource.getRepository(Bookmark)
+                .createQueryBuilder('bookmark')
+                .where('bookmark.projectId = projectId', {
+                  projectId: project.id,
+                })
+                .getCount();
 
-            const memberNumber = project.members.length - 1; // Exclude project writer
+            const memberCount = project.members.length - 1; // Exclude project writer
 
             return {
               id: project.id,
               title: project.title,
               views: project.views,
-              bookmarks: bookmarks.length,
+              bookmarkCount: projectBookmarkedTotalCount,
               hashtags: extractTagNames,
               memberTypes: orderedMemberTypes,
-              memberNumber,
-              recruitNumber: project.recruitNumber,
+              memberCount,
+              recruitCount: project.recruitCount,
             };
           })
         );
@@ -291,37 +293,37 @@ router.get(
           message: null,
           data: {
             projects: processedData,
-            total: projectTotalCount,
+            total: myProjectTotalCount,
           },
         });
       }
 
       if (tab === 'viewBookmarks') {
-        const profileUser = await AppDataSource.getRepository(User)
+        const user = await AppDataSource.getRepository(User)
           .createQueryBuilder('user')
           .where('user.nickname = :nickname', { nickname: profileNickname })
           .getOne();
 
-        if (!profileUser) {
+        if (!user) {
           return res.status(404).json({
             success: false,
             message: CLIENT_ERROR_NOT_EXIST_USER,
           });
         }
 
-        const bookmarkTotalCount = await AppDataSource.getRepository(Bookmark)
+        const myBookmarkTotalCount = await AppDataSource.getRepository(Bookmark)
           .createQueryBuilder('bookmark')
-          .where('bookmark.userId = :userId', { userId: profileUser.id })
+          .where('bookmark.userId = :userId', { userId: user.id })
           .getCount();
 
         const bookmarks = await AppDataSource.getRepository(Bookmark)
           .createQueryBuilder('bookmark')
-          .where('bookmark.userId = :userId', { userId: profileUser.id })
+          .where('bookmark.userId = :userId', { userId: user.id })
           .leftJoinAndSelect('bookmark.project', 'project')
           .leftJoinAndSelect('project.hashtags', 'hashtags')
           .leftJoinAndSelect('project.memberTypes', 'memberTypes')
           .leftJoinAndSelect('project.members', 'members')
-          .orderBy('project.id', 'DESC')
+          .orderBy('bookmark.id', 'DESC')
           .skip(count ? count - 5 : 0)
           .take(5)
           .getMany();
@@ -330,28 +332,28 @@ router.get(
           return v.project;
         });
 
-        if (bookmarks.length < 1) {
+        if (bookmarkProjects.length < 1) {
           return res.status(200).json({
             success: true,
             message: null,
             data: {
-              bookmarkProjects, // projects is empty array []
-              total: bookmarkTotalCount,
+              bookmarkProjects, // bookmarkProjects is empty array [] if bookmarkProjects length is under 1.
+              total: myBookmarkTotalCount,
             },
           });
         }
 
         const processedData = await Promise.all(
           bookmarkProjects.map(async (project) => {
-            const extractTagNames = project?.hashtags.map(
+            const extractTagNames = project.hashtags.map(
               (hashtag) => hashtag.tagName
             );
 
-            const extractMemberTypes = project?.memberTypes.map(
+            const extractMemberTypes = project.memberTypes.map(
               (memberType) => memberType.type
             );
 
-            // developer, designer, pm, anyone 순으로 정렬
+            // Order of developer, designer, pm, anyone
             const orderedMemberTypes = extractMemberTypes?.sort(function (
               a,
               b
@@ -378,24 +380,25 @@ router.get(
               );
             });
 
-            const bookmarkRepository = AppDataSource.getRepository(Bookmark);
-            const bookmarks = await bookmarkRepository.find({
-              where: {
-                projectId: project?.id,
-              },
-            });
+            const projectBookmarkedTotalCount =
+              await AppDataSource.getRepository(Bookmark)
+                .createQueryBuilder('bookmark')
+                .where('bookmark.projectId = projectId', {
+                  projectId: project.id,
+                })
+                .getCount();
 
-            const memberNumber = project.members.length - 1; // Exclude project writer
+            const memberCount = project.members.length - 1; // Exclude project writer
 
             return {
               id: project.id,
               title: project.title,
               views: project.views,
-              bookmarks: bookmarks.length,
+              bookmarkCount: projectBookmarkedTotalCount,
               hashtags: extractTagNames,
               memberTypes: orderedMemberTypes,
-              memberNumber,
-              recruitNumber: project.recruitNumber,
+              memberCount,
+              recruitCount: project.recruitCount,
             };
           })
         );
@@ -405,7 +408,7 @@ router.get(
           message: null,
           data: {
             bookmarks: processedData,
-            total: bookmarkTotalCount,
+            total: myBookmarkTotalCount,
           },
         });
       }
