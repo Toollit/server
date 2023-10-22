@@ -165,6 +165,7 @@ router.get(
             updatedAt,
             hashtags: processedHashtagsData,
             memberTypes: processedMemberTypesData,
+            memberNumber: members.length,
             recruitNumber,
             representativeImage,
           },
