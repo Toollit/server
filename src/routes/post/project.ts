@@ -1020,7 +1020,8 @@ router.post(
 
       const isExistMember = await AppDataSource.getRepository(ProjectMember)
         .createQueryBuilder('projectMember')
-        .where('projectMember.memberId = :memberId', {
+        .where('projectMember.projectId = :projectId', { projectId: postId })
+        .andWhere('projectMember.memberId = :memberId', {
           memberId: requestUser.id,
         })
         .getOne();
@@ -1036,7 +1037,12 @@ router.post(
         ProjectJoinRequest
       )
         .createQueryBuilder('projectJoinRequest')
-        .where('projectJoinRequest.projectId = :id', { id: postId })
+        .where('projectJoinRequest.projectId = :projectId', {
+          projectId: postId,
+        })
+        .andWhere('projectJoinRequest.requestUserId = :requestUserId', {
+          requestUserId: requestUser.id,
+        })
         .getOne();
 
       if (isExistJoinRequest) {
