@@ -14,6 +14,9 @@ export class ProjectJoinRequest {
   id: number;
 
   @Column()
+  writerId: number;
+
+  @Column()
   projectId: number;
 
   @Column()

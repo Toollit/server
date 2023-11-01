@@ -1056,6 +1056,7 @@ router.post(
         .insert()
         .into(ProjectJoinRequest)
         .values({
+          writerId: project.user.id,
           projectId: postId,
           requestUserId: requestUser.id,
           updatedAt: null,
