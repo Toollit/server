@@ -454,65 +454,10 @@ router.get(
               .where('user.id = :userId', { userId: request?.requestUserId })
               .getOne();
 
-            if (!project) {
-              return;
-            }
-
-            const extractTagNames = project.hashtags?.map(
-              (hashtag) => hashtag.tagName
-            );
-
-            const extractMemberTypes = project.memberTypes?.map(
-              (memberType) => memberType.type
-            );
-
-            // Order of developer, designer, pm, anyone
-            const orderedMemberTypes = extractMemberTypes?.sort(function (
-              a,
-              b
-            ) {
-              return (
-                (a === 'developer'
-                  ? -3
-                  : a === 'designer'
-                  ? -2
-                  : a === 'pm'
-                  ? -1
-                  : a === 'anyone'
-                  ? 0
-                  : 1) -
-                (b === 'developer'
-                  ? -3
-                  : b === 'designer'
-                  ? -2
-                  : b === 'pm'
-                  ? -1
-                  : b === 'anyone'
-                  ? 0
-                  : 1)
-              );
-            });
-
-            const projectBookmarkedTotalCount =
-              await AppDataSource.getRepository(Bookmark)
-                .createQueryBuilder('bookmark')
-                .where('bookmark.projectId = projectId', {
-                  projectId: project.id,
-                })
-                .getCount();
-
-            const memberCount = project.members?.length - 1; // Exclude project writer
-
             return {
               project: {
-                id: project.id,
-                title: project.title,
-                views: project.views,
-                bookmarkCount: projectBookmarkedTotalCount,
-                hashtags: extractTagNames,
-                memberTypes: orderedMemberTypes,
-                memberCount,
-                recruitCount: project.recruitCount,
+                id: project?.id,
+                title: project?.title,
                 createdAt: request.createdAt,
               },
               requestUser: {
