@@ -7,6 +7,7 @@ import { uploadS3 } from '@/middleware/uploadS3';
 import dotenv from 'dotenv';
 import { isLoggedIn } from '@/middleware/loginCheck';
 import { Bookmark } from '@/entity/Bookmark';
+import { ProjectJoinRequest } from '@/entity/ProjectJoinRequest';
 import {
   CLIENT_ERROR_ABNORMAL_ACCESS,
   CLIENT_ERROR_INTRODUCE_LENGTH_LIMIT,
@@ -29,7 +30,7 @@ interface ProfileResponseBody {}
 interface ProfileRequestBody {}
 
 interface ProfileRequestQuery {
-  tab: 'viewProfile' | 'viewProjects' | 'viewBookmarks';
+  tab: 'viewProfile' | 'viewProjects' | 'viewBookmarks' | 'viewAlarms';
   count?: number;
 }
 
@@ -409,6 +410,123 @@ router.get(
           data: {
             bookmarks: processedData,
             total: myBookmarkTotalCount,
+          },
+        });
+      }
+
+      if (tab === 'viewAlarms') {
+        const user = await AppDataSource.getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.nickname = :nickname', { nickname: profileNickname })
+          .getOne();
+
+        if (!user) {
+          return res.status(404).json({
+            success: false,
+            message: CLIENT_ERROR_NOT_EXIST_USER,
+          });
+        }
+
+        const projectJoinRequests = await AppDataSource.getRepository(
+          ProjectJoinRequest
+        )
+          .createQueryBuilder('projectJoinRequests')
+          .where('projectJoinRequests.writerId = :writerId', {
+            writerId: user.id,
+          })
+          .orderBy('projectJoinRequests.createdAt', 'DESC')
+          .getMany();
+
+        const projects = await Promise.all(
+          projectJoinRequests.map(async (request) => {
+            const project = await AppDataSource.getRepository(Project)
+              .createQueryBuilder('project')
+              .where('project.id = :projectId', {
+                projectId: request?.projectId,
+              })
+              .leftJoinAndSelect('project.memberTypes', 'memberTypes')
+              .leftJoinAndSelect('project.hashtags', 'hashtags')
+              .leftJoinAndSelect('project.members', 'members')
+              .getOne();
+
+            const requestUser = await AppDataSource.getRepository(User)
+              .createQueryBuilder('user')
+              .where('user.id = :userId', { userId: request?.requestUserId })
+              .getOne();
+
+            if (!project) {
+              return;
+            }
+
+            const extractTagNames = project.hashtags?.map(
+              (hashtag) => hashtag.tagName
+            );
+
+            const extractMemberTypes = project.memberTypes?.map(
+              (memberType) => memberType.type
+            );
+
+            // Order of developer, designer, pm, anyone
+            const orderedMemberTypes = extractMemberTypes?.sort(function (
+              a,
+              b
+            ) {
+              return (
+                (a === 'developer'
+                  ? -3
+                  : a === 'designer'
+                  ? -2
+                  : a === 'pm'
+                  ? -1
+                  : a === 'anyone'
+                  ? 0
+                  : 1) -
+                (b === 'developer'
+                  ? -3
+                  : b === 'designer'
+                  ? -2
+                  : b === 'pm'
+                  ? -1
+                  : b === 'anyone'
+                  ? 0
+                  : 1)
+              );
+            });
+
+            const projectBookmarkedTotalCount =
+              await AppDataSource.getRepository(Bookmark)
+                .createQueryBuilder('bookmark')
+                .where('bookmark.projectId = projectId', {
+                  projectId: project.id,
+                })
+                .getCount();
+
+            const memberCount = project.members?.length - 1; // Exclude project writer
+
+            return {
+              project: {
+                id: project.id,
+                title: project.title,
+                views: project.views,
+                bookmarkCount: projectBookmarkedTotalCount,
+                hashtags: extractTagNames,
+                memberTypes: orderedMemberTypes,
+                memberCount,
+                recruitCount: project.recruitCount,
+                createdAt: request.createdAt,
+              },
+              requestUser: {
+                nickname: requestUser?.nickname,
+              },
+            };
+          })
+        );
+
+        return res.status(200).json({
+          success: true,
+          message: null,
+          data: {
+            alarms: projects.length < 1 ? [] : projects,
           },
         });
       }
