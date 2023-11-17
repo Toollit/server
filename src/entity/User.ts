@@ -11,6 +11,7 @@ import {
 import { Project } from './Project';
 import { Profile } from './Profile';
 import { Bookmark } from './Bookmark';
+import { Notification } from './Notification';
 
 @Entity()
 export class User {
@@ -59,4 +60,7 @@ export class User {
 
   @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
   bookmarks: Bookmark[];
+
+  @OneToMany(() => Notification, (notification) => notification.user)
+  notifications: Notification[];
 }
