@@ -10,6 +10,7 @@ import { Bookmark } from '@/entity/Bookmark';
 import { isLoggedIn } from '@/middleware/loginCheck';
 import { ProjectMember } from '@/entity/ProjectMember';
 import { ProjectJoinRequest } from '@/entity/ProjectJoinRequest';
+import { Notification } from '@/entity/Notification';
 import {
   CLIENT_ERROR_LOGIN_REQUIRED,
   CLIENT_ERROR_MEMBER_OF_PROJECT,
@@ -1002,7 +1003,7 @@ router.post(
         where: {
           id: postId,
         },
-        relations: { user: true },
+        relations: { user: true }, // project writer
       });
 
       if (!project) {
@@ -1033,19 +1034,29 @@ router.post(
         });
       }
 
-      const isExistJoinRequest = await AppDataSource.getRepository(
-        ProjectJoinRequest
-      )
-        .createQueryBuilder('projectJoinRequest')
-        .where('projectJoinRequest.projectId = :projectId', {
-          projectId: postId,
+      const existJoinRequests = await AppDataSource.getRepository(Notification)
+        .createQueryBuilder('notification')
+        .where('notification.type = :type', {
+          type: 'projectJoinRequest',
         })
-        .andWhere('projectJoinRequest.requestUserId = :requestUserId', {
-          requestUserId: requestUser.id,
-        })
-        .getOne();
+        .getMany();
 
-      if (isExistJoinRequest) {
+      const jsonData: {
+        writerId: number;
+        projectId: number;
+        requestUserId: number;
+      }[] = existJoinRequests.map((req) => JSON.parse(req.content));
+
+      const isExistJoinRequest = jsonData.filter((data) => {
+        const { writerId, projectId, requestUserId } = data;
+        return (
+          requestUserId === requestUser.id &&
+          projectId === postId &&
+          writerId === project.user.id
+        );
+      });
+
+      if (isExistJoinRequest.length > 0) {
         return res.status(400).json({
           success: false,
           message: CLIENT_ERROR_PENDING_APPROVAL,
@@ -1054,12 +1065,17 @@ router.post(
 
       await AppDataSource.createQueryBuilder()
         .insert()
-        .into(ProjectJoinRequest)
+        .into(Notification)
         .values({
-          writerId: project.user.id,
-          projectId: postId,
-          requestUserId: requestUser.id,
+          type: 'projectJoinRequest',
+          isRead: false,
+          content: JSON.stringify({
+            writerId: project.user.id,
+            projectId: postId,
+            requestUserId: requestUser.id,
+          }),
           updatedAt: null,
+          user: project?.user,
         })
         .execute();
 
