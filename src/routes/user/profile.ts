@@ -433,40 +433,28 @@ router.get(
           .orderBy('notification.createdAt', 'DESC')
           .getMany();
 
-        const projectJoinRequestNotifications = notifications.filter(
-          (v) => v.type === 'projectJoinRequest'
-        );
-        const approveProjectJoinRequestNotifications = notifications.filter(
-          (v) => v.type === 'projectJoinApprove'
-        );
-        const rejectProjectJoinRequestNotifications = notifications.filter(
-          (v) => v.type === 'projectJoinReject'
-        );
-
-        const projects = await Promise.all(
-          projectJoinRequestNotifications.map(async (request) => {
-            const { projectId, requestUserId } = JSON.parse(request.content);
+        const result = await Promise.all(
+          notifications.map(async (notification) => {
+            const { type, content } = notification;
+            const { projectId, notificationCreatorId } = JSON.parse(content);
 
             const project = await AppDataSource.getRepository(Project)
               .createQueryBuilder('project')
               .where('project.id = :projectId', { projectId })
-              .leftJoinAndSelect('project.memberTypes', 'memberTypes')
-              .leftJoinAndSelect('project.hashtags', 'hashtags')
-              .leftJoinAndSelect('project.members', 'members')
               .getOne();
 
-            const joinRequestUser = await AppDataSource.getRepository(User)
+            const notificationCreator = await AppDataSource.getRepository(User)
               .createQueryBuilder('user')
-              .where('user.id = :userId', { userId: requestUserId })
+              .where('user.id = :userId', { userId: notificationCreatorId })
               .getOne();
 
             return {
-              type: 'projectJoinRequest',
-              id: request.id,
+              type,
+              id: notification.id,
               projectId: project?.id,
               projectTitle: project?.title,
-              createdAt: request.createdAt,
-              joinRequestUserNickname: joinRequestUser?.nickname,
+              createdAt: notification.createdAt,
+              notificationCreator: notificationCreator?.nickname,
             };
           })
         );
@@ -475,7 +463,7 @@ router.get(
           success: true,
           message: null,
           data: {
-            notifications: projects.length < 1 ? [] : projects,
+            notifications: result.length < 1 ? [] : result,
           },
         });
       }
