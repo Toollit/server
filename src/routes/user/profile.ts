@@ -7,7 +7,6 @@ import { uploadS3 } from '@/middleware/uploadS3';
 import dotenv from 'dotenv';
 import { isLoggedIn } from '@/middleware/loginCheck';
 import { Bookmark } from '@/entity/Bookmark';
-import { ProjectJoinRequest } from '@/entity/ProjectJoinRequest';
 import {
   CLIENT_ERROR_ABNORMAL_ACCESS,
   CLIENT_ERROR_INTRODUCE_LENGTH_LIMIT,
@@ -16,6 +15,7 @@ import {
   CLIENT_ERROR_NICKNAME_ONLY_NO_SPACE_ENGLISH_NUMBER,
   CLIENT_ERROR_NOT_EXIST_USER,
 } from '@/message/error';
+import { Notification } from '@/entity/Notification';
 
 dotenv.config();
 
@@ -427,42 +427,46 @@ router.get(
           });
         }
 
-        const projectJoinRequests = await AppDataSource.getRepository(
-          ProjectJoinRequest
-        )
-          .createQueryBuilder('projectJoinRequests')
-          .where('projectJoinRequests.writerId = :writerId', {
-            writerId: user.id,
-          })
-          .orderBy('projectJoinRequests.createdAt', 'DESC')
+        const notifications = await AppDataSource.getRepository(Notification)
+          .createQueryBuilder('notification')
+          .where('notification.userId = :userId', { userId: user.id })
+          .orderBy('notification.createdAt', 'DESC')
           .getMany();
 
+        const projectJoinRequestNotifications = notifications.filter(
+          (v) => v.type === 'projectJoinRequest'
+        );
+        const approveProjectJoinRequestNotifications = notifications.filter(
+          (v) => v.type === 'projectJoinApprove'
+        );
+        const rejectProjectJoinRequestNotifications = notifications.filter(
+          (v) => v.type === 'projectJoinReject'
+        );
+
         const projects = await Promise.all(
-          projectJoinRequests.map(async (request) => {
+          projectJoinRequestNotifications.map(async (request) => {
+            const { projectId, requestUserId } = JSON.parse(request.content);
+
             const project = await AppDataSource.getRepository(Project)
               .createQueryBuilder('project')
-              .where('project.id = :projectId', {
-                projectId: request?.projectId,
-              })
+              .where('project.id = :projectId', { projectId })
               .leftJoinAndSelect('project.memberTypes', 'memberTypes')
               .leftJoinAndSelect('project.hashtags', 'hashtags')
               .leftJoinAndSelect('project.members', 'members')
               .getOne();
 
-            const requestUser = await AppDataSource.getRepository(User)
+            const joinRequestUser = await AppDataSource.getRepository(User)
               .createQueryBuilder('user')
-              .where('user.id = :userId', { userId: request?.requestUserId })
+              .where('user.id = :userId', { userId: requestUserId })
               .getOne();
 
             return {
-              project: {
-                id: project?.id,
-                title: project?.title,
-                createdAt: request.createdAt,
-              },
-              requestUser: {
-                nickname: requestUser?.nickname,
-              },
+              type: 'projectJoinRequest',
+              id: request.id,
+              projectId: project?.id,
+              projectTitle: project?.title,
+              createdAt: request.createdAt,
+              joinRequestUserNickname: joinRequestUser?.nickname,
             };
           })
         );
@@ -471,7 +475,7 @@ router.get(
           success: true,
           message: null,
           data: {
-            alarms: projects.length < 1 ? [] : projects,
+            notifications: projects.length < 1 ? [] : projects,
           },
         });
       }
