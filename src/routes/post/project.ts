@@ -1083,4 +1083,123 @@ router.post(
   }
 );
 
+router.post(
+  `/join/:status`,
+  isLoggedIn,
+  async (
+    req: Request<
+      { status: 'approve' | 'reject' },
+      {},
+      { notificationId: number }
+    >,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const currentUser = req.user;
+    const { status } = req.params;
+    const { notificationId } = req.body;
+
+    if (!currentUser) {
+      return res.status(401).json({
+        success: false,
+        message: CLIENT_ERROR_LOGIN_REQUIRED,
+      });
+    }
+
+    if (status === 'approve') {
+      const queryRunner = AppDataSource.createQueryRunner();
+
+      try {
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+
+        const notification = await queryRunner.manager
+          .getRepository(Notification)
+          .createQueryBuilder('notification')
+          .where('notification.id = :id', { id: notificationId })
+          .getOne();
+
+        if (!notification) {
+          throw new Error('Notification does not exist');
+        }
+
+        const {
+          projectId,
+          notificationCreatorId,
+        }: {
+          projectId: number;
+          notificationCreatorId: number;
+        } = JSON.parse(notification.content);
+
+        // Project join Request user add project member
+        await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into(ProjectMember)
+          .values({
+            projectId,
+            memberId: notificationCreatorId,
+            updatedAt: null,
+          })
+          .execute();
+
+        // Delete notification from current user notification list
+        await queryRunner.manager
+          .createQueryBuilder()
+          .delete()
+          .from(Notification)
+          .where('id = :id', { id: notificationId })
+          .execute();
+
+        const projectJoinRequestUser = await queryRunner.manager
+          .getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.id = :id', { id: notificationCreatorId })
+          .getOne();
+
+        if (!projectJoinRequestUser) {
+          throw new Error('User does not exist');
+        }
+
+        // Send notification to project join request user
+        await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into(Notification)
+          .values({
+            type: 'projectJoinApprove',
+            isRead: false,
+            content: JSON.stringify({
+              projectId,
+              notificationCreatorId: currentUser.id,
+            }),
+            updatedAt: null,
+            user: projectJoinRequestUser,
+          })
+          .execute();
+
+        await queryRunner.commitTransaction();
+
+        return res.status(200).json({
+          success: true,
+          message: null,
+        });
+      } catch (error) {
+        await queryRunner.rollbackTransaction();
+        return next(error);
+      } finally {
+        await queryRunner.release();
+      }
+    }
+
+    if (status === 'reject') {
+      // TODO 참여 요청한 사용자에게 거절 알림이 보여지도록하고 알림내역에서 거절한 사용자는 알림 목록에서 알림내역을 삭제해야함.
+    }
+
+    return res.status(200).json({
+      test: true,
+    });
+  }
+);
+
 export default router;
