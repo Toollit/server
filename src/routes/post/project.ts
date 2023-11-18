@@ -986,10 +986,10 @@ router.post(
   '/join',
   isLoggedIn,
   async (req: Request, res: Response, next: NextFunction) => {
-    const requestUser = req.user;
+    const currentUser = req.user;
     const postId = Number(req.body.postId);
 
-    if (!requestUser) {
+    if (!currentUser) {
       return res.status(401).json({
         success: false,
         message: CLIENT_ERROR_LOGIN_REQUIRED,
@@ -1003,14 +1003,14 @@ router.post(
         where: {
           id: postId,
         },
-        relations: { user: true }, // project writer
+        relations: { user: true },
       });
 
       if (!project) {
         throw new Error('project does not exist');
       }
 
-      const isMyPost = requestUser?.id === project?.user.id;
+      const isMyPost = currentUser?.id === project?.user.id;
 
       if (isMyPost) {
         return res.status(403).json({
@@ -1023,7 +1023,7 @@ router.post(
         .createQueryBuilder('projectMember')
         .where('projectMember.projectId = :projectId', { projectId: postId })
         .andWhere('projectMember.memberId = :memberId', {
-          memberId: requestUser.id,
+          memberId: currentUser.id,
         })
         .getOne();
 
@@ -1034,29 +1034,24 @@ router.post(
         });
       }
 
-      const existJoinRequests = await AppDataSource.getRepository(Notification)
+      const projectJoinRequests = await AppDataSource.getRepository(
+        Notification
+      )
         .createQueryBuilder('notification')
         .where('notification.type = :type', {
           type: 'projectJoinRequest',
         })
         .getMany();
 
-      const jsonData: {
-        writerId: number;
-        projectId: number;
-        requestUserId: number;
-      }[] = existJoinRequests.map((req) => JSON.parse(req.content));
-
-      const isExistJoinRequest = jsonData.filter((data) => {
-        const { writerId, projectId, requestUserId } = data;
-        return (
-          requestUserId === requestUser.id &&
-          projectId === postId &&
-          writerId === project.user.id
+      const isExistJoinRequest = projectJoinRequests.find((request) => {
+        const { projectId, notificationCreatorId } = JSON.parse(
+          request.content
         );
+
+        return projectId === postId && notificationCreatorId === currentUser.id;
       });
 
-      if (isExistJoinRequest.length > 0) {
+      if (isExistJoinRequest) {
         return res.status(400).json({
           success: false,
           message: CLIENT_ERROR_PENDING_APPROVAL,
@@ -1070,12 +1065,11 @@ router.post(
           type: 'projectJoinRequest',
           isRead: false,
           content: JSON.stringify({
-            writerId: project.user.id,
             projectId: postId,
-            requestUserId: requestUser.id,
+            notificationCreatorId: currentUser.id,
           }),
           updatedAt: null,
-          user: project?.user,
+          user: project?.user, // Project writer. This field is intended to set the user who will receive the notification.
         })
         .execute();
 
