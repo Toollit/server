@@ -14,10 +14,7 @@ export class Notification {
   id: number;
 
   @Column()
-  type:
-    | 'projectJoinRequest'
-    | 'approveProjectJoinRequest'
-    | 'rejectProjectJoinRequest';
+  type: 'projectJoinRequest' | 'projectJoinApprove' | 'projectJoinReject';
 
   @Column()
   isRead: boolean;
