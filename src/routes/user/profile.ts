@@ -30,7 +30,7 @@ interface ProfileResponseBody {}
 interface ProfileRequestBody {}
 
 interface ProfileRequestQuery {
-  tab: 'viewProfile' | 'viewProjects' | 'viewBookmarks' | 'viewAlarms';
+  tab: 'viewProfile' | 'viewProjects' | 'viewBookmarks' | 'viewNotifications';
   count?: number;
 }
 
@@ -414,7 +414,7 @@ router.get(
         });
       }
 
-      if (tab === 'viewAlarms') {
+      if (tab === 'viewNotifications') {
         const user = await AppDataSource.getRepository(User)
           .createQueryBuilder('user')
           .where('user.nickname = :nickname', { nickname: profileNickname })
@@ -462,9 +462,7 @@ router.get(
         return res.status(200).json({
           success: true,
           message: null,
-          data: {
-            notifications: result.length < 1 ? [] : result,
-          },
+          data: result,
         });
       }
     } catch (error) {
