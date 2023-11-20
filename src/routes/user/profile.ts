@@ -462,7 +462,10 @@ router.get(
         return res.status(200).json({
           success: true,
           message: null,
-          data: result,
+          data: {
+            notifications: result,
+            total: notifications.length,
+          },
         });
       }
     } catch (error) {
