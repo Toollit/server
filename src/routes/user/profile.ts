@@ -892,4 +892,39 @@ router.post(
   }
 );
 
+router.post(
+  '/notification/delete',
+  isLoggedIn,
+  async (
+    req: Request<{}, {}, { notificationId: number }>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const currentUser = req.user;
+    const { notificationId } = req.body;
+
+    if (!currentUser) {
+      return res.status(400).json({
+        success: false,
+        message: CLIENT_ERROR_ABNORMAL_ACCESS,
+      });
+    }
+
+    try {
+      await AppDataSource.createQueryBuilder()
+        .delete()
+        .from(Notification)
+        .where('id = :id', { id: notificationId })
+        .execute();
+    } catch (err) {
+      return next(err);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: null,
+    });
+  }
+);
+
 export default router;
