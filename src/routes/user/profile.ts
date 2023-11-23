@@ -916,14 +916,14 @@ router.post(
         .from(Notification)
         .where('id = :id', { id: notificationId })
         .execute();
+
+      return res.status(200).json({
+        success: true,
+        message: null,
+      });
     } catch (err) {
       return next(err);
     }
-
-    return res.status(200).json({
-      success: true,
-      message: null,
-    });
   }
 );
 
