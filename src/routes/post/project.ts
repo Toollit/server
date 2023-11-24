@@ -12,6 +12,7 @@ import { ProjectMember } from '@/entity/ProjectMember';
 import { ProjectJoinRequest } from '@/entity/ProjectJoinRequest';
 import { Notification } from '@/entity/Notification';
 import {
+  CLIENT_ERROR_ABNORMAL_ACCESS,
   CLIENT_ERROR_LOGIN_REQUIRED,
   CLIENT_ERROR_MEMBER_OF_PROJECT,
   CLIENT_ERROR_NOT_FOUND,
@@ -198,7 +199,7 @@ const handleReqProjectRepresentativeImage = (req: Request) => {
   return { representativeImageUrl, content };
 };
 
-interface ProjectCreateReqBody {
+interface ProjectCreateReq {
   title: string;
   contentHTML: string;
   contentMarkdown: string;
@@ -208,7 +209,7 @@ interface ProjectCreateReqBody {
   recruitCount: number;
 }
 
-// Project create api
+// project create
 router.post(
   '/create',
   isLoggedIn,
@@ -222,13 +223,17 @@ router.post(
       handleReqProjectRepresentativeImage(req);
 
     if (representativeImageUrl === undefined) {
-      return res.status(500).json({
-        success: false,
-        message: SERVER_ERROR_DEFAULT,
-      });
+      return next(new Error('something wrong with representative image url'));
     }
 
-    const user = req.user;
+    const currentUser = req.user;
+
+    if (!currentUser) {
+      return res.status(400).json({
+        success: false,
+        message: CLIENT_ERROR_ABNORMAL_ACCESS,
+      });
+    }
 
     const {
       title,
@@ -238,96 +243,94 @@ router.post(
       hashtags,
       memberTypes,
       recruitCount,
-    } = content as ProjectCreateReqBody;
+    } = content as ProjectCreateReq;
 
     const queryRunner = AppDataSource.createQueryRunner();
 
     try {
       await queryRunner.connect();
-
       await queryRunner.startTransaction();
 
       const userRepository = queryRunner.manager.getRepository(User);
 
-      const writer = await userRepository.findOne({ where: { id: user?.id } });
+      const writer = await userRepository.findOne({
+        where: { id: currentUser.id },
+      });
 
-      if (writer && hashtags.length >= 1 && memberTypes.length >= 1) {
-        const newProject = new Project();
-        newProject.title = title;
-        newProject.contentHTML = contentHTML;
-        newProject.contentMarkdown = contentMarkdown;
-        newProject.user = writer;
-        newProject.recruitCount = recruitCount;
-        newProject.representativeImage = representativeImageUrl;
-
-        const projectRepository = queryRunner.manager.getRepository(Project);
-
-        try {
-          const projectData = await projectRepository.save(newProject);
-
-          await queryRunner.manager
-            .createQueryBuilder()
-            .insert()
-            .into(ProjectMember)
-            .values({
-              projectId: projectData.id,
-              memberId: user?.id,
-              updatedAt: null,
-            })
-            .execute();
-
-          const projectContentImageRepository =
-            queryRunner.manager.getRepository(ProjectContentImage);
-
-          const imgSaveRequests = imageUrls.map((url: string) => {
-            const newProjectContentImage = new ProjectContentImage();
-            newProjectContentImage.url = url;
-            newProjectContentImage.project = projectData;
-
-            projectContentImageRepository.save(newProjectContentImage);
-          });
-
-          await Promise.all(imgSaveRequests);
-
-          const addProcessedHashtags = hashtags.map((hashtag) => {
-            return { tagName: hashtag, project: projectData };
-          });
-
-          await queryRunner.manager
-            .createQueryBuilder()
-            .insert()
-            .into(Hashtag)
-            .values([...addProcessedHashtags])
-            .execute();
-
-          const addProcessedMemberTypes = memberTypes.map((memberType) => {
-            return { type: memberType, project: projectData };
-          });
-
-          await queryRunner.manager
-            .createQueryBuilder()
-            .insert()
-            .into(MemberType)
-            .values([...addProcessedMemberTypes])
-            .execute();
-
-          await queryRunner.commitTransaction();
-
-          return res.status(201).json({
-            success: true,
-            message: null,
-            data: {
-              postId: projectData.id,
-            },
-          });
-        } catch (error) {
-          return next(error);
-        }
+      if (!(writer && hashtags.length >= 1 && memberTypes.length >= 1)) {
+        throw new Error('something wrong with the writer or content data');
       }
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
 
-      return next(error);
+      const newProject = new Project();
+      newProject.title = title;
+      newProject.contentHTML = contentHTML;
+      newProject.contentMarkdown = contentMarkdown;
+      newProject.user = writer;
+      newProject.recruitCount = recruitCount;
+      newProject.representativeImage = representativeImageUrl;
+
+      const projectRepository = queryRunner.manager.getRepository(Project);
+
+      const projectData = await projectRepository.save(newProject);
+
+      await queryRunner.manager
+        .createQueryBuilder()
+        .insert()
+        .into(ProjectMember)
+        .values({
+          projectId: projectData.id,
+          memberId: currentUser.id,
+          updatedAt: null,
+        })
+        .execute();
+
+      const projectContentImageRepository =
+        queryRunner.manager.getRepository(ProjectContentImage);
+
+      const imgSaveRequests = imageUrls.map((url: string) => {
+        const newProjectContentImage = new ProjectContentImage();
+        newProjectContentImage.url = url;
+        newProjectContentImage.project = projectData;
+
+        projectContentImageRepository.save(newProjectContentImage);
+      });
+
+      await Promise.all(imgSaveRequests);
+
+      const addProcessedHashtags = hashtags.map((hashtag) => {
+        return { tagName: hashtag, project: projectData };
+      });
+
+      await queryRunner.manager
+        .createQueryBuilder()
+        .insert()
+        .into(Hashtag)
+        .values([...addProcessedHashtags])
+        .execute();
+
+      const addProcessedMemberTypes = memberTypes.map((memberType) => {
+        return { type: memberType, project: projectData };
+      });
+
+      await queryRunner.manager
+        .createQueryBuilder()
+        .insert()
+        .into(MemberType)
+        .values([...addProcessedMemberTypes])
+        .execute();
+
+      await queryRunner.commitTransaction();
+
+      return res.status(201).json({
+        success: true,
+        message: null,
+        data: {
+          postId: projectData.id,
+        },
+      });
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      return next(err);
     } finally {
       await queryRunner.release();
     }
