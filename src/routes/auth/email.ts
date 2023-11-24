@@ -32,14 +32,15 @@ redisClient.on('error', (err) => {
 
 const router = express.Router();
 
-interface EmailAuthCodeReqBody {
+interface IssueAuthCodeReq {
   email: string;
 }
 
+// issue authentication code upon sign up
 router.post(
   '/issueAuthCode',
   async (
-    req: Request<{}, {}, EmailAuthCodeReqBody>,
+    req: Request<{}, {}, IssueAuthCodeReq>,
     res: Response,
     next: NextFunction
   ) => {
@@ -60,8 +61,8 @@ router.post(
           message: CLIENT_ERROR_EXIST_EMAIL,
         });
       }
-    } catch (error) {
-      return next(error);
+    } catch (err) {
+      return next(err);
     }
 
     const authCode = Math.random().toString().slice(2, 8);
@@ -97,10 +98,10 @@ router.post(
       html: emailTemplate,
     };
 
-    transporter.sendMail(mailOptions, async function (error, info) {
-      if (error) {
+    transporter.sendMail(mailOptions, async function (err, info) {
+      if (err) {
         transporter.close();
-        return next(error);
+        return next(err);
       }
       console.log(
         `[${info.accepted}] - finish sending email : ` + info.response
@@ -114,8 +115,8 @@ router.post(
           success: true,
           message: null,
         });
-      } catch (error) {
-        return next(error);
+      } catch (err) {
+        return next(err);
       } finally {
         return transporter.close();
       }
