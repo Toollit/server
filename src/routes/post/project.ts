@@ -35,19 +35,18 @@ dotenv.config();
 
 const router = express.Router();
 
-// Project detail api
+// project detail info
 router.get(
   '/:postId',
   async (req: Request, res: Response, next: NextFunction) => {
     const postId = Number(req.params.postId);
-
     const modifyRequest = req.headers.modify;
 
     const projectRepository = AppDataSource.getRepository(Project);
     const userRepository = AppDataSource.getRepository(User);
 
     try {
-      // 조회시 조회수 1증가
+      // increasing the number of views each time a post is viewed
       await AppDataSource.createQueryBuilder()
         .update(Project)
         .set({
@@ -102,7 +101,7 @@ router.get(
 
       const processedHashtagsData = hashtags.map((hashtag) => hashtag.tagName);
 
-      // developer, designer, pm, anyone 순으로 정렬
+      // sorts in order of developer, designer, pm, and anyone
       const processedMemberTypesData = memberTypes.map(
         (memberType) => memberType.type
       );
@@ -175,8 +174,8 @@ router.get(
           },
         },
       });
-    } catch (error) {
-      return next(error);
+    } catch (err) {
+      return next(err);
     }
   }
 );
