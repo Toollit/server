@@ -124,15 +124,16 @@ router.post(
   }
 );
 
-interface AuthCodeReqBody {
+interface VerifyAuthCodeReq {
   email: string;
   authCode: string;
 }
 
+// check auth code sent to verify email when sign up
 router.post(
   '/verify',
   async (
-    req: Request<{}, {}, AuthCodeReqBody>,
+    req: Request<{}, {}, VerifyAuthCodeReq>,
     res: Response,
     next: NextFunction
   ) => {
@@ -161,8 +162,8 @@ router.post(
           message: CLIENT_ERROR_MISMATCH_AUTH_CODE,
         });
       }
-    } catch (error) {
-      next(error);
+    } catch (err) {
+      return next(err);
     }
   }
 );
