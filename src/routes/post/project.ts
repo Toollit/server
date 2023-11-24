@@ -337,7 +337,7 @@ router.post(
   }
 );
 
-// API to upload images included in project post
+// attach images to project content
 router.post(
   '/content/uploadImage',
   isLoggedIn,
@@ -352,10 +352,7 @@ router.post(
     const contentImageUrl = multerS3File?.location;
 
     if (contentImageUrl === undefined) {
-      return res.status(500).json({
-        success: false,
-        message: SERVER_ERROR_DEFAULT,
-      });
+      return next(new Error('something wrong with content image url'));
     }
 
     return res.status(201).json({
