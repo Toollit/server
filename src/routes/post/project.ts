@@ -365,7 +365,7 @@ router.post(
   }
 );
 
-interface ProjectUpdateReqBody {
+interface ProjectUpdateReq {
   postId: string;
   title: string;
   contentHTML: string;
@@ -376,7 +376,7 @@ interface ProjectUpdateReqBody {
   recruitCount: number;
 }
 
-// Update project post information api
+// Update project detail info
 router.post(
   '/update',
   isLoggedIn,
@@ -390,10 +390,7 @@ router.post(
       handleReqProjectRepresentativeImage(req);
 
     if (representativeImageUrl === undefined) {
-      return res.status(500).json({
-        success: false,
-        message: SERVER_ERROR_DEFAULT,
-      });
+      return next(new Error('Something wrong with representative image url'));
     }
 
     const {
@@ -405,13 +402,12 @@ router.post(
       hashtags: modifiedHashtags,
       memberTypes: modifiedMemberTypes,
       recruitCount: modifiedRecruitCount,
-    } = content as ProjectUpdateReqBody;
+    } = content as ProjectUpdateReq;
 
     const queryRunner = AppDataSource.createQueryRunner();
 
     try {
       await queryRunner.connect();
-
       await queryRunner.startTransaction();
 
       const projectRepository = queryRunner.manager.getRepository(Project);
@@ -422,16 +418,15 @@ router.post(
         },
       });
 
-      const dataValidationConditions = !(
+      const isValidData =
         existProject &&
         modifiedHashtags.length >= 1 &&
         modifiedMemberTypes.length >= 1 &&
         modifiedRecruitCount >= 1 &&
-        modifiedRecruitCount <= 100
-      );
+        modifiedRecruitCount <= 100;
 
-      if (dataValidationConditions) {
-        throw new Error();
+      if (!isValidData) {
+        throw new Error('Conditions of the data are not correct');
       }
 
       const updateTitleContentFields = async () => {
@@ -470,142 +465,129 @@ router.post(
           return null;
         }
 
-        // updateData가 빈 객체라도 createQueryBuilder execute 메소드가 동작하면 업데이트가 된 것 처럼 affected 1을 반환하므로 바로 위에 코드 nothingChange에서 업데이트가 필요없다고 판단되면 null을 반환한다.
-        try {
-          await queryRunner.manager
-            .createQueryBuilder()
-            .update(Project)
-            .set(updateData)
-            .where('id = :id', { id: existProject.id })
-            .execute();
-        } catch (error) {
-          next(error);
-        }
+        // When the createQueryBuilder execute method operates, there is a problem of returning affected 1 by recognizing that it has been updated even if an empty object is delivered.
+        // Therefore, if updateData is an empty object, it should be prevented from running the logic below.
+        await queryRunner.manager
+          .createQueryBuilder()
+          .update(Project)
+          .set(updateData)
+          .where('id = :id', { id: existProject.id })
+          .execute();
       };
 
       const updateProjectContentImages = async () => {
-        try {
-          const existProjectContentImages = await queryRunner.manager
-            .getRepository(ProjectContentImage)
-            .createQueryBuilder()
-            .where('ProjectContentImage.projectId = :postId', {
-              postId: Number(postId),
-            })
-            .getMany();
+        const existProjectContentImages = await queryRunner.manager
+          .getRepository(ProjectContentImage)
+          .createQueryBuilder()
+          .where('ProjectContentImage.projectId = :postId', {
+            postId: Number(postId),
+          })
+          .getMany();
 
-          const existImages = existProjectContentImages.map((image) => {
-            return image.url;
-          });
+        const existImages = existProjectContentImages.map((image) => {
+          return image.url;
+        });
 
-          // image url deleted from exist content
-          const toBeDeletedImages = existImages.filter(
-            (value) => !modifiedImageUrls.includes(value)
-          );
+        // Image url deleted from exist content
+        const toBeDeletedImages = existImages.filter(
+          (value) => !modifiedImageUrls.includes(value)
+        );
 
-          // image url added from exist content
-          const toBeAddedImages = modifiedImageUrls.filter(
-            (value) => !existImages.includes(value)
-          );
+        // Image url added from exist content
+        const toBeAddedImages = modifiedImageUrls.filter(
+          (value) => !existImages.includes(value)
+        );
 
-          const isEqualData =
-            toBeDeletedImages.length === 0 && toBeAddedImages.length === 0;
+        const isEqualData =
+          toBeDeletedImages.length === 0 && toBeAddedImages.length === 0;
 
-          // If no data has been changed, return true
-          if (isEqualData) {
-            return null;
-          }
-
-          const deleteImageRequests = toBeDeletedImages.map((url: string) => {
-            const request = queryRunner.manager
-              .createQueryBuilder()
-              .delete()
-              .from(ProjectContentImage)
-              .where('projectId = :postId', { postId: Number(postId) })
-              .andWhere('url = :url', { url })
-              .execute();
-
-            return request;
-          });
-
-          await Promise.all(deleteImageRequests);
-
-          const addProcessedProjectContentImages = toBeAddedImages.map(
-            (url) => {
-              return { url, project: existProject };
-            }
-          );
-
-          await queryRunner.manager
-            .createQueryBuilder()
-            .insert()
-            .into(ProjectContentImage)
-            .values([...addProcessedProjectContentImages])
-            .execute();
-        } catch (error) {
-          next(error);
+        // If there is no changed data, return null
+        if (isEqualData) {
+          return null;
         }
+
+        const deleteImageRequests = toBeDeletedImages.map((url: string) => {
+          const request = queryRunner.manager
+            .createQueryBuilder()
+            .delete()
+            .from(ProjectContentImage)
+            .where('projectId = :postId', { postId: Number(postId) })
+            .andWhere('url = :url', { url })
+            .execute();
+
+          return request;
+        });
+
+        await Promise.all(deleteImageRequests);
+
+        const addProcessedProjectContentImages = toBeAddedImages.map((url) => {
+          return { url, project: existProject };
+        });
+
+        await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into(ProjectContentImage)
+          .values([...addProcessedProjectContentImages])
+          .execute();
       };
 
       const updateProjectHashtags = async () => {
-        try {
-          const existProjectHashtags = await queryRunner.manager
-            .getRepository(Hashtag)
-            .createQueryBuilder()
-            .where('hashtag.projectId = :postId', { postId: Number(postId) })
-            .getMany();
+        const existProjectHashtags = await queryRunner.manager
+          .getRepository(Hashtag)
+          .createQueryBuilder()
+          .where('hashtag.projectId = :postId', { postId: Number(postId) })
+          .getMany();
 
-          const existHashtags = existProjectHashtags.map((hashtag) => {
-            return hashtag.tagName;
-          });
+        const existHashtags = existProjectHashtags.map((hashtag) => {
+          return hashtag.tagName;
+        });
 
-          const isEqualData = (
-            existedData: string[],
-            modifiedHData: string[]
-          ) => {
-            if (existedData.length !== modifiedHData.length) {
-              return false;
-            }
-
-            for (let i = 0; i < existedData.length; i++) {
-              if (existedData[i] !== modifiedHData[i]) {
-                return false;
-              }
-            }
-
-            return true;
-          };
-
-          if (isEqualData(existHashtags, modifiedHashtags)) {
-            return null;
+        const isEqualData = (
+          existedData: string[],
+          modifiedHData: string[]
+        ) => {
+          if (existedData.length !== modifiedHData.length) {
+            return false;
           }
 
-          const deleteHashtagRequests = existHashtags.map((tagName: string) => {
-            const result = queryRunner.manager
-              .createQueryBuilder()
-              .delete()
-              .from(Hashtag)
-              .where('projectId = :postId', { postId: Number(postId) })
-              .andWhere('tagName = :tagName', { tagName })
-              .execute();
+          for (let i = 0; i < existedData.length; i++) {
+            if (existedData[i] !== modifiedHData[i]) {
+              return false;
+            }
+          }
 
-            return result;
-          });
+          return true;
+        };
 
-          await Promise.all(deleteHashtagRequests);
-
-          const addProcessedHashtags = modifiedHashtags.map((hashtag) => {
-            return { tagName: hashtag, project: existProject };
-          });
-
-          await queryRunner.manager
-            .createQueryBuilder()
-            .insert()
-            .into(Hashtag)
-            .values([...addProcessedHashtags])
-            .execute();
-        } catch (error) {
-          next(error);
+        if (isEqualData(existHashtags, modifiedHashtags)) {
+          return null;
         }
+
+        const deleteHashtagRequests = existHashtags.map((tagName: string) => {
+          const result = queryRunner.manager
+            .createQueryBuilder()
+            .delete()
+            .from(Hashtag)
+            .where('projectId = :postId', { postId: Number(postId) })
+            .andWhere('tagName = :tagName', { tagName })
+            .execute();
+
+          return result;
+        });
+
+        await Promise.all(deleteHashtagRequests);
+
+        const addProcessedHashtags = modifiedHashtags.map((hashtag) => {
+          return { tagName: hashtag, project: existProject };
+        });
+
+        await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into(Hashtag)
+          .values([...addProcessedHashtags])
+          .execute();
       };
 
       const updateProjectMemberTypes = async () => {
@@ -656,78 +638,58 @@ router.post(
           return { type, project: existProject };
         });
 
-        try {
-          await queryRunner.manager
-            .createQueryBuilder()
-            .insert()
-            .into(MemberType)
-            .values([...addProcessedMemberTypes])
-            .execute();
-        } catch (error) {
-          next(error);
-        }
+        await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into(MemberType)
+          .values([...addProcessedMemberTypes])
+          .execute();
       };
 
       const updateProjectRecruitCount = async () => {
-        try {
-          const existRecruitCount = existProject?.recruitCount;
+        const existRecruitCount = existProject.recruitCount;
 
-          if (!existRecruitCount) {
-            throw new Error();
+        const isEqualData = (existData: number, newData: number) => {
+          if (existData !== newData) {
+            return false;
           }
 
-          const isDataEqual = (existData: number, newData: number) => {
-            if (existData !== newData) {
-              return false;
-            }
+          return true;
+        };
 
-            return true;
-          };
-
-          if (isDataEqual(existRecruitCount, modifiedRecruitCount)) {
-            return null;
-          }
-
-          await queryRunner.manager
-            .createQueryBuilder()
-            .update(Project)
-            .set({ recruitCount: modifiedRecruitCount })
-            .where('id = :postId', { postId: Number(postId) })
-            .execute();
-        } catch (error) {
-          next(error);
+        if (isEqualData(existRecruitCount, modifiedRecruitCount)) {
+          return null;
         }
+
+        await queryRunner.manager
+          .createQueryBuilder()
+          .update(Project)
+          .set({ recruitCount: modifiedRecruitCount })
+          .where('id = :postId', { postId: Number(postId) })
+          .execute();
       };
 
       const updateProjectRepresentativeImage = async () => {
-        try {
-          const existRepresentativeImage = existProject?.representativeImage;
+        const existRepresentativeImage = existProject.representativeImage;
 
-          if (!existRepresentativeImage) {
-            throw new Error();
+        const isEqualData = (existData: string, newData: string) => {
+          if (existData !== newData) {
+            return false;
           }
 
-          const isDataEqual = (existData: string, newData: string) => {
-            if (existData !== newData) {
-              return false;
-            }
+          return true;
+        };
 
-            return true;
-          };
-
-          if (isDataEqual(existRepresentativeImage, representativeImageUrl)) {
-            return null;
-          }
-
-          await queryRunner.manager
-            .createQueryBuilder()
-            .update(Project)
-            .set({ representativeImage: representativeImageUrl })
-            .where('id = :postId', { postId: Number(postId) })
-            .execute();
-        } catch (error) {
-          next(error);
+        if (isEqualData(existRepresentativeImage, representativeImageUrl)) {
+          return null;
         }
+
+        await queryRunner.manager
+          .createQueryBuilder()
+          .update(Project)
+          .set({ representativeImage: representativeImageUrl })
+          .where('id = :postId', { postId: Number(postId) })
+          .execute();
       };
 
       await Promise.all([
@@ -746,10 +708,9 @@ router.post(
         message: null,
         data: { postId },
       });
-    } catch (error) {
+    } catch (err) {
       await queryRunner.rollbackTransaction();
-
-      return next(error);
+      return next(err);
     } finally {
       await queryRunner.release();
     }
