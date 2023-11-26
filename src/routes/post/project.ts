@@ -876,16 +876,14 @@ router.post(
   }
 );
 
-// API to check project bookmark status
+// Check project detail bookmark status
 router.get(
   '/:postId/bookmarkStatus',
   async (req: Request, res: Response, next: NextFunction) => {
-    const requestUser = req.user;
     const postId = Number(req.params.postId);
+    const currentUser = req.user;
 
-    const userRepository = AppDataSource.getRepository(User);
-
-    if (!requestUser) {
+    if (!currentUser) {
       return res.status(200).json({
         success: true,
         message: null,
@@ -895,18 +893,17 @@ router.get(
       });
     }
 
+    const bookmarkRepository = AppDataSource.getRepository(Bookmark);
+
     try {
-      const isBookmark = await userRepository.findOne({
+      const isBookmarked = await bookmarkRepository.findOne({
         where: {
-          id: requestUser.id,
-          bookmarks: {
-            projectId: postId,
-          },
+          userId: currentUser.id,
+          projectId: postId,
         },
-        relations: { bookmarks: true },
       });
 
-      if (isBookmark) {
+      if (isBookmarked) {
         return res.status(200).json({
           success: true,
           message: null,
@@ -923,8 +920,8 @@ router.get(
           bookmark: false,
         },
       });
-    } catch (error) {
-      next(error);
+    } catch (err) {
+      return next(err);
     }
   }
 );
