@@ -1028,20 +1028,30 @@ router.post(
   }
 );
 
+// TODO ParamsDictionary 타입 문제 어떤식으로 처리할지 확인하기
+// interface ProjectJoinApprovalStatusReqParams {
+//   [key: string]: 'approve' | 'reject';
+// }
+
+interface ProjectJoinApprovalStatusReqBody {
+  notificationId: number;
+}
+
+// Project join request notifications approve or reject control router
 router.post(
-  `/join/:status`,
+  `/join/:approvalStatus`,
   isLoggedIn,
   async (
     req: Request<
-      { status: 'approve' | 'reject' },
+      { approvalStatus: 'approve' | 'reject' },
       {},
-      { notificationId: number }
+      ProjectJoinApprovalStatusReqBody
     >,
     res: Response,
     next: NextFunction
   ) => {
     const currentUser = req.user;
-    const { status } = req.params;
+    const { approvalStatus } = req.params;
     const { notificationId } = req.body;
 
     if (!currentUser) {
@@ -1053,29 +1063,29 @@ router.post(
 
     const queryRunner = AppDataSource.createQueryRunner();
 
-    if (status === 'approve') {
-      try {
-        await queryRunner.connect();
-        await queryRunner.startTransaction();
+    try {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
 
-        const notification = await queryRunner.manager
-          .getRepository(Notification)
-          .createQueryBuilder('notification')
-          .where('notification.id = :id', { id: notificationId })
-          .getOne();
+      const notification = await queryRunner.manager
+        .getRepository(Notification)
+        .createQueryBuilder('notification')
+        .where('notification.id = :id', { id: notificationId })
+        .getOne();
 
-        if (!notification) {
-          throw new Error('Notification does not exist');
-        }
+      if (!notification) {
+        throw new Error('Notification does not exist');
+      }
 
-        const {
-          projectId,
-          notificationCreatorId,
-        }: {
-          projectId: number;
-          notificationCreatorId: number;
-        } = JSON.parse(notification.content);
+      const {
+        projectId,
+        notificationCreatorId,
+      }: {
+        projectId: number;
+        notificationCreatorId: number;
+      } = JSON.parse(notification.content);
 
+      if (approvalStatus === 'approve') {
         // Project join Request user add project member
         await queryRunner.manager
           .createQueryBuilder()
@@ -1129,37 +1139,9 @@ router.post(
           success: true,
           message: null,
         });
-      } catch (error) {
-        await queryRunner.rollbackTransaction();
-        return next(error);
-      } finally {
-        await queryRunner.release();
       }
-    }
 
-    if (status === 'reject') {
-      try {
-        await queryRunner.connect();
-        await queryRunner.startTransaction();
-
-        const notification = await queryRunner.manager
-          .getRepository(Notification)
-          .createQueryBuilder('notification')
-          .where('notification.id = :id', { id: notificationId })
-          .getOne();
-
-        if (!notification) {
-          throw new Error('Notification does not exist');
-        }
-
-        const {
-          projectId,
-          notificationCreatorId,
-        }: {
-          projectId: number;
-          notificationCreatorId: number;
-        } = JSON.parse(notification.content);
-
+      if (approvalStatus === 'reject') {
         // Delete notification from current user notification list
         await queryRunner.manager
           .createQueryBuilder()
@@ -1201,17 +1183,13 @@ router.post(
           success: true,
           message: null,
         });
-      } catch (error) {
-        await queryRunner.rollbackTransaction();
-        return next(error);
-      } finally {
-        await queryRunner.release();
       }
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      return next(err);
+    } finally {
+      await queryRunner.release();
     }
-
-    return res.status(200).json({
-      test: true,
-    });
   }
 );
 
