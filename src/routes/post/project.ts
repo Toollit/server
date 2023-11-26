@@ -926,12 +926,13 @@ router.get(
   }
 );
 
+// Project join request router
 router.post(
   '/join',
   isLoggedIn,
   async (req: Request, res: Response, next: NextFunction) => {
-    const currentUser = req.user;
     const postId = Number(req.body.postId);
+    const currentUser = req.user;
 
     if (!currentUser) {
       return res.status(401).json({
@@ -951,7 +952,7 @@ router.post(
       });
 
       if (!project) {
-        throw new Error('project does not exist');
+        throw new Error('Project does not exist');
       }
 
       const isMyPost = currentUser?.id === project?.user.id;
@@ -1013,7 +1014,7 @@ router.post(
             notificationCreatorId: currentUser.id,
           }),
           updatedAt: null,
-          user: project?.user, // Project writer. This field is intended to set the user who will receive the notification.
+          user: project?.user, // This field is intended to set the user who will receive the notification. This notification is sent to the project writer.
         })
         .execute();
 
@@ -1021,8 +1022,8 @@ router.post(
         success: true,
         message: null,
       });
-    } catch (error) {
-      return next(error);
+    } catch (err) {
+      return next(err);
     }
   }
 );
