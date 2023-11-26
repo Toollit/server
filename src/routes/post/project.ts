@@ -793,23 +793,23 @@ router.post(
   }
 );
 
-interface ProjectBookmarkReqBody {
+interface ProjectBookmarkReq {
   postId: string;
 }
 
-// Project bookmark api
+// Project bookmark
 router.post(
   '/bookmark',
   isLoggedIn,
   async (
-    req: Request<{}, {}, ProjectBookmarkReqBody>,
+    req: Request<{}, {}, ProjectBookmarkReq>,
     res: Response,
     next: NextFunction
   ) => {
     const postId = Number(req.body.postId);
-    const requestUser = req.user;
+    const currentUser = req.user;
 
-    if (!requestUser) {
+    if (!currentUser) {
       return res.status(401).json({
         success: false,
         message: CLIENT_ERROR_LOGIN_REQUIRED,
@@ -820,13 +820,12 @@ router.post(
 
     try {
       await queryRunner.connect();
-
       await queryRunner.startTransaction();
 
       const existBookmark = await queryRunner.manager
         .getRepository(Bookmark)
         .findOne({
-          where: { userId: requestUser.id, projectId: postId },
+          where: { userId: currentUser.id, projectId: postId },
         });
 
       // Cancel exist bookmark
@@ -855,7 +854,7 @@ router.post(
           .createQueryBuilder()
           .insert()
           .into(Bookmark)
-          .values([{ userId: requestUser.id, projectId: postId }])
+          .values([{ userId: currentUser.id, projectId: postId }])
           .execute();
 
         await queryRunner.commitTransaction();
@@ -868,10 +867,9 @@ router.post(
           },
         });
       }
-    } catch (error) {
+    } catch (err) {
       await queryRunner.rollbackTransaction();
-
-      return next(error);
+      return next(err);
     } finally {
       await queryRunner.release();
     }
