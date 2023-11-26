@@ -9,7 +9,6 @@ import { uploadS3 } from '@/middleware/uploadS3';
 import { Bookmark } from '@/entity/Bookmark';
 import { isLoggedIn } from '@/middleware/loginCheck';
 import { ProjectMember } from '@/entity/ProjectMember';
-import { ProjectJoinRequest } from '@/entity/ProjectJoinRequest';
 import { Notification } from '@/entity/Notification';
 import {
   CLIENT_ERROR_ABNORMAL_ACCESS,
@@ -18,7 +17,6 @@ import {
   CLIENT_ERROR_NOT_FOUND,
   CLIENT_ERROR_PENDING_APPROVAL,
   CLIENT_ERROR_WRITTEN_BY_ME,
-  SERVER_ERROR_DEFAULT,
 } from '@/message/error';
 import dotenv from 'dotenv';
 
@@ -717,16 +715,16 @@ router.post(
   }
 );
 
-interface PostDeleteReqBody {
+interface PostDeleteReq {
   postId: string;
 }
 
-// Delete project post api
+// Delete project
 router.post(
   '/delete',
   isLoggedIn,
   async (
-    req: Request<{}, {}, PostDeleteReqBody>,
+    req: Request<{}, {}, PostDeleteReq>,
     res: Response,
     next: NextFunction
   ) => {
@@ -736,20 +734,12 @@ router.post(
 
     try {
       await queryRunner.connect();
-
       await queryRunner.startTransaction();
 
       await queryRunner.manager
         .createQueryBuilder()
         .delete()
         .from(Bookmark)
-        .where('projectId = :postId', { postId })
-        .execute();
-
-      await queryRunner.manager
-        .createQueryBuilder()
-        .delete()
-        .from(ProjectJoinRequest)
         .where('projectId = :postId', { postId })
         .execute();
 
@@ -794,10 +784,9 @@ router.post(
         success: true,
         message: null,
       });
-    } catch (error) {
+    } catch (err) {
       await queryRunner.rollbackTransaction();
-
-      return next(error);
+      return next(err);
     } finally {
       await queryRunner.release();
     }
