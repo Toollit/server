@@ -13,16 +13,16 @@ dotenv.config();
 
 const router = express.Router();
 
-// resetPassword page password reset router
+// Reset password page password reset router
 router.post(
   '/',
   isLoggedIn,
   (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user;
+    const currentUser = req.user;
     const newPassword = req.body.password;
 
-    if (user?.tempPassword) {
-      const salt = Buffer.from(user.salt, 'hex');
+    if (currentUser?.tempPassword) {
+      const salt = Buffer.from(currentUser.salt, 'hex');
 
       crypto.pbkdf2(
         newPassword,
@@ -35,7 +35,7 @@ router.post(
             return next(err);
           }
 
-          const userPassword = Buffer.from(user.password, 'hex');
+          const userPassword = Buffer.from(currentUser.password, 'hex');
 
           if (crypto.timingSafeEqual(userPassword, hashedPassword)) {
             return res.status(400).json({
@@ -69,22 +69,22 @@ router.post(
                     tempPassword: null,
                     loginFailedCount: 0,
                   })
-                  .where('id = :id', { id: user.id })
+                  .where('id = :id', { id: currentUser.id })
                   .execute();
 
                 return res.status(201).json({
                   success: true,
                   message: null,
                 });
-              } catch (error) {
-                return next(error);
+              } catch (err) {
+                return next(err);
               }
             }
           );
         }
       );
     } else {
-      // wrong access without logged in with a temporary password
+      // Wrong access without logged in with a temporary password
       return res.status(400).json({
         success: false,
         message: CLIENT_ERROR_ABNORMAL_ACCESS,
