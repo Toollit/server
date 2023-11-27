@@ -116,13 +116,13 @@ router.get(
   }
 );
 
-// API to check bookmark status of all posts
+// Check bookmark status of all posts router
 router.get(
   '/bookmarkStatus',
   async (req: Request, res: Response, next: NextFunction) => {
-    const requestUser = req.user;
+    const currentUser = req.user;
 
-    if (!requestUser) {
+    if (!currentUser) {
       return res.status(200).json({
         success: true,
         message: null,
@@ -135,12 +135,12 @@ router.get(
     const userRepository = AppDataSource.getRepository(User);
 
     try {
-      const userInfoWithBookmarks = await userRepository.findOne({
-        where: { id: requestUser.id },
+      const user = await userRepository.findOne({
+        where: { id: currentUser.id },
         relations: { bookmarks: true },
       });
 
-      const bookmarks = userInfoWithBookmarks?.bookmarks;
+      const bookmarks = user?.bookmarks;
 
       if (!bookmarks) {
         return res.status(200).json({
@@ -173,8 +173,8 @@ router.get(
           bookmarks: null,
         },
       });
-    } catch (error) {
-      next(error);
+    } catch (err) {
+      return next(err);
     }
   }
 );
