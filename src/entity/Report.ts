@@ -12,7 +12,16 @@ export class Report {
   id: number;
 
   @Column()
+  postType: string;
+
+  @Column()
+  postId: number;
+
+  @Column()
   title: string;
+
+  @Column({ type: 'text' })
+  content: string;
 
   @Column()
   writerId: number;
@@ -25,12 +34,6 @@ export class Report {
 
   @Column()
   reporterNickname: string;
-
-  @Column()
-  postType: string;
-
-  @Column()
-  postId: number;
 
   @Column()
   reason: string;
