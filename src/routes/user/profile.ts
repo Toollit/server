@@ -21,15 +21,11 @@ dotenv.config();
 
 const router = express.Router();
 
-interface ProfileRequestParams {
+interface ProfileReqParams {
   nickname: string;
 }
 
-interface ProfileResponseBody {}
-
-interface ProfileRequestBody {}
-
-interface ProfileRequestQuery {
+interface ProfileReqQuery {
   tab: 'viewProfile' | 'viewProjects' | 'viewBookmarks' | 'viewNotifications';
   count?: number;
 }
@@ -63,8 +59,8 @@ router.get(
           existUser: true,
         },
       });
-    } catch (error) {
-      return next(error);
+    } catch (err) {
+      return next(err);
     }
   }
 );
@@ -98,8 +94,8 @@ router.get(
         message: null,
         data: { profileImage: url },
       });
-    } catch (error) {
-      return next(error);
+    } catch (err) {
+      return next(err);
     }
   }
 );
@@ -108,12 +104,7 @@ router.get(
 router.get(
   '/:nickname',
   async (
-    req: Request<
-      ProfileRequestParams,
-      ProfileResponseBody,
-      ProfileRequestBody,
-      ProfileRequestQuery
-    >,
+    req: Request<ProfileReqParams, {}, {}, ProfileReqQuery>,
     res: Response,
     next: NextFunction
   ) => {
@@ -468,8 +459,8 @@ router.get(
           },
         });
       }
-    } catch (error) {
-      next(error);
+    } catch (err) {
+      return next(err);
     }
   }
 );
@@ -886,8 +877,8 @@ router.post(
           },
         });
       }
-    } catch (error) {
-      next(error);
+    } catch (err) {
+      return next(err);
     }
   }
 );
