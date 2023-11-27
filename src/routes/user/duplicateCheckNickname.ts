@@ -10,16 +10,16 @@ import {
 
 const router = express.Router();
 
-interface RequestBody {
+interface NicknameDuplicateCheckReqBody {
   nickname: string;
 }
 
-// user nickname duplicate check router
+// User nickname duplicate check router
 router.post(
   '/',
   isLoggedIn,
   async (
-    req: Request<{}, {}, RequestBody>,
+    req: Request<{}, {}, NicknameDuplicateCheckReqBody>,
     res: Response,
     next: NextFunction
   ) => {
@@ -45,20 +45,24 @@ router.post(
 
     const userRepository = AppDataSource.getRepository(User);
 
-    const isExistNickname = await userRepository.findOne({
-      where: { nickname },
-    });
+    try {
+      const isExistNickname = await userRepository.findOne({
+        where: { nickname },
+      });
 
-    if (isExistNickname) {
-      return res.status(400).json({
-        success: false,
-        message: CLIENT_ERROR_NICKNAME_ALREADY_EXIST,
-      });
-    } else {
-      return res.status(200).json({
-        success: true,
-        message: null,
-      });
+      if (isExistNickname) {
+        return res.status(400).json({
+          success: false,
+          message: CLIENT_ERROR_NICKNAME_ALREADY_EXIST,
+        });
+      } else {
+        return res.status(200).json({
+          success: true,
+          message: null,
+        });
+      }
+    } catch (err) {
+      return next(err);
     }
   }
 );
