@@ -34,7 +34,7 @@ dotenv.config();
 
 const router = express.Router();
 
-// project detail info
+// Project detail info router
 router.get(
   '/:postId',
   async (req: Request, res: Response, next: NextFunction) => {
@@ -45,7 +45,7 @@ router.get(
     const userRepository = AppDataSource.getRepository(User);
 
     try {
-      // increasing the number of views each time a post is viewed
+      // Increasing the number of views each time a post is viewed
       await AppDataSource.createQueryBuilder()
         .update(Project)
         .set({
@@ -100,7 +100,7 @@ router.get(
 
       const processedHashtagsData = hashtags.map((hashtag) => hashtag.tagName);
 
-      // sorts in order of developer, designer, pm, and anyone
+      // Sorts in order of developer, designer, pm, and anyone
       const processedMemberTypesData = memberTypes.map(
         (memberType) => memberType.type
       );
@@ -219,7 +219,7 @@ router.post(
       handleProjectRepresentativeImageContentFormData(req);
 
     if (representativeImageUrl === undefined) {
-      return next(new Error('something wrong with representative image url'));
+      return next(new Error('Something wrong with representative image url'));
     }
 
     const currentUser = req.user;
@@ -254,7 +254,7 @@ router.post(
       });
 
       if (!(writer && hashtags.length >= 1 && memberTypes.length >= 1)) {
-        throw new Error('something wrong with the writer or content data');
+        throw new Error('Something wrong with the writer or content data');
       }
 
       const newProject = new Project();
@@ -333,7 +333,7 @@ router.post(
   }
 );
 
-// attach images to project content
+// Attach images to project content router
 router.post(
   '/content/uploadImage',
   isLoggedIn,
@@ -348,7 +348,7 @@ router.post(
     const contentImageUrl = multerS3File?.location;
 
     if (contentImageUrl === undefined) {
-      return next(new Error('something wrong with content image url'));
+      return next(new Error('Something wrong with content image url'));
     }
 
     return res.status(201).json({
@@ -372,7 +372,7 @@ interface ProjectUpdateContent {
   recruitCount: number;
 }
 
-// Update project detail info. FormData format and the json format cannot be sent as requests at the same time. so image file and content data are received in the FormData format.
+// Update project detail info router. FormData format and the json format cannot be sent as requests at the same time. so image file and content data are received in the FormData format.
 router.post(
   '/update',
   isLoggedIn,
@@ -713,16 +713,16 @@ router.post(
   }
 );
 
-interface PostDeleteReq {
+interface PostDeleteReqBody {
   postId: string;
 }
 
-// Delete project
+// Delete project router
 router.post(
   '/delete',
   isLoggedIn,
   async (
-    req: Request<{}, {}, PostDeleteReq>,
+    req: Request<{}, {}, PostDeleteReqBody>,
     res: Response,
     next: NextFunction
   ) => {
@@ -791,16 +791,16 @@ router.post(
   }
 );
 
-interface ProjectBookmarkReq {
+interface ProjectBookmarkReqBody {
   postId: string;
 }
 
-// Project bookmark
+// Project bookmark router
 router.post(
   '/bookmark',
   isLoggedIn,
   async (
-    req: Request<{}, {}, ProjectBookmarkReq>,
+    req: Request<{}, {}, ProjectBookmarkReqBody>,
     res: Response,
     next: NextFunction
   ) => {
@@ -874,7 +874,7 @@ router.post(
   }
 );
 
-// Check project detail bookmark status
+// Check project detail bookmark status router
 router.get(
   '/:postId/bookmarkStatus',
   async (req: Request, res: Response, next: NextFunction) => {
