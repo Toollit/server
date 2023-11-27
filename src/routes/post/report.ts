@@ -7,7 +7,6 @@ import {
   CLIENT_ERROR_DEFAULT,
   CLIENT_ERROR_EXIST_REPORT,
   CLIENT_ERROR_LOGIN_REQUIRED,
-  SERVER_ERROR_DEFAULT,
 } from '@/message/error';
 import dotenv from 'dotenv';
 
@@ -15,16 +14,26 @@ dotenv.config();
 
 const router = express.Router();
 
-// Report problematic posts api
+interface ReportReqBody {
+  postId: number;
+  postType: 'project';
+  reason: string;
+  url: string;
+}
+
+// Report problematic post router
 router.post(
   '/',
   isLoggedIn,
-  async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user;
-    const { postId, postType, title, writer, reason, url } = req.body;
+  async (
+    req: Request<{}, {}, ReportReqBody>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const { postId, postType, reason, url } = req.body;
+    const currentUser = req.user;
 
-    // Check user login status
-    if (!user) {
+    if (!currentUser) {
       return res.status(401).json({
         success: false,
         message: CLIENT_ERROR_LOGIN_REQUIRED,
@@ -50,16 +59,21 @@ router.post(
     }
 
     try {
-      const problemUser = await AppDataSource.createQueryBuilder()
+      const problematicUser = await AppDataSource.createQueryBuilder()
         .relation(entity, 'user')
         .of(postId)
         .loadOne();
 
-      if (writer !== problemUser.nickname) {
-        return res.status(500).json({
-          success: false,
-          message: SERVER_ERROR_DEFAULT,
-        });
+      const problematicPost = await AppDataSource.getRepository(entity).findOne(
+        { where: { id: postId } }
+      );
+
+      if (!problematicUser) {
+        throw new Error('Problematic user does not exist');
+      }
+
+      if (!problematicPost) {
+        throw new Error('Problematic post does not exist');
       }
 
       // Check duplicate reports from the same user
@@ -67,8 +81,8 @@ router.post(
         .createQueryBuilder()
         .where('postId = :postId', { postId })
         .andWhere('postType = :postType', { postType })
-        .andWhere('writerId = :writerId', { writerId: problemUser.id })
-        .andWhere('reporterId = :reporterId', { reporterId: user.id })
+        .andWhere('writerId = :writerId', { writerId: problematicUser.id })
+        .andWhere('reporterId = :reporterId', { reporterId: currentUser.id })
         .getOne();
 
       if (existReport) {
@@ -83,15 +97,17 @@ router.post(
         .into(Report)
         .values([
           {
-            title,
-            writerId: problemUser.id,
-            writerNickname: writer,
-            reporterId: user.id,
-            reporterNickname: user.nickname ?? '',
             postType,
             postId,
+            title: problematicPost.title,
+            content: problematicPost.contentHTML,
+            writerId: problematicUser.id,
+            writerNickname: problematicUser.nickname,
+            reporterId: currentUser.id,
+            reporterNickname: currentUser.nickname,
             reason,
             url,
+            updatedAt: () => 'updatedAt',
           },
         ])
         .execute();
@@ -100,8 +116,8 @@ router.post(
         success: true,
         message: null,
       });
-    } catch (error) {
-      return next(error);
+    } catch (err) {
+      return next(err);
     }
   }
 );
