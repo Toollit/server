@@ -108,7 +108,7 @@ router.get(
     res: Response,
     next: NextFunction
   ) => {
-    const requestUser = req.user;
+    const currentUser = req.user;
     const profileNickname = req.params.nickname;
     const { tab, count } = req.query;
 
@@ -141,7 +141,7 @@ router.get(
         } = profile;
 
         // Look up user's own profile
-        if (requestUser?.nickname === nickname) {
+        if (currentUser?.nickname === nickname) {
           return res.status(200).json({
             success: true,
             message: null,
@@ -163,7 +163,7 @@ router.get(
         }
 
         // Look up other user's profile
-        if (requestUser?.nickname !== nickname) {
+        if (currentUser?.nickname !== nickname) {
           return res.status(200).json({
             success: true,
             message: null,
@@ -196,7 +196,7 @@ router.get(
           });
         }
 
-        const myProjectTotalCount = await AppDataSource.getRepository(Project)
+        const projectTotalCount = await AppDataSource.getRepository(Project)
           .createQueryBuilder('project')
           .where('project.user = :userId', { userId: user.id })
           .getCount();
@@ -217,8 +217,8 @@ router.get(
             success: true,
             message: null,
             data: {
-              projects, // projects is empty array [] if projects length is under 1.
-              total: myProjectTotalCount,
+              projects, // If projects length is under 1. The projects value is an empty array.
+              total: projectTotalCount,
             },
           });
         }
@@ -285,7 +285,7 @@ router.get(
           message: null,
           data: {
             projects: processedData,
-            total: myProjectTotalCount,
+            total: projectTotalCount,
           },
         });
       }
@@ -303,7 +303,7 @@ router.get(
           });
         }
 
-        const myBookmarkTotalCount = await AppDataSource.getRepository(Bookmark)
+        const bookmarkTotalCount = await AppDataSource.getRepository(Bookmark)
           .createQueryBuilder('bookmark')
           .where('bookmark.userId = :userId', { userId: user.id })
           .getCount();
@@ -330,7 +330,7 @@ router.get(
             message: null,
             data: {
               bookmarkProjects, // bookmarkProjects is empty array [] if bookmarkProjects length is under 1.
-              total: myBookmarkTotalCount,
+              total: bookmarkTotalCount,
             },
           });
         }
@@ -400,7 +400,7 @@ router.get(
           message: null,
           data: {
             bookmarks: processedData,
-            total: myBookmarkTotalCount,
+            total: bookmarkTotalCount,
           },
         });
       }
@@ -424,7 +424,7 @@ router.get(
           .orderBy('notification.createdAt', 'DESC')
           .getMany();
 
-        const result = await Promise.all(
+        const processedData = await Promise.all(
           notifications.map(async (notification) => {
             const { type, content } = notification;
             const { projectId, notificationCreatorId } = JSON.parse(content);
@@ -454,7 +454,7 @@ router.get(
           success: true,
           message: null,
           data: {
-            notifications: result,
+            notifications: processedData,
             total: notifications.length,
           },
         });
