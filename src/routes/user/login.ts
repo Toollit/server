@@ -123,16 +123,18 @@ router.get(
   }
 );
 
-// login page. social login with github
+// Login page. social login with github
 router.get('/github', (req, res, next) => {
   return res.redirect(
     `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=user:email&redirect_uri=${GITHUB_CALLBACK_URL}`
   );
 });
 
-// login page. social login with github auth callback
+// Login page. social login with github auth callback
 router.get('/auth/github/callback', async (req, res, next) => {
   const userCode = req.query.code;
+
+  const queryRunner = AppDataSource.createQueryRunner();
 
   try {
     const userIdentity = await axios.post(
@@ -161,95 +163,88 @@ router.get('/auth/github/callback', async (req, res, next) => {
 
     const email = userInfo.data.email;
 
-    // github 계정에 등록된 이메일 정보가 없는경우
+    // No email information in the github account
     if (!email) {
       return res.redirect(EMPTY_REDIRECT);
     }
 
-    // github 계정에 등록된 이메일 정보가 있는 경우
+    // Email information in the github account
     if (email) {
       const userRepository = AppDataSource.getRepository(User);
       const user = await userRepository.findOne({ where: { email } });
 
-      // 이미 가입한 사용자 로그인
+      // User who already signed up with github login and run login logic.
       if (user && user.signUpType === 'github') {
-        const isUpdated = await AppDataSource.createQueryBuilder()
+        await AppDataSource.createQueryBuilder()
           .update(User)
           .set({ lastLoginAt: new Date(), updatedAt: null })
           .where('id = :id', { id: user.id })
           .execute();
 
-        if (isUpdated) {
-          return req.login(user, async (err) => {
-            if (err) {
-              return next(err);
-            }
+        return req.login(user, async (err) => {
+          if (err) {
+            return next(err);
+          }
 
-            return res.redirect(SUCCESS_REDIRECT);
-          });
-        }
+          return res.redirect(SUCCESS_REDIRECT);
+        });
       }
 
-      // 동일한 이메일의 다른 가입 정보가 있는 경우
+      // There is different registration information for the same email address.
       if (user && user.signUpType !== 'github') {
         return res.redirect(DUPLICATE_REDIRECT);
       }
 
-      // 중복된 이메일이 없는 경우 DB저장(최초가입)
+      // Sign up logic. There are no duplicate emails. first time sign up.
       if (!user) {
-        const queryRunner = AppDataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
 
-        try {
-          await queryRunner.connect();
-          await queryRunner.startTransaction();
+        const newProfile = await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into(Profile)
+          .values({})
+          .execute();
 
-          const newProfile = await queryRunner.manager
-            .createQueryBuilder()
-            .insert()
-            .into(Profile)
-            .values({})
-            .execute();
+        const newUser = await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into(User)
+          .values({
+            email: userInfo.data.email,
+            signUpType: 'github',
+            lastLoginAt: new Date(),
+            profile: newProfile.identifiers[0].id,
+          })
+          .execute();
 
-          const newUser = await queryRunner.manager
-            .createQueryBuilder()
-            .insert()
-            .into(User)
-            .values({
-              email: userInfo.data.email,
-              signUpType: 'github',
-              lastLoginAt: new Date(),
-              profile: newProfile.identifiers[0].id,
-            })
-            .execute();
+        const user = await queryRunner.manager
+          .getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.id = :id', { id: newUser.identifiers[0].id })
+          .getOne();
 
-          const user = await queryRunner.manager
-            .getRepository(User)
-            .createQueryBuilder('user')
-            .where('user.id = :id', { id: newUser.identifiers[0].id })
-            .getOne();
-
-          await queryRunner.commitTransaction();
-
-          if (user) {
-            return req.login(user, async (err) => {
-              if (err) {
-                return next(err);
-              }
-
-              return res.redirect(FIRST_TIME_REDIRECT);
-            });
-          }
-        } catch (error) {
-          await queryRunner.rollbackTransaction();
-
-          return res.redirect(FAILURE_REDIRECT);
-        } finally {
-          return await queryRunner.release();
+        if (!user) {
+          throw new Error('New user information is not queried');
         }
+
+        await queryRunner.commitTransaction();
+
+        return req.login(user, async (err) => {
+          if (err) {
+            return next(err);
+          }
+
+          return res.redirect(FIRST_TIME_REDIRECT);
+        });
       }
     }
-  } catch (error) {
+  } catch (err) {
+    await queryRunner.rollbackTransaction();
     return res.redirect(FAILURE_REDIRECT);
+  } finally {
+    await queryRunner.release();
   }
 });
 
