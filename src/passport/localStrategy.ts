@@ -24,34 +24,35 @@ export default () =>
           where: { email },
         });
 
-        // not exist user
+        // Not exist user
         if (!user) {
           return cb(null, false, {
             message: CLIENT_ERROR_MISMATCH_EMAIL_PASSWORD,
           });
         }
 
-        // social login user
+        // User who has signed up by social login
         if (user.signUpType !== 'email') {
           return cb(null, false, {
             message: CLIENT_ERROR_EXIST_SIGNUP_SOCIAL_LOGIN,
           });
         }
 
-        // tempPassword login user
+        // User logged in with temporary password
         if (user.tempPassword === password) {
           return cb(null, user, {
             message: 'resetPassword',
           });
         }
 
-        // login failed more than 5 user
+        // User who failed 5 or more login attempts
         if (user.loginFailedCount >= 5) {
           return cb(null, false, {
             message: CLIENT_ERROR_LOGIN_LIMIT,
           });
         }
 
+        // Perform the login logic below if email, password is correct
         const salt = Buffer.from(user.salt, 'hex');
 
         crypto.pbkdf2(
@@ -72,10 +73,10 @@ export default () =>
               hashedPassword
             );
 
-            if (isPasswordMatch) {
-              // Resetting a temporary password if user received a temporary password but logged in with an existing password
-              if (user.tempPassword) {
-                try {
+            try {
+              if (isPasswordMatch) {
+                // Resetting a temporary password if user received a temporary password but logged in with an existing password
+                if (user.tempPassword) {
                   await AppDataSource.createQueryBuilder()
                     .update(User)
                     .set({
@@ -88,14 +89,10 @@ export default () =>
                     .execute();
 
                   return cb(null, user);
-                } catch (error) {
-                  return cb(error);
                 }
-              }
 
-              // Logged in with the original password
-              if (!user.tempPassword) {
-                try {
+                // Logged in with the original password
+                if (!user.tempPassword) {
                   await AppDataSource.createQueryBuilder()
                     .update(User)
                     .set({
@@ -107,14 +104,10 @@ export default () =>
                     .execute();
 
                   return cb(null, user);
-                } catch (error) {
-                  return cb(error);
                 }
               }
-            }
 
-            if (!isPasswordMatch) {
-              try {
+              if (!isPasswordMatch) {
                 await AppDataSource.createQueryBuilder()
                   .update(User)
                   .set({
@@ -137,14 +130,14 @@ export default () =>
                     String(loginFailedCount)
                   ),
                 });
-              } catch (error) {
-                return cb(error);
               }
+            } catch (err) {
+              return cb(err);
             }
           }
         );
-      } catch (error) {
-        return cb(error);
+      } catch (err) {
+        return cb(err);
       }
     })
   );

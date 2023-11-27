@@ -25,7 +25,7 @@ const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
-// login page. user login router
+// Login page. email login router
 router.post('/email', (req: Request, res: Response, next: NextFunction) => {
   passport.authenticate(
     'local',
