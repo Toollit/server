@@ -66,7 +66,7 @@ router.post('/email', (req: Request, res: Response, next: NextFunction) => {
   )(req, res, next);
 });
 
-// login page. social login with google
+// Login page. social login with google
 router.get(
   '/google',
   passport.authenticate('google', {
@@ -74,7 +74,7 @@ router.get(
   })
 );
 
-// login page. social login with google auth callback
+// Login page. social login with google auth callback
 router.get(
   '/auth/google/callback',
   (req: Request, res: Response, next: NextFunction) => {
@@ -84,7 +84,6 @@ router.get(
         err: any,
         user: User,
         info: {
-          success: boolean;
           message: 'empty' | 'duplicate' | 'error' | 'firstTime' | null;
         }
       ) => {

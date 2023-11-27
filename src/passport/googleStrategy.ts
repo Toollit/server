@@ -24,17 +24,19 @@ export default () => {
       async function (request, accessToken, refreshToken, profile, done) {
         const email = profile.emails?.[0]?.value;
 
-        // Profile does not have email info
+        // Profile does not have email info.
         if (!email) {
           return done(null, undefined, { message: 'empty' });
         }
+
+        const queryRunner = AppDataSource.createQueryRunner();
 
         const userRepository = AppDataSource.getRepository(User);
 
         try {
           const user = await userRepository.findOne({ where: { email } });
 
-          // Already a joined user and run login logic
+          // User who already signed up with google login and run login logic.
           if (user && user.signUpType === 'google') {
             const isUpdated = await AppDataSource.createQueryBuilder()
               .update(User)
@@ -52,54 +54,48 @@ export default () => {
             return done(null, undefined, { message: 'duplicate' });
           }
 
-          // Sign up logic. There are no duplicate emails. first time joining
+          // Sign up logic. There are no duplicate emails. first time sign up.
           if (!user) {
-            const queryRunner = AppDataSource.createQueryRunner();
+            await queryRunner.connect();
+            await queryRunner.startTransaction();
 
-            try {
-              await queryRunner.connect();
-              await queryRunner.startTransaction();
+            const newProfile = await queryRunner.manager
+              .createQueryBuilder()
+              .insert()
+              .into(Profile)
+              .values({})
+              .execute();
 
-              const newProfile = await queryRunner.manager
-                .createQueryBuilder()
-                .insert()
-                .into(Profile)
-                .values({})
-                .execute();
+            const newUser = await queryRunner.manager
+              .createQueryBuilder()
+              .insert()
+              .into(User)
+              .values({
+                email,
+                signUpType: 'google',
+                lastLoginAt: new Date(),
+                profile: newProfile.identifiers[0].id,
+              })
+              .execute();
 
-              const newUser = await queryRunner.manager
-                .createQueryBuilder()
-                .insert()
-                .into(User)
-                .values({
-                  email,
-                  signUpType: 'google',
-                  lastLoginAt: new Date(),
-                  profile: newProfile.identifiers[0].id,
-                })
-                .execute();
+            const user = await queryRunner.manager
+              .getRepository(User)
+              .createQueryBuilder('user')
+              .where('user.id = :id', { id: newUser.identifiers[0].id })
+              .getOne();
 
-              const user = await queryRunner.manager
-                .getRepository(User)
-                .createQueryBuilder('user')
-                .where('user.id = :id', { id: newUser.identifiers[0].id })
-                .getOne();
-
-              await queryRunner.commitTransaction();
-
-              if (user) {
-                return done(null, user, { message: 'firstTime' });
-              }
-            } catch (error) {
-              await queryRunner.rollbackTransaction();
-
-              return done(null, undefined, { message: 'error' });
-            } finally {
-              return await queryRunner.release();
+            if (!user) {
+              throw new Error('New user information is not queried');
             }
+
+            await queryRunner.commitTransaction();
+            return done(null, user, { message: 'firstTime' });
           }
-        } catch (error) {
-          return done(null, undefined, { success: false, message: 'error' });
+        } catch (err) {
+          await queryRunner.rollbackTransaction();
+          return done(null, undefined, { message: 'error' });
+        } finally {
+          await queryRunner.release();
         }
       }
     )
