@@ -179,25 +179,23 @@ router.get(
   }
 );
 
-const handleReqProjectRepresentativeImage = (req: Request) => {
+const handleProjectRepresentativeImageContentFormData = (req: Request) => {
   // If isStringImageData is true, it is the s3 image url or "defaultImage" string. If it is false, the newly delivered image file data is received by putting the file object in the req through the uploadS3 middleware.
   const isStringImageData = Boolean(req.body['projectRepresentativeImage']);
-  const imageData = req.body['projectRepresentativeImage'];
+  const imageData: string = req.body['projectRepresentativeImage'];
 
   const jsonDataFieldName = 'data';
 
-  const multerS3File = (req as MulterRequest).file;
+  const S3ImgUrl = (req as MulterRequest).file?.location;
 
-  const representativeImageUrl = isStringImageData
-    ? imageData
-    : multerS3File?.location;
+  const representativeImageUrl = isStringImageData ? imageData : S3ImgUrl;
 
   const content = JSON.parse(req.body[jsonDataFieldName]);
 
   return { representativeImageUrl, content };
 };
 
-interface ProjectCreateReq {
+interface ProjectCreateContent {
   title: string;
   contentHTML: string;
   contentMarkdown: string;
@@ -207,7 +205,7 @@ interface ProjectCreateReq {
   recruitCount: number;
 }
 
-// project create
+// Project create router. FormData format and the json format cannot be sent as requests at the same time. so image file and content data are received in the FormData format.
 router.post(
   '/create',
   isLoggedIn,
@@ -218,7 +216,7 @@ router.post(
   }),
   async (req: Request, res: Response, next: NextFunction) => {
     const { representativeImageUrl, content } =
-      handleReqProjectRepresentativeImage(req);
+      handleProjectRepresentativeImageContentFormData(req);
 
     if (representativeImageUrl === undefined) {
       return next(new Error('something wrong with representative image url'));
@@ -241,7 +239,7 @@ router.post(
       hashtags,
       memberTypes,
       recruitCount,
-    } = content as ProjectCreateReq;
+    } = content as ProjectCreateContent;
 
     const queryRunner = AppDataSource.createQueryRunner();
 
@@ -363,7 +361,7 @@ router.post(
   }
 );
 
-interface ProjectUpdateReq {
+interface ProjectUpdateContent {
   postId: string;
   title: string;
   contentHTML: string;
@@ -374,7 +372,7 @@ interface ProjectUpdateReq {
   recruitCount: number;
 }
 
-// Update project detail info
+// Update project detail info. FormData format and the json format cannot be sent as requests at the same time. so image file and content data are received in the FormData format.
 router.post(
   '/update',
   isLoggedIn,
@@ -385,7 +383,7 @@ router.post(
   }),
   async (req: Request, res: Response, next: NextFunction) => {
     const { representativeImageUrl, content } =
-      handleReqProjectRepresentativeImage(req);
+      handleProjectRepresentativeImageContentFormData(req);
 
     if (representativeImageUrl === undefined) {
       return next(new Error('Something wrong with representative image url'));
@@ -400,7 +398,7 @@ router.post(
       hashtags: modifiedHashtags,
       memberTypes: modifiedMemberTypes,
       recruitCount: modifiedRecruitCount,
-    } = content as ProjectUpdateReq;
+    } = content as ProjectUpdateContent;
 
     const queryRunner = AppDataSource.createQueryRunner();
 
