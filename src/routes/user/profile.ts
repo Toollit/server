@@ -488,18 +488,17 @@ interface MulterRequest extends Request {
   file: any;
 }
 
-// profile page. profile info update router
+// Profile page. profile info update router
 router.post(
   '/:category',
   isLoggedIn,
   filterRequest,
   async (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user;
+    const currentUser = req.user;
     const { category } = req.params;
     const { data } = req.body;
 
-    // console.log({ category, data });
-    if (!user) {
+    if (!currentUser) {
       return res.status(400).json({
         success: false,
         message: CLIENT_ERROR_ABNORMAL_ACCESS,
@@ -507,15 +506,15 @@ router.post(
     }
 
     try {
-      // update profile image
+      // Update profile image
       if (category === 'profileImage') {
         const multerS3File = (req as MulterRequest).file;
 
-        // delete profile image
+        // Delete profile image
         if (multerS3File === undefined) {
           const existUser = await AppDataSource.getRepository(User)
             .createQueryBuilder('user')
-            .where('user.id = :id', { id: user?.id })
+            .where('user.id = :id', { id: currentUser.id })
             .leftJoinAndSelect('user.profile', 'profile')
             .getOne();
 
@@ -531,13 +530,13 @@ router.post(
           });
         }
 
-        // update profile image
+        // Update profile image
         if (multerS3File) {
           const newProfileImageUrl = multerS3File.location;
 
           const existUser = await AppDataSource.getRepository(User)
             .createQueryBuilder('user')
-            .where('user.id = :id', { id: user?.id })
+            .where('user.id = :id', { id: currentUser?.id })
             .leftJoinAndSelect('user.profile', 'profile')
             .getOne();
 
@@ -557,13 +556,12 @@ router.post(
         }
       }
 
-      // update profile nickname
+      // Update profile nickname
       if (category === 'nickname') {
-        const requestUser = user;
-        const existNickname = requestUser?.nickname;
+        const existNickname = currentUser?.nickname;
         const newNickname = data;
 
-        // request same nickname
+        // Request same nickname
         if (existNickname === newNickname) {
           return res.status(200).json({
             success: true,
@@ -593,10 +591,10 @@ router.post(
           });
         }
 
-        // only korean, number, english is possible. white spaces impossible.
+        // Only korean, number, english is possible. white spaces impossible.
         // const koEnNumRegex = /^[0-9|a-zA-Z|ㄱ-ㅎ|ㅏ-ㅣ|가-힣]+$/;
 
-        // only english, number is possible. white spaces impossible.
+        // Only english, number is possible. white spaces impossible.
         const onlyNoSpaceEnglishNumber = /^[a-zA-Z0-9]+$/;
 
         const isOnlyNoSpaceEnglishNumber =
@@ -612,7 +610,7 @@ router.post(
         await AppDataSource.createQueryBuilder()
           .update(User)
           .set({ nickname: newNickname })
-          .where('id = :id', { id: user?.id })
+          .where('id = :id', { id: currentUser?.id })
           .execute();
 
         return res.status(201).json({
@@ -624,7 +622,7 @@ router.post(
         });
       }
 
-      // update profile introduce
+      // Update profile introduce
       if (category === 'introduce') {
         if (data.length > 1000) {
           return res.status(400).json({
@@ -638,7 +636,7 @@ router.post(
 
         const existUser = await AppDataSource.getRepository(User)
           .createQueryBuilder('user')
-          .where('user.id = :id', { id: user?.id })
+          .where('user.id = :id', { id: currentUser?.id })
           .leftJoinAndSelect('user.profile', 'profile')
           .getOne();
 
@@ -673,7 +671,7 @@ router.post(
       if (category === 'onOffline') {
         const existUser = await AppDataSource.getRepository(User)
           .createQueryBuilder('user')
-          .where('user.id = :id', { id: user?.id })
+          .where('user.id = :id', { id: currentUser?.id })
           .leftJoinAndSelect('user.profile', 'profile')
           .getOne();
 
@@ -706,7 +704,7 @@ router.post(
       if (category === 'place') {
         const existUser = await AppDataSource.getRepository(User)
           .createQueryBuilder('user')
-          .where('user.id = :id', { id: user?.id })
+          .where('user.id = :id', { id: currentUser?.id })
           .leftJoinAndSelect('user.profile', 'profile')
           .getOne();
 
@@ -741,7 +739,7 @@ router.post(
       if (category === 'contactTime') {
         const existUser = await AppDataSource.getRepository(User)
           .createQueryBuilder('user')
-          .where('user.id = :id', { id: user?.id })
+          .where('user.id = :id', { id: currentUser?.id })
           .leftJoinAndSelect('user.profile', 'profile')
           .getOne();
 
@@ -776,7 +774,7 @@ router.post(
       if (category === 'interests') {
         const existUser = await AppDataSource.getRepository(User)
           .createQueryBuilder('user')
-          .where('user.id = :id', { id: user?.id })
+          .where('user.id = :id', { id: currentUser?.id })
           .leftJoinAndSelect('user.profile', 'profile')
           .getOne();
 
@@ -811,7 +809,7 @@ router.post(
       if (category === 'career') {
         const existUser = await AppDataSource.getRepository(User)
           .createQueryBuilder('user')
-          .where('user.id = :id', { id: user?.id })
+          .where('user.id = :id', { id: currentUser?.id })
           .leftJoinAndSelect('user.profile', 'profile')
           .getOne();
 
@@ -846,7 +844,7 @@ router.post(
       if (category === 'skills') {
         const existUser = await AppDataSource.getRepository(User)
           .createQueryBuilder('user')
-          .where('user.id = :id', { id: user?.id })
+          .where('user.id = :id', { id: currentUser?.id })
           .leftJoinAndSelect('user.profile', 'profile')
           .getOne();
 
