@@ -14,6 +14,9 @@ import {
 
 dotenv.config();
 
+const ORIGIN_URL = process.env.ORIGIN_URL;
+const GETIT_LOGO_IMAGE_URL = process.env.GETIT_LOGO_IMAGE_URL;
+
 const redisClient = createClient({
   url: process.env.REDIS_CLOUD,
   legacyMode: true,
@@ -73,12 +76,16 @@ router.post(
       .resolve(__dirname)
       .replace('routes/auth', '/template/authMail.ejs');
 
-    ejs.renderFile(appDir, { authCode }, function (err, data) {
-      if (err) {
-        return next(err);
+    ejs.renderFile(
+      appDir,
+      { authCode, getitLogo: GETIT_LOGO_IMAGE_URL, getitURL: ORIGIN_URL },
+      function (err, data) {
+        if (err) {
+          return next(err);
+        }
+        emailTemplate = data;
       }
-      emailTemplate = data;
-    });
+    );
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
