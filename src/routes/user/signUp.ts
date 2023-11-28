@@ -98,14 +98,13 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// social login user nickname setting router
+// Social login user nickname setting router
 router.post(
   '/socialLogin/update/nickname',
   isLoggedIn,
   async (req: Request, res: Response, next: NextFunction) => {
     const { nickname } = req.body;
-
-    const user = req.user;
+    const currentUser = req.user;
 
     if (!nickname) {
       res.status(400).json({
@@ -118,7 +117,6 @@ router.post(
 
     try {
       await queryRunner.connect();
-
       await queryRunner.startTransaction();
 
       await queryRunner.manager
@@ -128,7 +126,7 @@ router.post(
           nickname,
           updatedAt: null,
         })
-        .where('id = :id', { id: user?.id })
+        .where('id = :id', { id: currentUser?.id })
         .execute();
 
       await queryRunner.commitTransaction();
@@ -137,10 +135,9 @@ router.post(
         success: true,
         message: null,
       });
-    } catch (error) {
+    } catch (err) {
       await queryRunner.rollbackTransaction();
-
-      return next(error);
+      return next(err);
     } finally {
       await queryRunner.release();
     }
