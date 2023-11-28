@@ -881,11 +881,15 @@ router.post(
   }
 );
 
+interface NotificationDeleteReqBody {
+  notificationId: number;
+}
+
 router.post(
   '/notification/delete',
   isLoggedIn,
   async (
-    req: Request<{}, {}, { notificationId: number }>,
+    req: Request<{}, {}, NotificationDeleteReqBody>,
     res: Response,
     next: NextFunction
   ) => {
