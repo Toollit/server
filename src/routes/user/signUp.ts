@@ -11,19 +11,18 @@ dotenv.config();
 
 const router = express.Router();
 
-// user email signUp router
-router.post('/', async (req, res, next) => {
+// Email sign up router
+router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   const { email, password, signUpType } = req.body;
 
   const queryRunner = AppDataSource.createQueryRunner();
 
   try {
     await queryRunner.connect();
-
     await queryRunner.startTransaction();
 
     if (!email || !password || !signUpType) {
-      throw new Error();
+      throw new Error('The information required for sign up is missing');
     }
 
     const salt = crypto.randomBytes(64);
@@ -44,63 +43,56 @@ router.post('/', async (req, res, next) => {
           const saltString = salt.toString('hex');
           const hashedString = hashedPassword.toString('hex');
 
-          try {
-            const newProfile = await queryRunner.manager
-              .createQueryBuilder()
-              .insert()
-              .into(Profile)
-              .values({})
-              .execute();
+          const newProfile = await queryRunner.manager
+            .createQueryBuilder()
+            .insert()
+            .into(Profile)
+            .values({})
+            .execute();
 
-            const newUser = await queryRunner.manager
-              .createQueryBuilder()
-              .insert()
-              .into(User)
-              .values({
-                email,
-                password: hashedString,
-                salt: saltString,
-                signUpType,
-                updatedAt: null,
-                lastLoginAt: new Date(),
-                profile: newProfile.identifiers[0].id,
-              })
-              .execute();
+          const newUser = await queryRunner.manager
+            .createQueryBuilder()
+            .insert()
+            .into(User)
+            .values({
+              email,
+              password: hashedString,
+              salt: saltString,
+              signUpType,
+              updatedAt: null,
+              lastLoginAt: new Date(),
+              profile: newProfile.identifiers[0].id,
+            })
+            .execute();
 
-            const user = await queryRunner.manager
-              .getRepository(User)
-              .createQueryBuilder('user')
-              .where('user.id = :id', { id: newUser.identifiers[0].id })
-              .getOne();
+          const user = await queryRunner.manager
+            .getRepository(User)
+            .createQueryBuilder('user')
+            .where('user.id = :id', { id: newUser.identifiers[0].id })
+            .getOne();
 
-            await queryRunner.commitTransaction();
+          await queryRunner.commitTransaction();
 
-            if (user) {
-              return req.login(user, async (err) => {
-                if (err) {
-                  return next(err);
-                }
-
-                return res.status(201).json({
-                  success: true,
-                  message: null,
-                });
-              });
-            }
-          } catch (error) {
-            await queryRunner.rollbackTransaction();
-
-            return next(error);
-          } finally {
-            await queryRunner.release();
+          if (!user) {
+            throw new Error('New user information is not queried');
           }
+
+          return req.login(user, async (err) => {
+            if (err) {
+              return next(err);
+            }
+
+            return res.status(201).json({
+              success: true,
+              message: null,
+            });
+          });
         }
       );
     });
-  } catch (error) {
+  } catch (err) {
     await queryRunner.rollbackTransaction();
-
-    return next(error);
+    return next(err);
   } finally {
     await queryRunner.release();
   }
