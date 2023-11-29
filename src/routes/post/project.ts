@@ -16,6 +16,7 @@ import {
   CLIENT_ERROR_MEMBER_OF_PROJECT,
   CLIENT_ERROR_NOT_FOUND,
   CLIENT_ERROR_PENDING_APPROVAL,
+  CLIENT_ERROR_PROJECT_NOT_FOUND,
   CLIENT_ERROR_WRITTEN_BY_ME,
 } from '@/message/error';
 import dotenv from 'dotenv';
@@ -1082,6 +1083,29 @@ router.post(
         projectId: number;
         notificationCreatorId: number;
       } = JSON.parse(notification.content);
+
+      const project = await queryRunner.manager
+        .getRepository(Project)
+        .createQueryBuilder('project')
+        .where('project.id = :id', { id: projectId })
+        .getOne();
+
+      if (!project) {
+        // Delete notification from current user notification list
+        await queryRunner.manager
+          .createQueryBuilder()
+          .delete()
+          .from(Notification)
+          .where('id = :id', { id: notificationId })
+          .execute();
+
+        await queryRunner.commitTransaction();
+
+        return res.status(404).json({
+          success: false,
+          message: CLIENT_ERROR_PROJECT_NOT_FOUND,
+        });
+      }
 
       if (approvalStatus === 'approve') {
         // Project join Request user add project member

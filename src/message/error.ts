@@ -54,6 +54,9 @@ export const CLIENT_ERROR_SAME_PASSWORD_IMPOSSIBLE =
 
 export const CLIENT_ERROR_PENDING_APPROVAL = '승인 대기 중 입니다.';
 
+export const CLIENT_ERROR_PROJECT_NOT_FOUND =
+  '프로젝트가 작성자에 의해 삭제되었거나 존재하지 않습니다.';
+
 // # Server error responses status code 500 ~
 export const SERVER_ERROR_DEFAULT =
   '오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
