@@ -1101,7 +1101,7 @@ router.post(
 
         await queryRunner.commitTransaction();
 
-        return res.status(404).json({
+        return res.status(409).json({
           success: false,
           message: CLIENT_ERROR_PROJECT_NOT_FOUND,
         });
