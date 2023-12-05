@@ -7,11 +7,11 @@ import { AppDataSource } from './data-source';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import passport from 'passport';
-import logger from 'morgan';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
 import passportStrategy from './passport/authStrategy';
 import { errorHandler } from './middleware/errorHandler';
+import { logger } from './middleware/logger';
 
 dotenv.config();
 
@@ -27,6 +27,7 @@ app.use(
 
 passportStrategy();
 
+app.use(logger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
