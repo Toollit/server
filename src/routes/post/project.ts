@@ -62,7 +62,6 @@ router.get(
           user: true,
           hashtags: true,
           memberTypes: true,
-          comments: true,
           members: true,
         },
         order: {
