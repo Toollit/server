@@ -43,6 +43,6 @@ export class Profile {
   @UpdateDateColumn({ nullable: true, default: null })
   updatedAt: Date | null;
 
-  @OneToOne(() => User, (user) => user.profile)
+  @OneToOne(() => User, (user) => user.profile, { onDelete: 'CASCADE' })
   user: User;
 }
