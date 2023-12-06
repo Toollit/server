@@ -29,6 +29,8 @@ export class Notification {
   @UpdateDateColumn({ nullable: true, default: null })
   updatedAt: Date | null;
 
-  @ManyToOne(() => User, (user) => user.notifications)
+  @ManyToOne(() => User, (user) => user.notifications, {
+    onDelete: 'CASCADE',
+  })
   user: User;
 }

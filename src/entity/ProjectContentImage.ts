@@ -22,6 +22,8 @@ export class ProjectContentImage {
   @UpdateDateColumn({ nullable: true, default: null })
   updatedAt: Date | null;
 
-  @ManyToOne(() => Project, (project) => project.images)
+  @ManyToOne(() => Project, (project) => project.images, {
+    onDelete: 'CASCADE',
+  })
   project: Project;
 }

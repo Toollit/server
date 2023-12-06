@@ -26,9 +26,13 @@ export class Bookmark {
   @UpdateDateColumn({ nullable: true, default: null })
   updatedAt: Date | null;
 
-  @ManyToOne(() => User, (user) => user.bookmarks)
+  @ManyToOne(() => User, (user) => user.bookmarks, {
+    onDelete: 'CASCADE',
+  })
   user: User;
 
-  @ManyToOne(() => Project, (project) => project.bookmarks)
+  @ManyToOne(() => Project, (project) => project.bookmarks, {
+    onDelete: 'CASCADE',
+  })
   project: Project;
 }

@@ -10,10 +10,8 @@ import {
 import { ProjectContentImage } from './ProjectContentImage';
 import { User } from './User';
 import { Hashtag } from './Hashtag';
-import { Comment } from './Comment';
 import { MemberType } from './MemberType';
 import { ProjectMember } from './ProjectMember';
-import { ProjectJoinRequest } from './ProjectJoinRequest';
 import { Bookmark } from './Bookmark';
 
 @Entity()
@@ -47,33 +45,42 @@ export class Project {
   @UpdateDateColumn({ nullable: true, default: null })
   updatedAt: Date | null;
 
-  @ManyToOne(() => User, (user) => user.projects)
+  @ManyToOne(() => User, (user) => user.projects, {
+    onDelete: 'CASCADE',
+  })
   user: User;
 
   @OneToMany(
     () => ProjectContentImage,
-    (ProjectContentImage) => ProjectContentImage.project
+    (ProjectContentImage) => ProjectContentImage.project,
+    {
+      cascade: ['remove'],
+      onDelete: 'CASCADE',
+    }
   )
   images: ProjectContentImage[];
 
-  @OneToMany(() => Hashtag, (hashtag) => hashtag.project)
+  @OneToMany(() => Hashtag, (hashtag) => hashtag.project, {
+    cascade: ['remove'],
+    onDelete: 'CASCADE',
+  })
   hashtags: Hashtag[];
 
-  @OneToMany(() => Comment, (comment) => comment.project)
-  comments: Comment[];
-
-  @OneToMany(() => MemberType, (memberType) => memberType.project)
+  @OneToMany(() => MemberType, (memberType) => memberType.project, {
+    cascade: ['remove'],
+    onDelete: 'CASCADE',
+  })
   memberTypes: MemberType[];
 
-  @OneToMany(() => ProjectMember, (projectMember) => projectMember.project)
+  @OneToMany(() => ProjectMember, (projectMember) => projectMember.project, {
+    cascade: ['remove'],
+    onDelete: 'CASCADE',
+  })
   members: ProjectMember[];
 
-  @OneToMany(
-    () => ProjectJoinRequest,
-    (projectJoinRequest) => projectJoinRequest.project
-  )
-  joinRequests: ProjectJoinRequest[];
-
-  @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
+  @OneToMany(() => Bookmark, (bookmark) => bookmark.user, {
+    cascade: ['remove'],
+    onDelete: 'CASCADE',
+  })
   bookmarks: Bookmark[];
 }

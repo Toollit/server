@@ -22,6 +22,8 @@ export class Hashtag {
   @UpdateDateColumn({ nullable: true, default: null })
   updatedAt: Date | null;
 
-  @ManyToOne(() => Project, (project) => project.hashtags)
+  @ManyToOne(() => Project, (project) => project.hashtags, {
+    onDelete: 'CASCADE',
+  })
   project: Project;
 }

@@ -25,6 +25,8 @@ export class ProjectMember {
   @UpdateDateColumn({ nullable: true, default: null })
   updatedAt: Date | null;
 
-  @ManyToOne(() => Project, (project) => project.members)
+  @ManyToOne(() => Project, (project) => project.members, {
+    onDelete: 'CASCADE',
+  })
   project: Project;
 }
