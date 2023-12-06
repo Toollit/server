@@ -42,25 +42,29 @@ export class User {
   @Column({ default: 0 })
   loginFailedCount: number;
 
+  @Column({ type: 'timestamp' })
+  lastLoginAt: Date;
+
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn({ nullable: true, default: null })
   updatedAt: Date | null;
 
-  @Column({ type: 'timestamp' })
-  lastLoginAt: Date;
-
-  @OneToMany(() => Project, (project) => project.user)
-  projects: Project[];
-
-  @OneToOne(() => Profile)
+  @OneToOne(() => Profile, (profile) => profile.user, { cascade: ['remove'] })
   @JoinColumn()
   profile: Profile;
 
-  @OneToMany(() => Bookmark, (bookmark) => bookmark.user)
+  @OneToMany(() => Project, (project) => project.user, { cascade: ['remove'] })
+  projects: Project[];
+
+  @OneToMany(() => Bookmark, (bookmark) => bookmark.user, {
+    cascade: ['remove'],
+  })
   bookmarks: Bookmark[];
 
-  @OneToMany(() => Notification, (notification) => notification.user)
+  @OneToMany(() => Notification, (notification) => notification.user, {
+    cascade: ['remove'],
+  })
   notifications: Notification[];
 }
