@@ -11,9 +11,9 @@ import {
  * */
 const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
   if (req.isAuthenticated()) {
-    next();
+    return next();
   } else {
-    res.status(401).json({
+    return res.status(401).json({
       success: false,
       message: CLIENT_ERROR_LOGIN_REQUIRED,
     });
@@ -25,9 +25,9 @@ const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
  * */
 const isNotLoggedIn = (req: Request, res: Response, next: NextFunction) => {
   if (!req.isAuthenticated()) {
-    next();
+    return next();
   } else {
-    res.status(401).json({
+    return res.status(401).json({
       success: false,
       message: CLIENT_ERROR_ABNORMAL_ACCESS,
     });
