@@ -737,41 +737,6 @@ router.post(
       await queryRunner.manager
         .createQueryBuilder()
         .delete()
-        .from(Bookmark)
-        .where('projectId = :postId', { postId })
-        .execute();
-
-      await queryRunner.manager
-        .createQueryBuilder()
-        .delete()
-        .from(ProjectContentImage)
-        .where('projectId = :postId', { postId })
-        .execute();
-
-      await queryRunner.manager
-        .createQueryBuilder()
-        .delete()
-        .from(Hashtag)
-        .where('projectId = :postId', { postId })
-        .execute();
-
-      await queryRunner.manager
-        .createQueryBuilder()
-        .delete()
-        .from(MemberType)
-        .where('projectId = :postId', { postId })
-        .execute();
-
-      await queryRunner.manager
-        .createQueryBuilder()
-        .delete()
-        .from(ProjectMember)
-        .where('projectId = :postId', { postId })
-        .execute();
-
-      await queryRunner.manager
-        .createQueryBuilder()
-        .delete()
         .from(Project)
         .where('id = :postId', { postId })
         .execute();
