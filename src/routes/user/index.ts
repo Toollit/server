@@ -1,20 +1,22 @@
 import express from 'express';
-import profile from './profile';
+import deleteAccount from './deleteAccount';
+import duplicateCheckNickname from './duplicateCheckNickname';
 import login from './login';
 import logout from './logout';
-import signUp from './signUp';
+import profile from './profile';
 import pwInquiry from './pwInquiry';
 import resetPassword from './resetPassword';
-import duplicateCheckNickname from './duplicateCheckNickname';
+import signUp from './signUp';
 
 const router = express.Router();
 
-router.use('/profile', profile);
+router.use('/deleteAccount', deleteAccount);
+router.use('/duplicateCheckNickname', duplicateCheckNickname);
 router.use('/login', login);
 router.use('/logout', logout);
-router.use('/signUp', signUp);
+router.use('/profile', profile);
 router.use('/pwInquiry', pwInquiry);
 router.use('/resetPassword', resetPassword);
-router.use('/duplicateCheckNickname', duplicateCheckNickname);
+router.use('/signUp', signUp);
 
 export default router;
