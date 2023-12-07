@@ -443,9 +443,11 @@ router.get(
               type,
               id: notification.id,
               projectId: project?.id,
-              projectTitle: project ? project?.title : '삭제된 게시글 입니다.',
+              projectTitle: project ? project.title : '삭제된 게시글 입니다.',
               createdAt: notification.createdAt,
-              notificationCreator: notificationCreator?.nickname,
+              notificationCreator: notificationCreator
+                ? notificationCreator.nickname
+                : '탈퇴한 사용자',
             };
           })
         );
