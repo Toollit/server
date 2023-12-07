@@ -13,7 +13,7 @@ export const CLIENT_ERROR_EXIST_SIGNUP_SOCIAL_LOGIN =
   '소셜 로그인을 통해 가입이 이루어진 계정입니다.';
 
 export const CLIENT_ERROR_LOGIN_LIMIT =
-  '로그인 5회 연속 오류로 서비스 이용이 불가합니다.\n(*고객센터 - 공지사항 - 비밀번호 5회 연속 오류 공지 확인)';
+  '로그인 5회 연속 오류로 서비스 이용이 불가합니다.\n(*자주 묻는 질문(FAQ) -> 비밀번호를 여러번 틀려서 로그인이 불가해요. 를 확인해주세요.)';
 
 export const CLIENT_ERROR_LOGIN_FAILED_COUNT =
   '비밀번호가 일치하지 않습니다.\n5회 이상 오류시 서비스 이용이 제한됩니다.\n(누적오류입력 {loginFailedCount}회)';
