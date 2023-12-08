@@ -35,15 +35,15 @@ redisClient.on('error', (err) => {
 
 const router = express.Router();
 
-interface IssueAuthCodeReq {
+interface IssueAuthCodeReqBody {
   email: string;
 }
 
-// issue authentication code upon sign up
+// Issue authentication code upon sign up
 router.post(
   '/issueAuthCode',
   async (
-    req: Request<{}, {}, IssueAuthCodeReq>,
+    req: Request<{}, {}, IssueAuthCodeReqBody>,
     res: Response,
     next: NextFunction
   ) => {
@@ -131,16 +131,16 @@ router.post(
   }
 );
 
-interface VerifyAuthCodeReq {
+interface VerifyAuthCodeReqBody {
   email: string;
   authCode: string;
 }
 
-// check auth code sent to verify email when sign up
+// Check auth code sent to verify email when sign up.
 router.post(
   '/verify',
   async (
-    req: Request<{}, {}, VerifyAuthCodeReq>,
+    req: Request<{}, {}, VerifyAuthCodeReqBody>,
     res: Response,
     next: NextFunction
   ) => {
