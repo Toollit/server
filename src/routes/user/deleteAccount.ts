@@ -1,13 +1,18 @@
-import { AppDataSource } from '@/data-source';
-import { CLIENT_ERROR_ABNORMAL_ACCESS } from '@/message/error';
-import { isLoggedIn } from '@/middleware/loginCheck';
 import express, { NextFunction, Request, Response } from 'express';
-import dotenv from 'dotenv';
+import { AppDataSource } from '@/data-source';
+import { isLoggedIn } from '@/middleware/loginCheck';
 import nodemailer from 'nodemailer';
-import ejs from 'ejs';
 import path from 'path';
 import { v4 as uuidV4 } from 'uuid';
 import { DeleteAccountRequest } from '@/entity/deleteAccountRequest';
+import { User } from '@/entity/User';
+import { Profile } from '@/entity/Profile';
+import ejs from 'ejs';
+import dotenv from 'dotenv';
+import {
+  CLIENT_ERROR_ABNORMAL_ACCESS,
+  CLIENT_ERROR_EXPIRE_TIME,
+} from '@/message/error';
 
 dotenv.config();
 
@@ -119,6 +124,143 @@ router.post(
         message: null,
       });
     });
+  }
+);
+
+interface ConfirmDeleteAccountReqbody {
+  email?: string;
+  a1?: string;
+  a2?: string;
+  a3?: string;
+}
+
+// Confirm delete account router
+router.post(
+  '/confirm',
+  async (
+    req: Request<{}, {}, ConfirmDeleteAccountReqbody>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const { email, a1, a2, a3 } = req.body;
+
+    const queryRunner = AppDataSource.createQueryRunner();
+
+    try {
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      // Check the request has all the required values for authentication.
+      if (!email || !a1 || !a2 || !a3) {
+        await queryRunner.commitTransaction();
+
+        return res.status(400).json({
+          success: false,
+          message: CLIENT_ERROR_ABNORMAL_ACCESS,
+        });
+      }
+
+      // Check account deletion request info is exist.
+      const isValidRequest = await queryRunner.manager
+        .getRepository(DeleteAccountRequest)
+        .createQueryBuilder()
+        .where('email = :email', { email })
+        .andWhere('a1 = :a1', { a1 })
+        .andWhere('a2 = :a2', { a2 })
+        .andWhere('a3 = :a3', { a3 })
+        .getOne();
+
+      // Request with invalid auth code.
+      if (!isValidRequest) {
+        await queryRunner.commitTransaction();
+
+        return res.status(400).json({
+          success: false,
+          message: CLIENT_ERROR_ABNORMAL_ACCESS,
+        });
+      }
+
+      const updatedAt = isValidRequest.updatedAt;
+      const currentTime = new Date();
+
+      if (!updatedAt) {
+        throw new Error('Data updatedAt is not exist');
+      }
+
+      const differenceInMilliseconds =
+        currentTime.getTime() - updatedAt.getTime();
+      const tenMinutesInMilliseconds = 10 * 60 * 1000; // 10 minutes.
+
+      if (differenceInMilliseconds >= tenMinutesInMilliseconds) {
+        // Ten minutes have passed.
+
+        await queryRunner.commitTransaction();
+
+        return res.status(400).json({
+          success: false,
+          message: CLIENT_ERROR_EXPIRE_TIME,
+        });
+      } else {
+        // Less than ten minutes had passed.
+        // Delete account request info
+        await queryRunner.manager
+          .createQueryBuilder()
+          .delete()
+          .from(DeleteAccountRequest)
+          .where('email = :email', { email })
+          .execute();
+
+        const user = await queryRunner.manager
+          .getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.email = :email', { email })
+          .leftJoinAndSelect('user.profile', 'profile')
+          .getOne();
+
+        if (!user) {
+          throw new Error('User does not exist.');
+        }
+
+        const profile = await queryRunner.manager
+          .getRepository(Profile)
+          .createQueryBuilder()
+          .where('id = :id', { id: user?.profile.id })
+          .getOne();
+
+        if (!profile) {
+          throw new Error('Profile does not exist.');
+        }
+
+        // Delete all user and related data except one to one relationship profile
+        // Cascade not working one to one relation.
+        // Github issue reference: https://github.com/typeorm/typeorm/issues/3218
+        await queryRunner.manager
+          .createQueryBuilder()
+          .delete()
+          .from(User)
+          .where('email = :email', { email })
+          .execute();
+
+        await queryRunner.manager
+          .createQueryBuilder()
+          .delete()
+          .from(Profile)
+          .where('id = :id', { id: profile.id })
+          .execute();
+
+        await queryRunner.commitTransaction();
+
+        return res.status(200).json({
+          success: true,
+          message: null,
+        });
+      }
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      return next(err);
+    } finally {
+      await queryRunner.release();
+    }
   }
 );
 
