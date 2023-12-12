@@ -14,7 +14,11 @@ export class Notification {
   id: number;
 
   @Column()
-  type: 'projectJoinRequest' | 'projectJoinApprove' | 'projectJoinReject';
+  type:
+    | 'projectJoinRequest'
+    | 'projectJoinApprove'
+    | 'projectJoinReject'
+    | 'projectLeave';
 
   @Column()
   isRead: boolean;
@@ -29,6 +33,7 @@ export class Notification {
   @UpdateDateColumn({ nullable: true, default: null })
   updatedAt: Date | null;
 
+  // This field is intended to set the user who will receive the notification.
   @ManyToOne(() => User, (user) => user.notifications, {
     onDelete: 'CASCADE',
   })
