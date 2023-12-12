@@ -100,7 +100,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 
 // Social login user nickname setting router
 router.post(
-  '/socialLogin/update/nickname',
+  '/settings/update/nickname',
   isLoggedIn,
   async (req: Request, res: Response, next: NextFunction) => {
     const { nickname } = req.body;
