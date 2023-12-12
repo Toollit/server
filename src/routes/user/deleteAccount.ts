@@ -13,6 +13,7 @@ import {
   CLIENT_ERROR_ABNORMAL_ACCESS,
   CLIENT_ERROR_EXPIRE_TIME,
 } from '@/message/error';
+import { ProjectMember } from '@/entity/ProjectMember';
 
 dotenv.config();
 
@@ -224,12 +225,20 @@ router.post(
         const profile = await queryRunner.manager
           .getRepository(Profile)
           .createQueryBuilder()
-          .where('id = :id', { id: user?.profile.id })
+          .where('id = :id', { id: user.profile.id })
           .getOne();
 
         if (!profile) {
           throw new Error('Profile does not exist.');
         }
+
+        // TODO It is not urgent!! Relation resetting is required. User is not automatically deleted from the project member when the user is deleted account because the relationship with the user is not established
+        await queryRunner.manager
+          .createQueryBuilder()
+          .delete()
+          .from(ProjectMember)
+          .where('memberId = :memberId', { memberId: user.id })
+          .execute();
 
         // Delete all user and related data except one to one relationship profile
         // Cascade not working one to one relation.
