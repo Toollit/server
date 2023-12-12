@@ -59,6 +59,9 @@ export const CLIENT_ERROR_PROJECT_NOT_FOUND =
 
 export const CLIENT_ERROR_EXPIRE_TIME = '유효기간이 만료되었습니다.';
 
+export const CLIENT_ERROR_RECRUITMENT_COMPLETED =
+  '프로젝트 인원 모집이 완료되었습니다.';
+
 // # Server error responses status code 500 ~
 export const SERVER_ERROR_DEFAULT =
   '오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
