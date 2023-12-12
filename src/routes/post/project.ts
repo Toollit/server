@@ -17,6 +17,7 @@ import {
   CLIENT_ERROR_NOT_FOUND,
   CLIENT_ERROR_PENDING_APPROVAL,
   CLIENT_ERROR_PROJECT_NOT_FOUND,
+  CLIENT_ERROR_RECRUITMENT_COMPLETED,
   CLIENT_ERROR_WRITTEN_BY_ME,
 } from '@/message/error';
 import dotenv from 'dotenv';
@@ -942,6 +943,22 @@ router.post(
         });
       }
 
+      const members = await AppDataSource.getRepository(ProjectMember)
+        .createQueryBuilder('projectMember')
+        .where('projectMember.projectId = :projectId', { projectId: postId })
+        .getMany();
+
+      // Reason for -1 in members.length is that the author is not included in the number of recruits.
+      const recruitCount = project.recruitCount;
+      const currentMemberCount = members.length - 1;
+      if (recruitCount === currentMemberCount) {
+        // throw new Error('Project member recruitment completed ');
+        return res.status(400).json({
+          success: false,
+          message: CLIENT_ERROR_RECRUITMENT_COMPLETED,
+        });
+      }
+
       const projectJoinRequests = await AppDataSource.getRepository(
         Notification
       )
@@ -1202,6 +1219,33 @@ router.post(
       }
 
       if (approvalStatus === 'approve') {
+        const members = await AppDataSource.getRepository(ProjectMember)
+          .createQueryBuilder('projectMember')
+          .where('projectMember.projectId = :projectId', { projectId })
+          .getMany();
+
+        // Reason for -1 in members.length is that the author is not included in the number of recruits.
+        const recruitCount = project.recruitCount;
+        const currentMemberCount = members.length - 1;
+        if (recruitCount === currentMemberCount) {
+          // throw new Error('Project member recruitment completed ');
+
+          // Delete notification from current user notification list
+          await queryRunner.manager
+            .createQueryBuilder()
+            .delete()
+            .from(Notification)
+            .where('id = :id', { id: notificationId })
+            .execute();
+
+          await queryRunner.commitTransaction();
+
+          return res.status(400).json({
+            success: false,
+            message: CLIENT_ERROR_RECRUITMENT_COMPLETED,
+          });
+        }
+
         // Project join Request user add project member
         await queryRunner.manager
           .createQueryBuilder()
