@@ -991,6 +991,136 @@ router.post(
   }
 );
 
+interface ProjectLeaveReqBody {
+  postId: string;
+}
+
+// Project leave request router
+router.post(
+  '/leave',
+  isLoggedIn,
+  async (
+    req: Request<{}, {}, ProjectLeaveReqBody>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const postId = Number(req.body.postId);
+    const currentUser = req.user;
+
+    if (!currentUser) {
+      return res.status(401).json({
+        success: false,
+        message: CLIENT_ERROR_LOGIN_REQUIRED,
+      });
+    }
+
+    const queryRunner = AppDataSource.createQueryRunner();
+
+    try {
+      const projectRepository = AppDataSource.getRepository(Project);
+
+      const project = await projectRepository.findOne({
+        where: {
+          id: postId,
+        },
+        relations: { user: true },
+      });
+
+      if (!project) {
+        throw new Error('Project does not exist');
+      }
+
+      const isMyPost = currentUser?.id === project?.user.id;
+
+      if (isMyPost) {
+        return res.status(403).json({
+          success: false,
+          message: CLIENT_ERROR_WRITTEN_BY_ME,
+        });
+      }
+
+      const isExistMember = await AppDataSource.getRepository(ProjectMember)
+        .createQueryBuilder('projectMember')
+        .where('projectMember.projectId = :projectId', { projectId: postId })
+        .andWhere('projectMember.memberId = :memberId', {
+          memberId: currentUser.id,
+        })
+        .getOne();
+
+      if (!isExistMember) {
+        return res.status(403).json({
+          success: false,
+          message: CLIENT_ERROR_ABNORMAL_ACCESS,
+        });
+      }
+
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      await queryRunner.manager
+        .createQueryBuilder()
+        .delete()
+        .from(ProjectMember)
+        .where('memberId = :id', { id: currentUser.id })
+        .execute();
+
+      const members = await queryRunner.manager
+        .getRepository(ProjectMember)
+        .createQueryBuilder('projectMember')
+        .where('projectMember.projectId = :projectId', { projectId: postId })
+        .getMany();
+
+      if (members.length < 1) {
+        throw new Error(
+          'Project creator must be included, so it must be at least 1.'
+        );
+      }
+
+      const createNotifications = members.map(async (member) => {
+        const user = await queryRunner.manager
+          .getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.id = :id', { id: member.memberId })
+          .getOne();
+
+        if (!user) {
+          throw new Error('Create notifications error');
+        }
+
+        return await queryRunner.manager
+          .createQueryBuilder()
+          .insert()
+          .into(Notification)
+          .values({
+            type: 'projectLeave',
+            isRead: false,
+            content: JSON.stringify({
+              projectId: postId,
+              notificationCreatorId: currentUser.id,
+            }),
+            updatedAt: null,
+            user: user, // This field is intended to set the user who will receive the notification. This notification is sent to the project members
+          })
+          .execute();
+      });
+
+      await Promise.all(createNotifications);
+
+      await queryRunner.commitTransaction();
+
+      return res.status(200).json({
+        success: true,
+        message: null,
+      });
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      return next(err);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+);
+
 // TODO ParamsDictionary 타입 문제 어떤식으로 처리할지 확인하기
 // interface ProjectJoinApprovalStatusReqParams {
 //   [key: string]: 'approve' | 'reject';
