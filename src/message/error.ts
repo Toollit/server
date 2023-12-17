@@ -41,7 +41,7 @@ export const CLIENT_ERROR_NICKNAME_LENGTH_TWO_TO_TWENTY =
 export const CLIENT_ERROR_NICKNAME_ALREADY_EXIST =
   '이미 존재하는 닉네임입니다. 다른 닉네임을 입력해 주세요.';
 
-export const CLIENT_ERROR_NOT_EXIST_USER = '존재하지 않는 유저 입니다.';
+export const CLIENT_ERROR_NOT_EXIST_USER = '존재하지 않는 사용자입니다.';
 
 export const CLIENT_ERROR_INTRODUCE_LENGTH_LIMIT =
   '자기소개는 {lengthLimit}자 이하여야 합니다.';
