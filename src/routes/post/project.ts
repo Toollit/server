@@ -14,6 +14,7 @@ import {
   CLIENT_ERROR_ABNORMAL_ACCESS,
   CLIENT_ERROR_LOGIN_REQUIRED,
   CLIENT_ERROR_MEMBER_OF_PROJECT,
+  CLIENT_ERROR_NOT_EXIST_USER,
   CLIENT_ERROR_NOT_FOUND,
   CLIENT_ERROR_PENDING_APPROVAL,
   CLIENT_ERROR_PROJECT_NOT_FOUND,
@@ -1273,7 +1274,12 @@ router.post(
           .getOne();
 
         if (!projectJoinRequestUser) {
-          throw new Error('User does not exist');
+          await queryRunner.commitTransaction();
+
+          return res.status(404).json({
+            success: false,
+            message: CLIENT_ERROR_NOT_EXIST_USER,
+          });
         }
 
         // Send approve notification to project join request user
@@ -1317,7 +1323,12 @@ router.post(
           .getOne();
 
         if (!projectJoinRequestUser) {
-          throw new Error('User does not exist');
+          await queryRunner.commitTransaction();
+
+          return res.status(404).json({
+            success: false,
+            message: CLIENT_ERROR_NOT_EXIST_USER,
+          });
         }
 
         // Send reject notification to project join request user
