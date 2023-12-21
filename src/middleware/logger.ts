@@ -21,11 +21,11 @@ const stream = {
 
     if (statusCode >= 400) {
       return winstonLogger.error(
-        message.replace(removeAnsiEscapeCodesRegex, '')
+        decodeURIComponent(message.replace(removeAnsiEscapeCodesRegex, ''))
       );
     } else {
       return winstonLogger.info(
-        message.replace(removeAnsiEscapeCodesRegex, '')
+        decodeURIComponent(message.replace(removeAnsiEscapeCodesRegex, ''))
       );
     }
   },
