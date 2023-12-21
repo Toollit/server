@@ -3,6 +3,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import authRouter from './routes/auth/index';
 import userRouter from './routes/user/index';
 import postRouter from './routes/post/index';
+import searchRouter from './routes/search/index';
 import { AppDataSource } from './data-source';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -58,6 +59,7 @@ app.get('/', (req: Request, res: Response, next: NextFunction) => {
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
 app.use('/api/post', postRouter);
+app.use('/api/search', searchRouter);
 
 app.use(errorHandler);
 
