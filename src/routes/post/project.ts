@@ -181,7 +181,7 @@ router.get(
   }
 );
 
-const handleProjectRepresentativeImageContentFormData = (req: Request) => {
+const handleProjectFormData = (req: Request) => {
   // If isStringImageData is true, it is the s3 image url or "defaultImage" string. If it is false, the newly delivered image file data is received by putting the file object in the req through the uploadS3 middleware.
   const isStringImageData = Boolean(req.body['projectRepresentativeImage']);
   const imageData: string = req.body['projectRepresentativeImage'];
@@ -217,8 +217,7 @@ router.post(
     data: { name: 'projectRepresentativeImage' },
   }),
   async (req: Request, res: Response, next: NextFunction) => {
-    const { representativeImageUrl, content } =
-      handleProjectRepresentativeImageContentFormData(req);
+    const { representativeImageUrl, content } = handleProjectFormData(req);
 
     if (representativeImageUrl === undefined) {
       return next(new Error('Something wrong with representative image url'));
@@ -384,15 +383,14 @@ router.post(
     data: { name: 'projectRepresentativeImage' },
   }),
   async (req: Request, res: Response, next: NextFunction) => {
-    const { representativeImageUrl, content } =
-      handleProjectRepresentativeImageContentFormData(req);
+    const { representativeImageUrl, content } = handleProjectFormData(req);
 
     if (representativeImageUrl === undefined) {
       return next(new Error('Something wrong with representative image url'));
     }
 
     const {
-      postId,
+      postId: modifiedPostId,
       title: modifiedTitle,
       contentHTML: modifiedContentHTML,
       contentMarkdown: modifiedContentMarkdown,
@@ -401,6 +399,8 @@ router.post(
       memberTypes: modifiedMemberTypes,
       recruitCount: modifiedRecruitCount,
     } = content as ProjectUpdateContent;
+
+    const postId = Number(modifiedPostId);
 
     const queryRunner = AppDataSource.createQueryRunner();
 
@@ -412,7 +412,7 @@ router.post(
 
       const existProject = await projectRepository.findOne({
         where: {
-          id: Number(postId),
+          id: postId,
         },
       });
 
@@ -477,9 +477,7 @@ router.post(
         const existProjectContentImages = await queryRunner.manager
           .getRepository(ProjectContentImage)
           .createQueryBuilder()
-          .where('ProjectContentImage.projectId = :postId', {
-            postId: Number(postId),
-          })
+          .where('ProjectContentImage.projectId = :postId', { postId })
           .getMany();
 
         const existImages = existProjectContentImages.map((image) => {
@@ -509,7 +507,7 @@ router.post(
             .createQueryBuilder()
             .delete()
             .from(ProjectContentImage)
-            .where('projectId = :postId', { postId: Number(postId) })
+            .where('projectId = :postId', { postId })
             .andWhere('url = :url', { url })
             .execute();
 
@@ -534,7 +532,7 @@ router.post(
         const existProjectHashtags = await queryRunner.manager
           .getRepository(Hashtag)
           .createQueryBuilder()
-          .where('hashtag.projectId = :postId', { postId: Number(postId) })
+          .where('hashtag.projectId = :postId', { postId })
           .getMany();
 
         const existHashtags = existProjectHashtags.map((hashtag) => {
@@ -567,7 +565,7 @@ router.post(
             .createQueryBuilder()
             .delete()
             .from(Hashtag)
-            .where('projectId = :postId', { postId: Number(postId) })
+            .where('projectId = :postId', { postId })
             .andWhere('tagName = :tagName', { tagName })
             .execute();
 
@@ -592,9 +590,7 @@ router.post(
         const existProjectMemberTypes = await queryRunner.manager
           .getRepository(MemberType)
           .createQueryBuilder()
-          .where('memberType.projectId = :postId', {
-            postId: Number(postId),
-          })
+          .where('memberType.projectId = :postId', { postId })
           .getMany();
 
         const existMemberTypes = existProjectMemberTypes.map((memberType) => {
@@ -622,7 +618,7 @@ router.post(
               .createQueryBuilder()
               .delete()
               .from(MemberType)
-              .where('projectId = :postId', { postId: Number(postId) })
+              .where('projectId = :postId', { postId })
               .andWhere('type = :type', { type })
               .execute();
 
@@ -663,7 +659,7 @@ router.post(
           .createQueryBuilder()
           .update(Project)
           .set({ recruitCount: modifiedRecruitCount })
-          .where('id = :postId', { postId: Number(postId) })
+          .where('id = :postId', { postId })
           .execute();
       };
 
@@ -686,7 +682,7 @@ router.post(
           .createQueryBuilder()
           .update(Project)
           .set({ representativeImage: representativeImageUrl })
-          .where('id = :postId', { postId: Number(postId) })
+          .where('id = :postId', { postId })
           .execute();
       };
 
