@@ -655,6 +655,21 @@ router.post(
           return null;
         }
 
+        const members = await queryRunner.manager
+          .getRepository(ProjectMember)
+          .createQueryBuilder()
+          .where('projectId = :postId', { postId })
+          .getCount();
+
+        // -1 is writer
+        const memberCount = members - 1;
+
+        if (modifiedRecruitCount < memberCount) {
+          throw new Error(
+            'Recruit count cannot set smaller than the current member count.'
+          );
+        }
+
         await queryRunner.manager
           .createQueryBuilder()
           .update(Project)
