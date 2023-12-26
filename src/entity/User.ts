@@ -12,6 +12,7 @@ import { Project } from './Project';
 import { Profile } from './Profile';
 import { Bookmark } from './Bookmark';
 import { Notification } from './Notification';
+import { Contact } from './Contact';
 
 @Entity()
 export class User {
@@ -67,4 +68,9 @@ export class User {
     cascade: ['remove'],
   })
   notifications: Notification[];
+
+  @OneToMany(() => Contact, (contact) => contact.user, {
+    cascade: ['remove'],
+  })
+  contacts: Contact[];
 }

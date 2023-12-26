@@ -4,7 +4,9 @@ import {
   Column,
   UpdateDateColumn,
   CreateDateColumn,
+  ManyToOne,
 } from 'typeorm';
+import { User } from './User';
 
 @Entity()
 export class Contact {
@@ -31,4 +33,9 @@ export class Contact {
 
   @UpdateDateColumn({ nullable: true, default: null })
   updatedAt: Date | null;
+
+  @ManyToOne(() => User, (user) => user.contacts, {
+    onDelete: 'CASCADE',
+  })
+  user: User;
 }
