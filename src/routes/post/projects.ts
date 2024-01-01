@@ -116,9 +116,9 @@ router.get(
   }
 );
 
-// Check bookmark status of all posts router
+// Check bookmarks status of all posts router
 router.get(
-  '/bookmarkStatus',
+  '/bookmarksStatus',
   async (req: Request, res: Response, next: NextFunction) => {
     const currentUser = req.user;
 
