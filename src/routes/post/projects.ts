@@ -1,7 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '@/data-source';
 import { Project } from '@/entity/Project';
-import { User } from '@/entity/User';
 import { Bookmark } from '@/entity/Bookmark';
 import dotenv from 'dotenv';
 
@@ -108,69 +107,6 @@ router.get(
         data: {
           projects: processedData,
           totalPage,
-        },
-      });
-    } catch (err) {
-      return next(err);
-    }
-  }
-);
-
-// Check bookmarks status of all posts router
-router.get(
-  '/bookmarksStatus',
-  async (req: Request, res: Response, next: NextFunction) => {
-    const currentUser = req.user;
-
-    if (!currentUser) {
-      return res.status(200).json({
-        success: true,
-        message: null,
-        data: {
-          bookmarks: null,
-        },
-      });
-    }
-
-    const userRepository = AppDataSource.getRepository(User);
-
-    try {
-      const user = await userRepository.findOne({
-        where: { id: currentUser.id },
-        relations: { bookmarks: true },
-      });
-
-      const bookmarks = user?.bookmarks;
-
-      if (!bookmarks) {
-        return res.status(200).json({
-          success: true,
-          message: null,
-          data: {
-            bookmarks: null,
-          },
-        });
-      }
-
-      const hashBookmark = bookmarks.length >= 1;
-
-      const bookmarkIds = bookmarks.map((bookmark) => bookmark.projectId);
-
-      if (hashBookmark) {
-        return res.status(200).json({
-          success: true,
-          message: null,
-          data: {
-            bookmarks: bookmarkIds,
-          },
-        });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: null,
-        data: {
-          bookmarks: null,
         },
       });
     } catch (err) {
