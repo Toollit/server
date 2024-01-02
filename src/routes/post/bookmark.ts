@@ -46,11 +46,11 @@ router.get(
         });
       }
 
-      const hashBookmark = bookmarks.length >= 1;
+      const hasBookmark = bookmarks.length >= 1;
 
       const bookmarkIds = bookmarks.map((bookmark) => bookmark.projectId);
 
-      if (hashBookmark) {
+      if (hasBookmark) {
         return res.status(200).json({
           success: true,
           message: null,
@@ -64,7 +64,7 @@ router.get(
         success: true,
         message: null,
         data: {
-          bookmarks: null,
+          bookmarks: [],
         },
       });
     } catch (err) {
