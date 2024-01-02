@@ -372,13 +372,12 @@ router.get(
               );
             });
 
-            const projectBookmarkedTotalCount =
-              await AppDataSource.getRepository(Bookmark)
-                .createQueryBuilder('bookmark')
-                .where('bookmark.projectId = projectId', {
-                  projectId: project.id,
-                })
-                .getCount();
+            const bookmarks = await AppDataSource.getRepository(Bookmark)
+              .createQueryBuilder('bookmark')
+              .where('bookmark.projectId = :projectId', {
+                projectId: project.id,
+              })
+              .getCount();
 
             const memberCount = project.members.length - 1; // Exclude project writer
 
@@ -386,7 +385,7 @@ router.get(
               id: project.id,
               title: project.title,
               views: project.views,
-              bookmarkCount: projectBookmarkedTotalCount,
+              bookmarkCount: bookmarks,
               hashtags: extractTagNames,
               memberTypes: orderedMemberTypes,
               memberCount,
