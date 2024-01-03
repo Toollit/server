@@ -13,6 +13,7 @@ import cookieParser from 'cookie-parser';
 import passportStrategy from './passport/authStrategy';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './middleware/logger';
+import helmet from 'helmet';
 
 dotenv.config();
 
@@ -26,8 +27,7 @@ app.use(
   })
 );
 
-passportStrategy();
-
+app.use(helmet());
 app.use(logger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -39,9 +39,10 @@ app.use(
     saveUninitialized: false,
   })
 );
-
 app.use(passport.initialize());
 app.use(passport.session());
+
+passportStrategy();
 
 // typeorm connection with database
 AppDataSource.initialize()
