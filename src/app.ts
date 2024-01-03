@@ -14,11 +14,25 @@ import passportStrategy from './passport/authStrategy';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './middleware/logger';
 import helmet from 'helmet';
+import compression from 'compression';
+import hpp from 'hpp';
 
 dotenv.config();
 
 const app: Application = express();
 const port = 4000;
+
+// passport settings
+passportStrategy();
+
+// typeorm connection with database
+AppDataSource.initialize()
+  .then(() => {
+    console.log('Data Source has been initialized!');
+  })
+  .catch((error) =>
+    console.error('Error during Data Source initialization:', error)
+  );
 
 app.use(
   cors({
@@ -28,6 +42,8 @@ app.use(
 );
 
 app.use(helmet());
+app.use(compression());
+app.use(hpp());
 app.use(logger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -41,17 +57,6 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(passport.session());
-
-passportStrategy();
-
-// typeorm connection with database
-AppDataSource.initialize()
-  .then(() => {
-    console.log('Data Source has been initialized!');
-  })
-  .catch((error) =>
-    console.error('Error during Data Source initialization:', error)
-  );
 
 app.get('/', (req: Request, res: Response, next: NextFunction) => {
   res.send('Hello World!');
