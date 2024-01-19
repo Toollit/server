@@ -14,7 +14,7 @@ import {
 dotenv.config();
 
 const ORIGIN_URL = process.env.ORIGIN_URL;
-const GETIT_LOGO_IMAGE_URL = process.env.GETIT_LOGO_IMAGE_URL;
+const TOOLLIT_LOGO_IMAGE_URL = process.env.TOOLLIT_LOGO_IMAGE_URL;
 
 const router = express.Router();
 
@@ -58,8 +58,8 @@ router.post('/', async (req, res, next) => {
       appDir,
       {
         tempPasswordCode: tempPassword,
-        getitLogo: GETIT_LOGO_IMAGE_URL,
-        getitURL: ORIGIN_URL,
+        toollitLogo: TOOLLIT_LOGO_IMAGE_URL,
+        toollitURL: ORIGIN_URL,
       },
       function (err, data) {
         if (err) {
@@ -81,9 +81,9 @@ router.post('/', async (req, res, next) => {
     });
 
     const mailOptions = {
-      from: `Getit <${process.env.NODEMAILER_USER}>`,
+      from: `Toollit <${process.env.NODEMAILER_USER}>`,
       to: email,
-      subject: 'Getit 로그인을위한 임시 비밀번호입니다.',
+      subject: 'Toollit 로그인을위한 임시 비밀번호입니다.',
       html: emailTemplate,
     };
 

@@ -15,7 +15,7 @@ import {
 dotenv.config();
 
 const ORIGIN_URL = process.env.ORIGIN_URL;
-const GETIT_LOGO_IMAGE_URL = process.env.GETIT_LOGO_IMAGE_URL;
+const TOOLLIT_LOGO_IMAGE_URL = process.env.TOOLLIT_LOGO_IMAGE_URL;
 
 const redisClient = createClient({
   url: process.env.REDIS_CLOUD,
@@ -78,7 +78,7 @@ router.post(
 
     ejs.renderFile(
       appDir,
-      { authCode, getitLogo: GETIT_LOGO_IMAGE_URL, getitURL: ORIGIN_URL },
+      { authCode, toollitLogo: TOOLLIT_LOGO_IMAGE_URL, toollitURL: ORIGIN_URL },
       function (err, data) {
         if (err) {
           return next(err);
@@ -99,9 +99,9 @@ router.post(
     });
 
     const mailOptions = {
-      from: `Getit <${process.env.NODEMAILER_USER}>`,
+      from: `Toollit <${process.env.NODEMAILER_USER}>`,
       to: userEmail,
-      subject: 'Getit 회원가입을 위한 인증번호를 입력해주세요.',
+      subject: 'Toollit 회원가입을 위한 인증번호를 입력해주세요.',
       html: emailTemplate,
     };
 

@@ -16,6 +16,6 @@ declare namespace NodeJS {
     readonly S3_SECRET_ACCESS_KEY: string;
     readonly S3_BUCKET_NAME: string;
     readonly S3_BUCKET_REGION: string;
-    readonly GETIT_LOGO_IMAGE_URL: string;
+    readonly TOOLLIT_LOGO_IMAGE_URL: string;
   }
 }

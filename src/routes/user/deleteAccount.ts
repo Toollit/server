@@ -18,7 +18,7 @@ import { ProjectMember } from '@/entity/ProjectMember';
 dotenv.config();
 
 const ORIGIN_URL = process.env.ORIGIN_URL;
-const GETIT_LOGO_IMAGE_URL = process.env.GETIT_LOGO_IMAGE_URL;
+const TOOLLIT_LOGO_IMAGE_URL = process.env.TOOLLIT_LOGO_IMAGE_URL;
 
 const router = express.Router();
 
@@ -81,8 +81,8 @@ router.post(
     ejs.renderFile(
       appDir,
       {
-        getitLogo: GETIT_LOGO_IMAGE_URL,
-        getitURL: ORIGIN_URL,
+        toollitLogo: TOOLLIT_LOGO_IMAGE_URL,
+        toollitURL: ORIGIN_URL,
         deleteAccountConfirmURL,
       },
       function (err, data) {
@@ -105,9 +105,9 @@ router.post(
     });
 
     const mailOptions = {
-      from: `Getit <${process.env.NODEMAILER_USER}>`,
+      from: `Toollit <${process.env.NODEMAILER_USER}>`,
       to: email,
-      subject: 'Getit 회원 탈퇴 확인 메일입니다.',
+      subject: 'Toollit 회원 탈퇴 확인 메일입니다.',
       html: emailTemplate,
     };
 
