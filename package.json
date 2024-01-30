@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "typeorm-ts-node-commonjs schema:sync -d ./dist/src/data-source.js && cross-env NODE_ENV=production TS_NODE_BASEURL=./dist node -r ts-node/register/transpile-only -r tsconfig-paths/register ./dist/src/app.js",
-    "dev": "cross-env NODE_ENV=development nodemon",
-    "build": "rm -rf dist && npx tsc -p .",
+    "start": "cross-env NODE_ENV=production typeorm-ts-node-commonjs schema:sync -d ./dist/src/data-source.js && cross-env NODE_ENV=production TS_NODE_BASEURL=./dist node -r ts-node/register/transpile-only -r tsconfig-paths/register ./dist/src/app.js",
+    "dev": "NODE_ENV=development nodemon",
+    "build": "rm -rf dist && cross-env NODE_ENV=production npx tsc -p .",
     "typeorm": "typeorm-ts-node-commonjs schema:sync -d src/data-source",
     "migration:create": "typeorm-ts-node-commonjs migration:create src/migrations/migration",
     "migration:generate": "typeorm-ts-node-commonjs migration:generate src/migrations/migration -d src/data-source",
