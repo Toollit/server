@@ -11,7 +11,7 @@ import {
   CLIENT_ERROR_NOT_EXIST_EMAIL,
 } from '@/message/error';
 
-dotenv.config();
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const ORIGIN_URL = process.env.ORIGIN_URL;
 const TOOLLIT_LOGO_IMAGE_URL = process.env.TOOLLIT_LOGO_IMAGE_URL;

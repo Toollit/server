@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 import { isLoggedIn } from '@/middleware/loginCheck';
 import { CLIENT_ERROR_DEFAULT } from '@/message/error';
 
-dotenv.config();
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const router = express.Router();
 

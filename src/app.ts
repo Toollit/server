@@ -17,7 +17,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import hpp from 'hpp';
 
-dotenv.config();
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const app: Application = express();
 const port = 4000;
@@ -71,6 +71,6 @@ app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(
-    `started server on 0.0.0.0:${port}, url: http://localhost:${port}`
+    `started server on 0.0.0.0:${port}, url: ${process.env.ORIGIN_URL}`
   );
 });

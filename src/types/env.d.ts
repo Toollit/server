@@ -1,5 +1,6 @@
 declare namespace NodeJS {
   interface ProcessEnv {
+    readonly NODE_ENV: 'development' | 'production';
     readonly DB_ENDPOINT: string;
     readonly DB_PORT: string;
     readonly DB_USERNAME: string;

@@ -9,7 +9,7 @@ import {
   CLIENT_ERROR_SAME_PASSWORD_IMPOSSIBLE,
 } from '@/message/error';
 
-dotenv.config();
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const router = express.Router();
 

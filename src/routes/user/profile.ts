@@ -17,7 +17,7 @@ import {
 } from '@/message/error';
 import { Notification } from '@/entity/Notification';
 
-dotenv.config();
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const router = express.Router();
 

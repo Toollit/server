@@ -23,6 +23,8 @@ import {
 } from '@/message/error';
 import dotenv from 'dotenv';
 
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
+
 interface MulterRequest extends Request {
   file?: Express.MulterS3.File | undefined;
   files?:
@@ -32,8 +34,6 @@ interface MulterRequest extends Request {
     | Express.MulterS3.File[]
     | undefined;
 }
-
-dotenv.config();
 
 const router = express.Router();
 

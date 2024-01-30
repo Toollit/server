@@ -15,7 +15,7 @@ import {
 } from '@/message/error';
 import { ProjectMember } from '@/entity/ProjectMember';
 
-dotenv.config();
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const ORIGIN_URL = process.env.ORIGIN_URL;
 const TOOLLIT_LOGO_IMAGE_URL = process.env.TOOLLIT_LOGO_IMAGE_URL;

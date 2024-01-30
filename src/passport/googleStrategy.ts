@@ -5,7 +5,7 @@ import { User } from '@/entity/User';
 import { Profile } from '@/entity/Profile';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const GOOGLE_CLIENT_ID = process.env['GOOGLE_CLIENT_ID'];
 const GOOGLE_CLIENT_SECRET = process.env['GOOGLE_CLIENT_SECRET'];

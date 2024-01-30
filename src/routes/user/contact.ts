@@ -5,7 +5,7 @@ import { isLoggedIn } from '@/middleware/loginCheck';
 import { CLIENT_ERROR_ABNORMAL_ACCESS } from '@/message/error';
 import { Contact } from '@/entity/Contact';
 
-dotenv.config();
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const router = express.Router();
 
