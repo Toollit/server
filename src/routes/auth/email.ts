@@ -3,7 +3,6 @@ import nodemailer from 'nodemailer';
 import ejs from 'ejs';
 import path from 'path';
 import { createClient } from 'redis';
-import dotenv from 'dotenv';
 import { AppDataSource } from '@/data-source';
 import { User } from '@/entity/User';
 import {
@@ -11,8 +10,6 @@ import {
   CLIENT_ERROR_MISMATCH_AUTH_CODE,
   CLIENT_ERROR_EXPIRE_AUTH_TIME,
 } from '@/message/error';
-
-dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const ORIGIN_URL = process.env.ORIGIN_URL;
 const TOOLLIT_LOGO_IMAGE_URL = process.env.TOOLLIT_LOGO_IMAGE_URL;

@@ -9,9 +9,6 @@ import {
 import axios from 'axios';
 import { User } from '@/entity/User';
 import { Profile } from '@/entity/Profile';
-import dotenv from 'dotenv';
-
-dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const router = express.Router();
 

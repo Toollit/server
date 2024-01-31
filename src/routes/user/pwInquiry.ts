@@ -5,13 +5,10 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 import ejs from 'ejs';
 import { User } from '@/entity/User';
-import dotenv from 'dotenv';
 import {
   CLIENT_ERROR_EXIST_SIGNUP_SOCIAL_LOGIN,
   CLIENT_ERROR_NOT_EXIST_EMAIL,
 } from '@/message/error';
-
-dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const ORIGIN_URL = process.env.ORIGIN_URL;
 const TOOLLIT_LOGO_IMAGE_URL = process.env.TOOLLIT_LOGO_IMAGE_URL;

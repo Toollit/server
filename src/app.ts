@@ -1,11 +1,11 @@
 import 'reflect-metadata';
+import './dotenvConfig';
 import express, { Application, Request, Response, NextFunction } from 'express';
 import authRouter from './routes/auth/index';
 import userRouter from './routes/user/index';
 import postRouter from './routes/post/index';
 import searchRouter from './routes/search/index';
 import { AppDataSource } from './data-source';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import passport from 'passport';
 import session from 'express-session';
@@ -16,8 +16,6 @@ import { logger } from './middleware/logger';
 import helmet from 'helmet';
 import compression from 'compression';
 import hpp from 'hpp';
-
-dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const app: Application = express();
 const port = 4000;

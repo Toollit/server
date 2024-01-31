@@ -2,9 +2,6 @@ import express, { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '@/data-source';
 import { Project } from '@/entity/Project';
 import { Bookmark } from '@/entity/Bookmark';
-import dotenv from 'dotenv';
-
-dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const router = express.Router();
 

@@ -1,11 +1,8 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '@/data-source';
-import dotenv from 'dotenv';
 import { isLoggedIn } from '@/middleware/loginCheck';
 import { CLIENT_ERROR_ABNORMAL_ACCESS } from '@/message/error';
 import { Contact } from '@/entity/Contact';
-
-dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const router = express.Router();
 

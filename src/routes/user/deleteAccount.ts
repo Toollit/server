@@ -8,14 +8,11 @@ import { DeleteAccountRequest } from '@/entity/deleteAccountRequest';
 import { User } from '@/entity/User';
 import { Profile } from '@/entity/Profile';
 import ejs from 'ejs';
-import dotenv from 'dotenv';
 import {
   CLIENT_ERROR_ABNORMAL_ACCESS,
   CLIENT_ERROR_EXPIRE_TIME,
 } from '@/message/error';
 import { ProjectMember } from '@/entity/ProjectMember';
-
-dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const ORIGIN_URL = process.env.ORIGIN_URL;
 const TOOLLIT_LOGO_IMAGE_URL = process.env.TOOLLIT_LOGO_IMAGE_URL;

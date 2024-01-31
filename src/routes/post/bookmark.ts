@@ -4,9 +4,6 @@ import { User } from '@/entity/User';
 import { Bookmark } from '@/entity/Bookmark';
 import { isLoggedIn } from '@/middleware/loginCheck';
 import { CLIENT_ERROR_LOGIN_REQUIRED } from '@/message/error';
-import dotenv from 'dotenv';
-
-dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const router = express.Router();
 

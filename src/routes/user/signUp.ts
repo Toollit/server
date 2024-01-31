@@ -3,11 +3,8 @@ import { AppDataSource } from '@/data-source';
 import crypto from 'crypto';
 import { User } from '@/entity/User';
 import { Profile } from '@/entity/Profile';
-import dotenv from 'dotenv';
 import { isLoggedIn } from '@/middleware/loginCheck';
 import { CLIENT_ERROR_DEFAULT } from '@/message/error';
-
-dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const router = express.Router();
 

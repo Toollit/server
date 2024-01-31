@@ -21,9 +21,6 @@ import {
   CLIENT_ERROR_RECRUITMENT_COMPLETED,
   CLIENT_ERROR_WRITTEN_BY_ME,
 } from '@/message/error';
-import dotenv from 'dotenv';
-
-dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 interface MulterRequest extends Request {
   file?: Express.MulterS3.File | undefined;

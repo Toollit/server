@@ -4,7 +4,6 @@ import { User } from '@/entity/User';
 import { Project } from '@/entity/Project';
 import { Profile } from '@/entity/Profile';
 import { uploadS3 } from '@/middleware/uploadS3';
-import dotenv from 'dotenv';
 import { isLoggedIn } from '@/middleware/loginCheck';
 import { Bookmark } from '@/entity/Bookmark';
 import {
@@ -16,8 +15,6 @@ import {
   CLIENT_ERROR_NOT_EXIST_USER,
 } from '@/message/error';
 import { Notification } from '@/entity/Notification';
-
-dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const router = express.Router();
 
