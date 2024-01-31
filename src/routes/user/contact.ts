@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { AppDataSource } from '@/data-source';
+import { AppDataSource } from '@/config/data-source';
 import { isLoggedIn } from '@/middleware/loginCheck';
 import { CLIENT_ERROR_ABNORMAL_ACCESS } from '@/message/error';
 import { Contact } from '@/entity/Contact';

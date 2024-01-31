@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { AppDataSource } from '@/data-source';
+import { AppDataSource } from '@/config/data-source';
 import { User } from '@/entity/User';
 import { Project } from '@/entity/Project';
 import { Profile } from '@/entity/Profile';

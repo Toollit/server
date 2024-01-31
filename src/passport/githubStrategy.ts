@@ -1,6 +1,6 @@
 import passport from 'passport';
 import { Strategy as GitHubStrategy } from 'passport-github';
-import { AppDataSource } from '../data-source';
+import { AppDataSource } from '@/config/data-source';
 import { User } from '../entity/User';
 
 export default () => {

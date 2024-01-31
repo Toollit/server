@@ -1,6 +1,6 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import { AppDataSource } from '@/data-source';
+import { AppDataSource } from '@/config/data-source';
 import { User } from '@/entity/User';
 import { Profile } from '@/entity/Profile';
 

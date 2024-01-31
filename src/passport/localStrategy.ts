@@ -1,7 +1,7 @@
 import passport from 'passport';
 import passportLocal from 'passport-local';
 import crypto from 'crypto';
-import { AppDataSource } from '@/data-source';
+import { AppDataSource } from '@/config/data-source';
 import { User } from '@/entity/User';
 import {
   CLIENT_ERROR_EXIST_SIGNUP_SOCIAL_LOGIN,

@@ -1,6 +1,6 @@
 import passport from 'passport';
 import localStrategy from './localStrategy';
-import { AppDataSource } from '@/data-source';
+import { AppDataSource } from '@/config/data-source';
 import { User } from '@/entity/User';
 import googleStrategy from './googleStrategy';
 

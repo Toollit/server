@@ -1,5 +1,5 @@
 import express, { NextFunction, Request, Response } from 'express';
-import { AppDataSource } from '@/data-source';
+import { AppDataSource } from '@/config/data-source';
 import { isLoggedIn } from '@/middleware/loginCheck';
 import nodemailer from 'nodemailer';
 import path from 'path';

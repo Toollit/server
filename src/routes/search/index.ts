@@ -1,5 +1,5 @@
 import express, { NextFunction, Request, Response } from 'express';
-import { AppDataSource } from '@/data-source';
+import { AppDataSource } from '@/config/data-source';
 import { Project } from '@/entity/Project';
 import { CLIENT_ERROR_DEFAULT, SERVER_ERROR_DEFAULT } from '@/message/error';
 import { Bookmark } from '@/entity/Bookmark';

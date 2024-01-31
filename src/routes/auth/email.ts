@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 import ejs from 'ejs';
 import path from 'path';
 import { createClient } from 'redis';
-import { AppDataSource } from '@/data-source';
+import { AppDataSource } from '@/config/data-source';
 import { User } from '@/entity/User';
 import {
   CLIENT_ERROR_EXIST_EMAIL,

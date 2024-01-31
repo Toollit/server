@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { AppDataSource } from '@/data-source';
+import { AppDataSource } from '@/config/data-source';
 import { v4 as uuidV4 } from 'uuid';
 import path from 'path';
 import nodemailer from 'nodemailer';

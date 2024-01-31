@@ -5,7 +5,7 @@ import authRouter from './routes/auth/index';
 import userRouter from './routes/user/index';
 import postRouter from './routes/post/index';
 import searchRouter from './routes/search/index';
-import { AppDataSource } from './data-source';
+import { AppDataSource } from './config/data-source';
 import cors from 'cors';
 import passport from 'passport';
 import session from 'express-session';

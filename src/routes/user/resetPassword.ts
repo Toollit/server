@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
-import { AppDataSource } from '@/data-source';
+import { AppDataSource } from '@/config/data-source';
 import crypto from 'crypto';
 import { User } from '@/entity/User';
 import { isLoggedIn } from '@/middleware/loginCheck';
