@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import './dotenvConfig';
+import './config/dotenvConfig';
 import express, { Application, Request, Response, NextFunction } from 'express';
 import authRouter from './routes/auth/index';
 import userRouter from './routes/user/index';
