@@ -1,6 +1,8 @@
 import 'reflect-metadata';
+import './dotenvConfig'; // I set dotenv in app.ts, but the reason I set it here is because there is a problem that the env value is undefined when db sync with the npm run typeorm command.
 import { DataSource } from 'typeorm';
 import path from 'path';
+import mysql2 from 'mysql2';
 
 export const AppDataSource = new DataSource({
   type: 'mysql',
@@ -15,4 +17,5 @@ export const AppDataSource = new DataSource({
   migrations: [path.join(__dirname, '../migrations/*.{ts,js}')],
   subscribers: [],
   charset: 'utf8mb4_unicode_ci',
+  driver: mysql2,
 });
