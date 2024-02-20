@@ -67,10 +67,10 @@ router.post('/', async (req, res, next) => {
     );
 
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
+      service: 'hiworks',
+      host: 'smtps.hiworks.com',
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.NODEMAILER_USER,
         pass: process.env.NODEMAILER_PASS,
@@ -78,7 +78,7 @@ router.post('/', async (req, res, next) => {
     });
 
     const mailOptions = {
-      from: `Toollit <${process.env.NODEMAILER_USER}>`,
+      from: 'Toollit <no-reply@toollit.com>',
       to: email,
       subject: 'Toollit 로그인을위한 임시 비밀번호입니다.',
       html: emailTemplate,

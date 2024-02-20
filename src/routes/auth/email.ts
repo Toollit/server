@@ -85,10 +85,10 @@ router.post(
     );
 
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
+      service: 'hiworks',
+      host: 'smtps.hiworks.com',
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.NODEMAILER_USER,
         pass: process.env.NODEMAILER_PASS,
@@ -96,7 +96,7 @@ router.post(
     });
 
     const mailOptions = {
-      from: `Toollit <${process.env.NODEMAILER_USER}>`,
+      from: 'Toollit <no-reply@toollit.com>',
       to: userEmail,
       subject: 'Toollit 회원가입을 위한 인증번호를 입력해주세요.',
       html: emailTemplate,

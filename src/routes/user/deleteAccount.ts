@@ -91,10 +91,10 @@ router.post(
     );
 
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
+      service: 'hiworks',
+      host: 'smtps.hiworks.com',
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.NODEMAILER_USER,
         pass: process.env.NODEMAILER_PASS,
@@ -102,7 +102,7 @@ router.post(
     });
 
     const mailOptions = {
-      from: `Toollit <${process.env.NODEMAILER_USER}>`,
+      from: 'Toollit <no-reply@toollit.com>',
       to: email,
       subject: 'Toollit 회원 탈퇴 확인 메일입니다.',
       html: emailTemplate,
