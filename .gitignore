@@ -9,3 +9,5 @@ temp/
 dist/
 logs/
 
+
+*.pem
