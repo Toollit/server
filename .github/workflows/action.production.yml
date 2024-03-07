@@ -1,0 +1,79 @@
+name: GitHub Actions
+run-name: ${{ github.actor }} executed GitHub Actions.
+on:
+  push:
+    branches:
+      - production
+
+jobs:
+  source_code_to_zip_file:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository source code
+        uses: actions/checkout@v4
+
+      - name: Check source code
+        working-directory: .
+        run: |
+          ls -a
+
+      - name: Install zip
+        uses: montudor/action-zip@v1
+
+      - name: Zip output
+        working-directory: .
+        run: zip -qq -r app.zip ./*
+
+      - name: Check zip file
+        working-directory: .
+        run: |
+          ls -a
+
+      - name: Upload zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zip
+          path: ./app.zip
+
+  upload_zip_file_to_aws_s3:
+    runs-on: ubuntu-22.04
+    needs: source_code_to_zip_file
+    steps:
+      - name: download zip artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: zip
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload to S3
+        working-directory: .
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          aws s3 cp --region ${{ secrets.AWS_REGION }} ./app.zip s3://${{ secrets.AWS_APP_ZIP_BUCKET }}/app.zip
+
+  deploy_aws_ec2:
+    runs-on: ubuntu-22.04
+    needs: upload_zip_file_to_aws_s3
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: deploy with AWS CodeDeploy
+        working-directory: .
+        run: aws deploy create-deployment
+          --application-name ${{ secrets.AWS_APPLICATION_NAME }}
+          --deployment-config-name CodeDeployDefault.AllAtOnce
+          --deployment-group-name ${{ secrets.AWS_DEPLOYMENT_GROUP_NAME }}
+          --s3-location bucket=${{ secrets.AWS_APP_ZIP_BUCKET }},key=app.zip,bundleType=zip
