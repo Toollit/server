@@ -13,6 +13,8 @@ import {
 
 const ORIGIN_URL = process.env.ORIGIN_URL;
 const TOOLLIT_LOGO_IMAGE_URL = process.env.TOOLLIT_LOGO_IMAGE_URL;
+const HIWORKS_EMAIL_USER = process.env.HIWORKS_EMAIL_USER;
+const HIWORKS_EMAIL_PASS = process.env.HIWORKS_EMAIL_PASS;
 
 const redisClient = createClient({
   url: process.env.REDIS_CLOUD,
@@ -90,8 +92,8 @@ router.post(
       port: 465,
       secure: true,
       auth: {
-        user: process.env.NODEMAILER_USER,
-        pass: process.env.NODEMAILER_PASS,
+        user: HIWORKS_EMAIL_USER,
+        pass: HIWORKS_EMAIL_PASS,
       },
     });
 

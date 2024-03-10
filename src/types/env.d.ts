@@ -2,13 +2,12 @@ declare namespace NodeJS {
   interface ProcessEnv {
     readonly NODE_ENV: 'development' | 'production';
     readonly DB_ENDPOINT: string;
-    readonly DB_PORT: string;
     readonly DB_USERNAME: string;
     readonly DB_PASSWORD: string;
     readonly DB_DATABASE: string;
     readonly ORIGIN_URL: string;
-    readonly NODEMAILER_USER: string;
-    readonly NODEMAILER_PASS: string;
+    readonly HIWORKS_EMAIL_USER: string;
+    readonly HIWORKS_EMAIL_PASS: string;
     readonly COOKIE_SECRET: string;
     readonly GOOGLE_CLIENT_ID: string;
     readonly GOOGLE_CLIENT_SECRET: string;
