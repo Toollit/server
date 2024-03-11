@@ -13,6 +13,9 @@ RUN npm install --legacy-peer-deps
 # copy the generated modules and all other files to the container
 COPY . .
 
+# build project
+RUN npm run build
+
 # app is running on port 4000 within the container, so need to expose it
 EXPOSE 4000
 
