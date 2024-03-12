@@ -75,9 +75,6 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.3"
   },
-  "_moduleAliases": {
-    "@": "dist/src"
-  },
   "engines": {
     "npm": "10.2.4",
     "node": "20.11.1"
