@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # run npm install in local machine
-RUN npm install --legacy-peer-deps
+RUN npm install --production --legacy-peer-deps
 
 # copy the generated modules and all other files to the container
 COPY . .
