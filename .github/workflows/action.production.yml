@@ -6,7 +6,7 @@ on:
       - production
 
 jobs:
-  deploy_docker_image:
+  build_and_upload_images:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository source code
@@ -17,19 +17,29 @@ jobs:
         with:
           node-version: '20.11.1'
 
+      - name: Docker login
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
       - name: App build and push docker image
         run: |
           docker build -t toollit-server-app .
-          docker tag toollit-server-app:latest ${{ secrets.DOCKER_TOOLLIT_SERVER_APP_REPO_URL }}/toollit-server-app:latest
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          docker push ${{ secrets.DOCKER_TOOLLIT_SERVER_APP_REPO_URL }}/toollit-server-app:latest
+          docker tag toollit-server-app:latest ${{ secrets.DOCKER_TOOLLIT_REPO_URL }}/toollit-server-app:latest
+          docker push ${{ secrets.DOCKER_TOOLLIT_REPO_URL }}/toollit-server-app:latest
 
-      # - name: Nginx build and push docker image
-      #   run: |
-      #     docker build -t toollit-server-nginx ./nginx
-      #     docker tag toollit-server-app:latest ${{ secrets.DOCKER_REPO_URL }}/toollit-server-app:latest
-      #     docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-      #     docker push ${{ secrets.DOCKER_REPO_URL }}/toollit-server-app:latest
+      - name: Nginx build and push docker image
+        run: |
+          docker build -t toollit-server-nginx ./nginx
+          docker tag toollit-server-nginx:latest ${{ secrets.DOCKER_TOOLLIT_REPO_URL }}/toollit-server-nginx:latest
+          docker push ${{ secrets.DOCKER_TOOLLIT_REPO_URL }}/toollit-server-nginx:latest
+
+  ec2_deploy_images:
+    runs-on: ubuntu-22.04
+    needs: build_and_upload_images
+    steps:
+      - name: Docker login
+        run: |
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
       - name: SSH into EC2 instance and deploy
         uses: appleboy/ssh-action@v1.0.3
@@ -39,5 +49,10 @@ jobs:
           key: ${{ secrets.AWS_EC2_SSH_KEY }}
           port: ${{ secrets.AWS_SSH_PORT }}
           script: |
-            whoami
-            ls -al
+            cd app && pwd
+            sudo git remote add origin ${{ secrets.TOOLLIT_SERVER_REPO_URL }}
+            sudo git pull origin production
+            sudo docker pull ${{ secrets.DOCKER_TOOLLIT_REPO_URL }}/toollit-server-app:latest
+            sudo docker pull ${{ secrets.DOCKER_TOOLLIT_REPO_URL }}/toollit-server-nginx:latest
+            sudo docker-compose down
+            sudo docker-compose -f docker-compose.prod.yml up -d
