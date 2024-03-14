@@ -50,8 +50,7 @@ jobs:
           port: ${{ secrets.AWS_SSH_PORT }}
           script: |
             cd app && pwd
-            sudo git remote add origin ${{ secrets.TOOLLIT_SERVER_REPO_URL }}
-            sudo git pull origin production
+            sudo git pull https://<${{ secrets.GIT_ID }}>:<${{ secrets.GIT_PASSWORD }}>@${{ secrets.TOOLLIT_SERVER_REPO_URL }}
             sudo docker pull ${{ secrets.DOCKER_TOOLLIT_REPO_URL }}/toollit-server-app:latest
             sudo docker pull ${{ secrets.DOCKER_TOOLLIT_REPO_URL }}/toollit-server-nginx:latest
             sudo docker-compose down
