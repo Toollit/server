@@ -39,7 +39,7 @@ jobs:
           key: ${{ secrets.AWS_EC2_SSH_KEY }}
           port: ${{ secrets.AWS_SSH_PORT }}
           script: |
-            sudo docker pull ${{ secrets.DOCKER_REPO_URL }}/toollit-server-app:latest
+            sudo docker pull ${{ secrets.DOCKER_TOOLLIT_SERVER_APP_REPO_URL }}/toollit-server-app:latest
             sudo docker stop toollit-server-app || true
             sudo docker rm toollit-server-app || true
-            sudo docker run -d -p 4000:4000 --name toollit-server-app ${{ secrets.DOCKER_REPO_URL }}/toollit-server-app:latest
+            sudo docker run -d -p 4000:4000 --name toollit-server-app ${{ secrets.DOCKER_TOOLLIT_SERVER_APP_REPO_URL }}/toollit-server-app:latest
