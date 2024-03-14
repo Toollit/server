@@ -37,6 +37,7 @@ jobs:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USERNAME }}
           key: ${{ secrets.AWS_EC2_SSH_KEY }}
+          port: ${{ secrets.AWS_SSH_PORT }}
           script: |
             sudo docker pull ${{ secrets.DOCKER_REPO_URL }}/toollit-server-app:latest
             sudo docker stop toollit-server-app || true
