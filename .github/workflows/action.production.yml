@@ -37,10 +37,6 @@ jobs:
     runs-on: ubuntu-22.04
     needs: build_and_upload_images
     steps:
-      - name: Docker login
-        run: |
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-
       - name: SSH into EC2 instance and deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -51,6 +47,7 @@ jobs:
           script: |
             cd app && pwd
             sudo git pull https://${{ secrets.GIT_ID }}:${{ secrets.GIT_PASSWORD }}@${{ secrets.TOOLLIT_SERVER_REPO_URL }}
+            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
             sudo docker pull ${{ secrets.DOCKER_TOOLLIT_REPO_URL }}/toollit-server-app:latest
             sudo docker pull ${{ secrets.DOCKER_TOOLLIT_REPO_URL }}/toollit-server-nginx:latest
             sudo docker-compose down
