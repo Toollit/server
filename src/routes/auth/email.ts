@@ -12,7 +12,7 @@ import {
 } from '@/message/error';
 
 const ORIGIN_URL = process.env.ORIGIN_URL;
-const TOOLLIT_LOGO_IMAGE_URL = process.env.TOOLLIT_LOGO_IMAGE_URL;
+const AWS_S3_TOOLLIT_LOGO_IMAGE_URL = process.env.AWS_S3_TOOLLIT_LOGO_IMAGE_URL;
 const HIWORKS_EMAIL_USER = process.env.HIWORKS_EMAIL_USER;
 const HIWORKS_EMAIL_PASS = process.env.HIWORKS_EMAIL_PASS;
 
@@ -77,7 +77,11 @@ router.post(
 
     ejs.renderFile(
       appDir,
-      { authCode, toollitLogo: TOOLLIT_LOGO_IMAGE_URL, toollitURL: ORIGIN_URL },
+      {
+        authCode,
+        toollitLogo: AWS_S3_TOOLLIT_LOGO_IMAGE_URL,
+        toollitURL: ORIGIN_URL,
+      },
       function (err, data) {
         if (err) {
           return next(err);

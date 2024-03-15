@@ -3,17 +3,17 @@ import multer from 'multer';
 import multerS3 from 'multer-s3';
 import { S3Client } from '@aws-sdk/client-s3';
 
-const S3_ACCESS_KEY_ID = process.env.S3_ACCESS_KEY_ID;
-const S3_SECRET_ACCESS_KEY = process.env.S3_SECRET_ACCESS_KEY;
-const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME;
-const S3_BUCKET_REGION = process.env.S3_BUCKET_REGION;
+const AWS_S3_ACCESS_KEY_ID = process.env.AWS_S3_ACCESS_KEY_ID;
+const AWS_S3_SECRET_ACCESS_KEY = process.env.AWS_S3_SECRET_ACCESS_KEY;
+const AWS_S3_BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
+const AWS_S3_BUCKET_REGION = process.env.AWS_S3_BUCKET_REGION;
 
 const s3 = new S3Client({
   credentials: {
-    accessKeyId: S3_ACCESS_KEY_ID,
-    secretAccessKey: S3_SECRET_ACCESS_KEY,
+    accessKeyId: AWS_S3_ACCESS_KEY_ID,
+    secretAccessKey: AWS_S3_SECRET_ACCESS_KEY,
   },
-  region: S3_BUCKET_REGION,
+  region: AWS_S3_BUCKET_REGION,
 });
 
 const upload = (path: string) => {
@@ -29,7 +29,7 @@ const upload = (path: string) => {
     },
     storage: multerS3({
       s3: s3,
-      bucket: S3_BUCKET_NAME,
+      bucket: AWS_S3_BUCKET_NAME,
       key(req, file, cb) {
         const userId = req.user?.id;
         const newFileName = new Date().getTime();

@@ -15,7 +15,7 @@ import {
 import { ProjectMember } from '@/entity/ProjectMember';
 
 const ORIGIN_URL = process.env.ORIGIN_URL;
-const TOOLLIT_LOGO_IMAGE_URL = process.env.TOOLLIT_LOGO_IMAGE_URL;
+const AWS_S3_TOOLLIT_LOGO_IMAGE_URL = process.env.AWS_S3_TOOLLIT_LOGO_IMAGE_URL;
 const HIWORKS_EMAIL_USER = process.env.HIWORKS_EMAIL_USER;
 const HIWORKS_EMAIL_PASS = process.env.HIWORKS_EMAIL_PASS;
 
@@ -80,7 +80,7 @@ router.post(
     ejs.renderFile(
       appDir,
       {
-        toollitLogo: TOOLLIT_LOGO_IMAGE_URL,
+        toollitLogo: AWS_S3_TOOLLIT_LOGO_IMAGE_URL,
         toollitURL: ORIGIN_URL,
         deleteAccountConfirmURL,
       },
