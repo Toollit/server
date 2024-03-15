@@ -50,5 +50,5 @@ jobs:
             sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
             sudo docker pull ${{ secrets.DOCKER_TOOLLIT_REPO_URL }}/toollit-server-app:latest
             sudo docker pull ${{ secrets.DOCKER_TOOLLIT_REPO_URL }}/toollit-server-nginx:latest
-            sudo docker-compose down
-            sudo docker-compose -f docker-compose.prod.yml up -d
+            sudo docker compose -f docker-compose.prod.yml down
+            sudo docker compose -f docker-compose.prod.yml up -d
