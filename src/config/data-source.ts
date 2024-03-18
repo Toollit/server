@@ -3,19 +3,33 @@ import './dotenvConfig'; // I set dotenv in app.ts, but the reason I set it here
 import { DataSource } from 'typeorm';
 import path from 'path';
 import mysql2 from 'mysql2';
+import { getParameterStore } from '@/utils/awsParamterStore';
 
-export const AppDataSource = new DataSource({
-  type: 'mysql',
-  host: process.env.DB_ENDPOINT,
-  port: 3306,
-  username: process.env.DB_USERNAME,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
-  synchronize: false,
-  logging: true,
-  entities: [path.join(__dirname, '../entity/**/*.{ts,js}')],
-  migrations: [path.join(__dirname, '../migrations/*.{ts,js}')],
-  subscribers: [],
-  charset: 'utf8mb4_unicode_ci',
-  driver: mysql2,
-});
+export let AppDataSource: Readonly<DataSource>;
+
+export const dataSource = async () => {
+  const DB_ENDPOINT = await getParameterStore({ key: 'DB_ENDPOINT' });
+  const DB_USERNAME = await getParameterStore({ key: 'DB_USERNAME' });
+  const DB_PASSWORD = await getParameterStore({ key: 'DB_PASSWORD' });
+  const DB_DATABASE = await getParameterStore({ key: 'DB_DATABASE' });
+
+  const source = new DataSource({
+    type: 'mysql',
+    host: DB_ENDPOINT,
+    port: 3306,
+    username: DB_USERNAME,
+    password: DB_PASSWORD,
+    database: DB_DATABASE,
+    synchronize: false,
+    logging: true,
+    entities: [path.join(__dirname, '../entity/**/*.{ts,js}')],
+    migrations: [path.join(__dirname, '../migrations/*.{ts,js}')],
+    subscribers: [],
+    charset: 'utf8mb4_unicode_ci',
+    driver: mysql2,
+  });
+
+  AppDataSource = source;
+
+  return source;
+};
