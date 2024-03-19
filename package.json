@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "rm -rf dist && cross-env NODE_ENV=production npx tsc -p .",
-    "start": "cross-env NODE_ENV=production typeorm-ts-node-commonjs schema:sync -d ./dist/src/config/data-source.js && cross-env NODE_ENV=production TS_NODE_BASEURL=./dist node -r ts-node/register/transpile-only -r tsconfig-paths/register ./dist/src/app.js",
+    "start": "cross-env NODE_ENV=production TS_NODE_BASEURL=./dist node -r tsconfig-paths/register ./dist/src/app.js",
     "typeorm:prod": "NODE_ENV=production typeorm-ts-node-commonjs schema:sync -d ./dist/src/config/data-source",
     "migration:prod:create": "NODE_ENV=production typeorm-ts-node-commonjs migration:create ./dist/src/migrations/migration",
     "migration:prod:generate": "NODE_ENV=production typeorm-ts-node-commonjs migration:generate ./dist/src/migrations/migration -d ./dist/src/config/data-source",
