@@ -17,13 +17,25 @@ import helmet from 'helmet';
 import compression from 'compression';
 import hpp from 'hpp';
 import { getParameterStore } from '@/utils/awsParamterStore';
+import { redisClient } from './utils/redisClient';
 
-const setUpApp = async () => {
+const app = async () => {
   const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
   const COOKIE_SECRET = await getParameterStore({ key: 'COOKIE_SECRET' });
 
   const app: Application = express();
   const port = 4000;
+
+  // redis connection settings
+  const redis = await redisClient;
+  redis.on('connect', () => {
+    console.info('Redis connected!');
+  });
+  redis.on('error', (err) => {
+    console.error('Redis Client Error', err);
+  });
+
+  await redis.connect();
 
   // passport settings
   passportStrategy();
@@ -78,4 +90,4 @@ const setUpApp = async () => {
   });
 };
 
-setUpApp();
+app();

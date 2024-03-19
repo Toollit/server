@@ -2,7 +2,6 @@ import express, { Request, Response, NextFunction } from 'express';
 import nodemailer from 'nodemailer';
 import ejs from 'ejs';
 import path from 'path';
-import { createClient } from 'redis';
 import { AppDataSource } from '@/config/data-source';
 import { User } from '@/entity/User';
 import {
@@ -10,27 +9,8 @@ import {
   CLIENT_ERROR_MISMATCH_AUTH_CODE,
   CLIENT_ERROR_EXPIRE_AUTH_TIME,
 } from '@/message/error';
-
-const ORIGIN_URL = process.env.ORIGIN_URL;
-const AWS_S3_TOOLLIT_LOGO_IMAGE_URL = process.env.AWS_S3_TOOLLIT_LOGO_IMAGE_URL;
-const HIWORKS_EMAIL_USER = process.env.HIWORKS_EMAIL_USER;
-const HIWORKS_EMAIL_PASS = process.env.HIWORKS_EMAIL_PASS;
-
-const redisClient = createClient({
-  url: process.env.REDIS_CLOUD,
-  legacyMode: true,
-});
-
-redisClient.on('connect', () => {
-  console.info('Redis connected!');
-});
-redisClient.on('error', (err) => {
-  console.error('Redis Client Error', err);
-});
-
-(async () => {
-  await redisClient.connect();
-})();
+import { getParameterStore } from '@/utils/awsParamterStore';
+import { redisClient } from '@/utils/redisClient';
 
 const router = express.Router();
 
@@ -46,6 +26,18 @@ router.post(
     res: Response,
     next: NextFunction
   ) => {
+    const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
+    const AWS_S3_TOOLLIT_LOGO_IMAGE_URL = await getParameterStore({
+      key: 'AWS_S3_TOOLLIT_LOGO_IMAGE_URL',
+    });
+    const HIWORKS_EMAIL_USER = await getParameterStore({
+      key: 'HIWORKS_EMAIL_USER',
+    });
+    const HIWORKS_EMAIL_PASS = await getParameterStore({
+      key: 'HIWORKS_EMAIL_PASS',
+    });
+    const REDIS_CLOUD = await getParameterStore({ key: 'REDIS_CLOUD' });
+
     const userEmail = req.body.email;
 
     const userRepository = AppDataSource.getRepository(User);
@@ -119,7 +111,8 @@ router.post(
 
       try {
         // save authCode to redis. redis cache expires in 5 minutes
-        await redisClient.v4.set(userEmail, authCode, { EX: 60 * 5 });
+        const redis = await redisClient;
+        await redis.v4.set(userEmail, authCode, { EX: 60 * 5 });
 
         return res.status(200).json({
           success: true,
@@ -150,7 +143,8 @@ router.post(
     const { email, authCode } = req.body;
 
     try {
-      const redisAuthCode = await redisClient.v4.get(email);
+      const redis = await redisClient;
+      const redisAuthCode = await redis.v4.get(email);
 
       if (redisAuthCode === null) {
         return res.status(401).json({
