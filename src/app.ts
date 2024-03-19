@@ -74,7 +74,7 @@ const app = async () => {
   app.use(passport.session());
 
   app.get('/', (req: Request, res: Response, next: NextFunction) => {
-    res.send('Hello World!');
+    res.send('toollit server is available now.');
   });
 
   app.use('/api/auth', authRouter);
@@ -85,7 +85,7 @@ const app = async () => {
   app.use(errorHandler);
 
   app.listen(port, () => {
-    console.log(`started server on 0.0.0.0:${port}, url: ${ORIGIN_URL}`);
+    console.log(`started server on 0.0.0.0:${port}`);
   });
 };
 
