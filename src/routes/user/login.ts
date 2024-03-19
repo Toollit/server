@@ -9,7 +9,7 @@ import {
 import axios from 'axios';
 import { User } from '@/entity/User';
 import { Profile } from '@/entity/Profile';
-import { getParameterStore } from '@/utils/awsParamterStore';
+import { getParameterStore } from '@/utils/awsParameterStore';
 
 const router = express.Router();
 

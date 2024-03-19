@@ -9,7 +9,7 @@ import {
   CLIENT_ERROR_EXIST_SIGNUP_SOCIAL_LOGIN,
   CLIENT_ERROR_NOT_EXIST_EMAIL,
 } from '@/message/error';
-import { getParameterStore } from '@/utils/awsParamterStore';
+import { getParameterStore } from '@/utils/awsParameterStore';
 
 const router = express.Router();
 

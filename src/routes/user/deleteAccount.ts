@@ -13,7 +13,7 @@ import {
   CLIENT_ERROR_EXPIRE_TIME,
 } from '@/message/error';
 import { ProjectMember } from '@/entity/ProjectMember';
-import { getParameterStore } from '@/utils/awsParamterStore';
+import { getParameterStore } from '@/utils/awsParameterStore';
 
 const router = express.Router();
 

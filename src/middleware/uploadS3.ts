@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import multer from 'multer';
 import multerS3 from 'multer-s3';
 import { S3Client } from '@aws-sdk/client-s3';
-import { getParameterStore } from '@/utils/awsParamterStore';
+import { getParameterStore } from '@/utils/awsParameterStore';
 
 const upload = async (path: string) => {
   const AWS_S3_ACCESS_KEY_ID = await getParameterStore({

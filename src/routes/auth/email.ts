@@ -9,7 +9,7 @@ import {
   CLIENT_ERROR_MISMATCH_AUTH_CODE,
   CLIENT_ERROR_EXPIRE_AUTH_TIME,
 } from '@/message/error';
-import { getParameterStore } from '@/utils/awsParamterStore';
+import { getParameterStore } from '@/utils/awsParameterStore';
 import { redisClient } from '@/utils/redisClient';
 
 const router = express.Router();

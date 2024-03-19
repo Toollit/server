@@ -3,7 +3,7 @@ import './dotenvConfig'; // I set dotenv in app.ts, but the reason I set it here
 import { DataSource } from 'typeorm';
 import path from 'path';
 import mysql2 from 'mysql2';
-import { getParameterStore } from '@/utils/awsParamterStore';
+import { getParameterStore } from '@/utils/awsParameterStore';
 
 export let AppDataSource: Readonly<DataSource>;
 

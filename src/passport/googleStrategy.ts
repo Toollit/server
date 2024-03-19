@@ -3,7 +3,7 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { AppDataSource } from '@/config/data-source';
 import { User } from '@/entity/User';
 import { Profile } from '@/entity/Profile';
-import { getParameterStore } from '@/utils/awsParamterStore';
+import { getParameterStore } from '@/utils/awsParameterStore';
 
 export default async () => {
   const GOOGLE_CLIENT_ID = await getParameterStore({ key: 'GOOGLE_CLIENT_ID' });

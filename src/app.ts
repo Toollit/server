@@ -16,7 +16,7 @@ import { logger } from './middleware/logger';
 import helmet from 'helmet';
 import compression from 'compression';
 import hpp from 'hpp';
-import { getParameterStore } from '@/utils/awsParamterStore';
+import { getParameterStore } from '@/utils/awsParameterStore';
 import { redisClient } from './utils/redisClient';
 
 const app = async () => {
