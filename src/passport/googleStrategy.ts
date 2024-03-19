@@ -3,12 +3,17 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { AppDataSource } from '@/config/data-source';
 import { User } from '@/entity/User';
 import { Profile } from '@/entity/Profile';
+import { getParameterStore } from '@/utils/awsParamterStore';
 
-const GOOGLE_CLIENT_ID = process.env['GOOGLE_CLIENT_ID'];
-const GOOGLE_CLIENT_SECRET = process.env['GOOGLE_CLIENT_SECRET'];
-const GOOGLE_CALLBACK_URL = process.env['GOOGLE_CALLBACK_URL'];
+export default async () => {
+  const GOOGLE_CLIENT_ID = await getParameterStore({ key: 'GOOGLE_CLIENT_ID' });
+  const GOOGLE_CLIENT_SECRET = await getParameterStore({
+    key: 'GOOGLE_CLIENT_SECRET',
+  });
+  const GOOGLE_CALLBACK_URL = await getParameterStore({
+    key: 'GOOGLE_CALLBACK_URL',
+  });
 
-export default () => {
   passport.use(
     new GoogleStrategy(
       {

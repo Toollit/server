@@ -2,21 +2,30 @@ import { NextFunction, Request, Response } from 'express';
 import multer from 'multer';
 import multerS3 from 'multer-s3';
 import { S3Client } from '@aws-sdk/client-s3';
+import { getParameterStore } from '@/utils/awsParamterStore';
 
-const AWS_S3_ACCESS_KEY_ID = process.env.AWS_S3_ACCESS_KEY_ID;
-const AWS_S3_SECRET_ACCESS_KEY = process.env.AWS_S3_SECRET_ACCESS_KEY;
-const AWS_S3_BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
-const AWS_S3_BUCKET_REGION = process.env.AWS_S3_BUCKET_REGION;
+const upload = async (path: string) => {
+  const AWS_S3_ACCESS_KEY_ID = await getParameterStore({
+    key: 'AWS_S3_ACCESS_KEY_ID',
+  });
+  const AWS_S3_SECRET_ACCESS_KEY = await getParameterStore({
+    key: 'AWS_S3_SECRET_ACCESS_KEY',
+  });
+  const AWS_S3_BUCKET_NAME = await getParameterStore({
+    key: 'AWS_S3_BUCKET_NAME',
+  });
+  const AWS_S3_BUCKET_REGION = await getParameterStore({
+    key: 'AWS_S3_BUCKET_REGION',
+  });
 
-const s3 = new S3Client({
-  credentials: {
-    accessKeyId: AWS_S3_ACCESS_KEY_ID,
-    secretAccessKey: AWS_S3_SECRET_ACCESS_KEY,
-  },
-  region: AWS_S3_BUCKET_REGION,
-});
+  const s3 = new S3Client({
+    credentials: {
+      accessKeyId: AWS_S3_ACCESS_KEY_ID,
+      secretAccessKey: AWS_S3_SECRET_ACCESS_KEY,
+    },
+    region: AWS_S3_BUCKET_REGION,
+  });
 
-const upload = (path: string) => {
   return multer({
     fileFilter(req, file, cb) {
       if (file.mimetype === 'application/json') {
@@ -101,17 +110,21 @@ const isFieldsType = (
 };
 
 export const uploadS3 = ({ path, option, data }: Upload) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     if (option === 'single' && isSingleType(data)) {
-      return upload(path).single(data.name)(req, res, next);
+      return (await upload(path)).single(data.name)(req, res, next);
     }
 
     if (option === 'array' && isArrayType(data)) {
-      return upload(path).array(data.name, data.maxCount)(req, res, next);
+      return (await upload(path)).array(data.name, data.maxCount)(
+        req,
+        res,
+        next
+      );
     }
 
     if (option === 'fields' && isFieldsType(data)) {
-      return upload(path).fields(data)(req, res, next);
+      return (await upload(path)).fields(data)(req, res, next);
     }
   };
 };

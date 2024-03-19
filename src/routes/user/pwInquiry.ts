@@ -9,16 +9,23 @@ import {
   CLIENT_ERROR_EXIST_SIGNUP_SOCIAL_LOGIN,
   CLIENT_ERROR_NOT_EXIST_EMAIL,
 } from '@/message/error';
-
-const ORIGIN_URL = process.env.ORIGIN_URL;
-const AWS_S3_TOOLLIT_LOGO_IMAGE_URL = process.env.AWS_S3_TOOLLIT_LOGO_IMAGE_URL;
-const HIWORKS_EMAIL_USER = process.env.HIWORKS_EMAIL_USER;
-const HIWORKS_EMAIL_PASS = process.env.HIWORKS_EMAIL_PASS;
+import { getParameterStore } from '@/utils/awsParamterStore';
 
 const router = express.Router();
 
 // Password inquiry page find password and issuance of temporary password router
 router.post('/', async (req, res, next) => {
+  const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
+  const AWS_S3_TOOLLIT_LOGO_IMAGE_URL = await getParameterStore({
+    key: 'AWS_S3_TOOLLIT_LOGO_IMAGE_URL',
+  });
+  const HIWORKS_EMAIL_USER = await getParameterStore({
+    key: 'HIWORKS_EMAIL_USER',
+  });
+  const HIWORKS_EMAIL_PASS = await getParameterStore({
+    key: 'HIWORKS_EMAIL_PASS',
+  });
+
   const email = req.body.email;
 
   const userRepository = AppDataSource.getRepository(User);

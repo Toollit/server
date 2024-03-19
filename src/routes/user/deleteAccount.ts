@@ -13,11 +13,7 @@ import {
   CLIENT_ERROR_EXPIRE_TIME,
 } from '@/message/error';
 import { ProjectMember } from '@/entity/ProjectMember';
-
-const ORIGIN_URL = process.env.ORIGIN_URL;
-const AWS_S3_TOOLLIT_LOGO_IMAGE_URL = process.env.AWS_S3_TOOLLIT_LOGO_IMAGE_URL;
-const HIWORKS_EMAIL_USER = process.env.HIWORKS_EMAIL_USER;
-const HIWORKS_EMAIL_PASS = process.env.HIWORKS_EMAIL_PASS;
+import { getParameterStore } from '@/utils/awsParamterStore';
 
 const router = express.Router();
 
@@ -26,6 +22,17 @@ router.post(
   '/',
   isLoggedIn,
   async (req: Request, res: Response, next: NextFunction) => {
+    const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
+    const AWS_S3_TOOLLIT_LOGO_IMAGE_URL = await getParameterStore({
+      key: 'AWS_S3_TOOLLIT_LOGO_IMAGE_URL',
+    });
+    const HIWORKS_EMAIL_USER = await getParameterStore({
+      key: 'HIWORKS_EMAIL_USER',
+    });
+    const HIWORKS_EMAIL_PASS = await getParameterStore({
+      key: 'HIWORKS_EMAIL_PASS',
+    });
+
     const currentUser = req.user;
 
     if (!currentUser) {

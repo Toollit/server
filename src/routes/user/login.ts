@@ -9,18 +9,9 @@ import {
 import axios from 'axios';
 import { User } from '@/entity/User';
 import { Profile } from '@/entity/Profile';
+import { getParameterStore } from '@/utils/awsParamterStore';
 
 const router = express.Router();
-
-const SUCCESS_REDIRECT = process.env.ORIGIN_URL;
-const FAILURE_REDIRECT = `${process.env.ORIGIN_URL}/login?error=true`;
-const DUPLICATE_REDIRECT = `${process.env.ORIGIN_URL}/login?duplicate=true`;
-const EMPTY_REDIRECT = `${process.env.ORIGIN_URL}/login?hasEmailInfo=false`;
-const FIRST_TIME_REDIRECT = `${process.env.ORIGIN_URL}/login?firstTime=true`;
-
-const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
-const GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL;
-const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
 // Login page. email login router
 router.post('/email', (req: Request, res: Response, next: NextFunction) => {
@@ -74,7 +65,14 @@ router.get(
 // Login page. social login with google auth callback
 router.get(
   '/auth/google/callback',
-  (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response, next: NextFunction) => {
+    const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
+    const SUCCESS_REDIRECT = ORIGIN_URL;
+    const FAILURE_REDIRECT = `${ORIGIN_URL}/login?error=true`;
+    const DUPLICATE_REDIRECT = `${ORIGIN_URL}/login?duplicate=true`;
+    const EMPTY_REDIRECT = `${ORIGIN_URL}/login?hasEmailInfo=false`;
+    const FIRST_TIME_REDIRECT = `${ORIGIN_URL}/login?firstTime=true`;
+
     passport.authenticate(
       'google',
       (
@@ -121,7 +119,12 @@ router.get(
 );
 
 // Login page. social login with github
-router.get('/github', (req, res, next) => {
+router.get('/github', async (req, res, next) => {
+  const GITHUB_CLIENT_ID = await getParameterStore({ key: 'GITHUB_CLIENT_ID' });
+  const GITHUB_CALLBACK_URL = await getParameterStore({
+    key: 'GITHUB_CALLBACK_URL',
+  });
+
   return res.redirect(
     `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=user:email&redirect_uri=${GITHUB_CALLBACK_URL}`
   );
@@ -129,6 +132,17 @@ router.get('/github', (req, res, next) => {
 
 // Login page. social login with github auth callback
 router.get('/auth/github/callback', async (req, res, next) => {
+  const GITHUB_CLIENT_ID = await getParameterStore({ key: 'GITHUB_CLIENT_ID' });
+  const GITHUB_CLIENT_SECRET = await getParameterStore({
+    key: 'GITHUB_CLIENT_SECRET',
+  });
+  const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
+  const SUCCESS_REDIRECT = ORIGIN_URL;
+  const FAILURE_REDIRECT = `${ORIGIN_URL}/login?error=true`;
+  const DUPLICATE_REDIRECT = `${ORIGIN_URL}/login?duplicate=true`;
+  const EMPTY_REDIRECT = `${ORIGIN_URL}/login?hasEmailInfo=false`;
+  const FIRST_TIME_REDIRECT = `${ORIGIN_URL}/login?firstTime=true`;
+
   const userCode = req.query.code;
 
   const queryRunner = AppDataSource.createQueryRunner();
