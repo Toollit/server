@@ -5,7 +5,7 @@ import authRouter from './routes/auth/index';
 import userRouter from './routes/user/index';
 import postRouter from './routes/post/index';
 import searchRouter from './routes/search/index';
-import { dataSource } from './config/data-source';
+import { AppDataSource } from './config/data-source';
 import cors from 'cors';
 import passport from 'passport';
 import session from 'express-session';
@@ -16,7 +16,7 @@ import { logger } from './middleware/logger';
 import helmet from 'helmet';
 import compression from 'compression';
 import hpp from 'hpp';
-import { getParameterStore } from '@/utils/awsParameterStore';
+import { getParameterStore } from './utils/awsParameterStore';
 import { redisClient } from './utils/redisClient';
 
 const app = async () => {
@@ -41,13 +41,12 @@ const app = async () => {
   passportStrategy();
 
   // typeorm connection with database
-  dataSource()
-    .then((db) => {
-      db.initialize();
+  AppDataSource.initialize()
+    .then(() => {
       console.log('Data Source has been initialized!');
     })
-    .catch((err) =>
-      console.error('Error during Data Source initialization:', err)
+    .catch((error) =>
+      console.error('Error during Data Source initialization:', error)
     );
 
   app.use(

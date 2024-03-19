@@ -7,7 +7,7 @@ import { getParameterStore } from '@/utils/awsParameterStore';
 
 export let AppDataSource: Readonly<DataSource>;
 
-export const dataSource = async () => {
+export const dataSource = (async () => {
   const DB_ENDPOINT = await getParameterStore({ key: 'DB_ENDPOINT' });
   const DB_USERNAME = await getParameterStore({ key: 'DB_USERNAME' });
   const DB_PASSWORD = await getParameterStore({ key: 'DB_PASSWORD' });
@@ -32,4 +32,4 @@ export const dataSource = async () => {
   AppDataSource = source;
 
   return source;
-};
+})();
