@@ -50,7 +50,7 @@ jobs:
             sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
             sudo docker pull ${{ secrets.DOCKER_TOOLLIT_REPO_NAME }}/toollit-server-app:latest
             sudo docker pull ${{ secrets.DOCKER_TOOLLIT_REPO_NAME }}/toollit-server-nginx:latest
-            chmod +x init-letsencrypt.sh
-            sudo ./init-letsencrypt.sh
             sudo docker compose -f docker-compose.prod.yml down
             sudo docker compose -f docker-compose.prod.yml up -d
+            sudo chmod +x init-letsencrypt.sh
+            sudo ./init-letsencrypt.sh
