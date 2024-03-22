@@ -31,7 +31,7 @@ echo "### Creating dummy certificate for $domains ..."
 path="/etc/letsencrypt/live/$domains"
 mkdir -p "$data_path/conf/live/$domains"
 sudo docker compose -f docker-compose.prod.yml run --rm --entrypoint "\
-  sudo openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1\
+  openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1\
     -keyout '$path/privkey.pem' \
     -out '$path/fullchain.pem' \
     -subj '/CN=localhost'" certbot
