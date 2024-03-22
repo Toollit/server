@@ -6,7 +6,7 @@ if ! [ -x "$(command -v docker)" ] || ! [ -x "$(command -v compose)" ]; then
 fi
 
 domains=(api.toollit.com)
-rsa_key_size=4096
+rsa_key_size=2048
 data_path="./data/certbot"
 email="seungwon.code@gmail.com" # Adding a valid address is strongly recommended
 staging=1 # Set to 1 if you're testing your setup to avoid hitting request limits
