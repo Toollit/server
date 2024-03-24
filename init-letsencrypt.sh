@@ -27,6 +27,17 @@ if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/
   echo
 fi
 
+
+echo "### Shutting down docker containers ..."
+docker compose -f docker-compose.prod.yml down
+echo
+
+
+echo "### Run docker containers ..."
+docker compose -f docker-compose.prod.yml up -d
+echo
+
+
 echo "### Creating dummy certificate for $domains ..."
 path="/etc/letsencrypt/live/$domains"
 mkdir -p "$data_path/conf/live/$domains"
