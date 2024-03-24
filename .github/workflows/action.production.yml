@@ -46,7 +46,8 @@ jobs:
           port: ${{ secrets.AWS_SSH_PORT }}
           script: |
             cd app/server && pwd
-            sudo git pull origin production
+            git checkout production
+            git pull
             sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
             sudo docker pull ${{ secrets.DOCKER_TOOLLIT_REPO_NAME }}/toollit-server-app:latest
             sudo docker pull ${{ secrets.DOCKER_TOOLLIT_REPO_NAME }}/toollit-server-nginx:latest
