@@ -45,7 +45,7 @@ jobs:
           key: ${{ secrets.AWS_EC2_SSH_KEY }}
           port: ${{ secrets.AWS_SSH_PORT }}
           script: |
-            cd app/server && pwd
+            cd app && pwd
             git checkout production
             git pull
             sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
