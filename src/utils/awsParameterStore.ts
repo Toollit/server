@@ -4,6 +4,7 @@ import {
   GetParameterRequest,
 } from '@aws-sdk/client-ssm';
 
+const isDev = process.env.NODE_ENV === 'development';
 const NODE_ENV = process.env.NODE_ENV === 'development' ? 'dev' : 'prod';
 
 const envPath = `/${NODE_ENV}/toollit/server/env`;
@@ -88,6 +89,11 @@ function getValueByKey({ key }: ParameterKey): (typeof env)[key] {
 }
 
 const getParameterStore = async ({ key }: ParameterKey) => {
+  if (isDev) {
+    const value = process.env[key];
+    return value;
+  }
+
   const parameterStorePath = getValueByKey({ key });
 
   const params: GetParameterRequest = {
