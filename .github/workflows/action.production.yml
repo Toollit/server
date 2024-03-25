@@ -47,7 +47,9 @@ jobs:
           script: |
             cd app && pwd
             git checkout production
+            git stash
             git pull origin production
+            git stash drop
             sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
             sudo docker pull ${{ secrets.DOCKER_TOOLLIT_REPO_NAME }}/toollit-server-app:latest
             sudo docker pull ${{ secrets.DOCKER_TOOLLIT_REPO_NAME }}/toollit-server-nginx:latest
