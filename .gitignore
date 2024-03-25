@@ -12,4 +12,5 @@ logs/
 
 *.pem
 
-./data/certbot
+# data directory is cerbot settings directory 
+data
