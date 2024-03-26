@@ -11,15 +11,21 @@ data_path="./data/certbot"
 email="seungwon.code@gmail.com" # Adding a valid address is strongly recommended
 staging=1 # staging=1 for development, staging=0 for production. Set to 1 if you're testing your setup to avoid hitting request limits
 
-# To update new docker images
-echo "### Shutting down docker containers ..."
-docker compose -f docker-compose.prod.yml down
-echo
 
-# To update new docker images
-echo "### Run docker containers ..."
-docker compose -f docker-compose.prod.yml up -d
-echo
+# Updating docker images if ssl is already issued.
+if [ -d "$data_path" ]; then
+  echo "### To update new docker images. Shutting down docker containers ..."
+  docker compose -f docker-compose.prod.yml down
+  echo
+
+  echo "### Delete all images to maintain ec2 storage space ..."
+  docker rmi -f $(sudo docker images -aq)
+
+  echo "### To update new docker images. Run docker containers ..."
+  docker compose -f docker-compose.prod.yml up -d
+  echo
+fi
+
 
 # If a folder exists in data_path during deployment, this script here indefinitely waits for a response so that the script below does not run.
 if [ -d "$data_path" ]; then
