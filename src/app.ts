@@ -20,6 +20,7 @@ import { getParameterStore } from './utils/awsParameterStore';
 import { redisClient } from './utils/redisClient';
 
 const app = async () => {
+  const isDev = process.env.NODE_ENV === 'development';
   const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
   const COOKIE_SECRET = await getParameterStore({ key: 'COOKIE_SECRET' });
 
@@ -68,6 +69,11 @@ const app = async () => {
       secret: COOKIE_SECRET,
       resave: false,
       saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        secure: true,
+        domain: isDev ? undefined : '.toollit.com',
+      },
     })
   );
   app.use(passport.initialize());
