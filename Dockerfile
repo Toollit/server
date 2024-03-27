@@ -16,6 +16,9 @@ COPY . .
 # build project
 RUN npm run build
 
+# move uncompiled email template ejs file
+RUN cp -r /usr/src/app/src/template /usr/src/app/dist/src
+
 # app is running on port 4000 within the container, so need to expose it
 EXPOSE 4000
 
