@@ -50,13 +50,16 @@ const app = async () => {
       console.error('Error during Data Source initialization:', error)
     );
 
+  if (!isDev) {
+    app.set('trust proxy', 1);
+  }
+
   app.use(
     cors({
       origin: ORIGIN_URL,
       credentials: true,
     })
   );
-
   app.use(helmet());
   app.use(compression());
   app.use(hpp());
@@ -64,18 +67,33 @@ const app = async () => {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ limit: '10mb', extended: true }));
   app.use(cookieParser(COOKIE_SECRET));
-  app.use(
-    session({
-      secret: COOKIE_SECRET,
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        httpOnly: true,
-        secure: true,
-        domain: isDev ? undefined : '.toollit.com',
-      },
-    })
-  );
+
+  if (!isDev) {
+    app.use(
+      session({
+        secret: COOKIE_SECRET,
+        resave: false,
+        saveUninitialized: false,
+        proxy: true,
+        cookie: {
+          httpOnly: true,
+          secure: true,
+          domain: isDev ? undefined : '.toollit.com',
+        },
+      })
+    );
+  }
+
+  if (isDev) {
+    app.use(
+      session({
+        secret: COOKIE_SECRET,
+        resave: false,
+        saveUninitialized: false,
+      })
+    );
+  }
+
   app.use(passport.initialize());
   app.use(passport.session());
 
