@@ -21,14 +21,26 @@ import { redisClient } from './utils/redisClient';
 
 const app = async () => {
   const isDev = process.env.NODE_ENV === 'development';
-  const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
-  const COOKIE_SECRET = await getParameterStore({ key: 'COOKIE_SECRET' });
+  const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' }).catch(
+    (err) => {
+      throw new Error(`aws getParameterStore ORIGIN_URL fetch error: ${err}`);
+    }
+  );
+  const COOKIE_SECRET = await getParameterStore({ key: 'COOKIE_SECRET' }).catch(
+    (err) => {
+      throw new Error(
+        `aws getParameterStore COOKIE_SECRET fetch error: ${err}`
+      );
+    }
+  );
 
   const app: Application = express();
   const port = 4000;
 
   // redis connection settings
-  const redis = await redisClient;
+  const redis = await redisClient.catch((err) => {
+    throw new Error(`redis client create error: ${err}`);
+  });
   redis.on('connect', () => {
     console.info('Redis connected!');
   });
@@ -36,7 +48,9 @@ const app = async () => {
     console.error('Redis Client Error', err);
   });
 
-  await redis.connect();
+  await redis.connect().catch((err) => {
+    throw new Error(`redis client connect error: ${err}`);
+  });
 
   // passport settings
   passportStrategy();
