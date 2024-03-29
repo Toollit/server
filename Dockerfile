@@ -10,6 +10,9 @@ COPY package*.json ./
 # run npm install in local machine
 RUN npm install --legacy-peer-deps
 
+# install PM2
+RUN npm install pm2 -g
+
 # copy the generated modules and all other files to the container
 COPY . .
 
@@ -23,4 +26,4 @@ RUN cp -r /usr/src/app/src/template /usr/src/app/dist/src
 EXPOSE 4000
 
 # the command that starts our app
-CMD ["npm", "run", "start"]
+CMD [ "pm2-runtime", "npm", "--", "start" ]
