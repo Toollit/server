@@ -93,6 +93,7 @@ const app = async () => {
           httpOnly: true,
           secure: true,
           domain: isDev ? undefined : '.toollit.com',
+          maxAge: 6 * 60 * 60 * 1000, // 6 hours
         },
       })
     );
