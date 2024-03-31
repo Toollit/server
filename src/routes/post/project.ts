@@ -529,9 +529,8 @@ router.post(
         const existProjectHashtags = await queryRunner.manager
           .getRepository(Hashtag)
           .createQueryBuilder()
-          .where('hashtag.projectId = :postId', { postId })
+          .where('projectId = :postId', { postId })
           .getMany();
-        console.log('existProjectHashtags ===>', existProjectHashtags);
 
         const existHashtags = existProjectHashtags.map((hashtag) => {
           return hashtag.tagName;
@@ -555,10 +554,6 @@ router.post(
         };
 
         if (isEqualData(existHashtags, modifiedHashtags)) {
-          console.log(
-            'isEqualData ===> ',
-            isEqualData(existHashtags, modifiedHashtags)
-          );
           return null;
         }
 
