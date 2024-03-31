@@ -45,11 +45,14 @@ export default () =>
           });
         }
 
-        // User who failed 5 or more login attempts
-        if (user.loginFailedCount >= 5) {
-          return cb(null, false, {
-            message: CLIENT_ERROR_LOGIN_LIMIT,
-          });
+        // Do not count login failures for resume testing accounts
+        if (email !== 'test@test.com') {
+          // User who failed 5 or more login attempts
+          if (user.loginFailedCount >= 5) {
+            return cb(null, false, {
+              message: CLIENT_ERROR_LOGIN_LIMIT,
+            });
+          }
         }
 
         // Perform the login logic below if email, password is correct
