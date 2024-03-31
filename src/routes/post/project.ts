@@ -587,7 +587,7 @@ router.post(
         const existProjectMemberTypes = await queryRunner.manager
           .getRepository(MemberType)
           .createQueryBuilder()
-          .where('memberType.projectId = :postId', { postId })
+          .where('projectId = :postId', { postId })
           .getMany();
 
         const existMemberTypes = existProjectMemberTypes.map((memberType) => {
