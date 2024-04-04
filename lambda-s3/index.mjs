@@ -21,7 +21,7 @@ export const handler = async (event, context) => {
     util.inspect(event, { depth: 5 })
   );
 
-  const srcBucket = 'toollit-image-bucket';
+  const srcBucket = 'toollit-image-bucket/projectRepresentativeImage';
 
   // Object key may have spaces or unicode non-ASCII characters
   const srcKey = decodeURIComponent(
@@ -64,12 +64,15 @@ export const handler = async (event, context) => {
     return;
   }
 
-  // set thumbnail width. Resize will set the height automatically to maintain aspect ratio.
-  const width = 200;
+  // set project representative image width and height. Resize will set the height automatically to maintain aspect ratio.
+  const width = 324;
+  const height = 130;
 
   // Use the sharp module to resize the image and save in a buffer.
   try {
-    var output_buffer = await sharp(content_buffer).resize(width).toBuffer();
+    var output_buffer = await sharp(content_buffer)
+      .resize(width, height)
+      .toBuffer();
   } catch (error) {
     console.log(error);
     return;
