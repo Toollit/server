@@ -261,7 +261,10 @@ router.post(
       newProject.contentMarkdown = contentMarkdown;
       newProject.user = writer;
       newProject.recruitCount = recruitCount;
-      newProject.representativeImage = representativeImageUrl;
+      newProject.representativeImage = representativeImageUrl.replace(
+        'toollit-image-bucket',
+        'toollit-image-bucket-resized'
+      );
 
       const projectRepository = queryRunner.manager.getRepository(Project);
 
