@@ -21,7 +21,7 @@ export const handler = async (event, context) => {
     util.inspect(event, { depth: 5 })
   );
 
-  const srcBucket = 'toollit-image-bucket/projectRepresentativeImage';
+  const srcBucket = 'toollit-image-bucket';
 
   // Object key may have spaces or unicode non-ASCII characters
   const srcKey = decodeURIComponent(
