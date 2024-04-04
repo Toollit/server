@@ -696,7 +696,12 @@ router.post(
         await queryRunner.manager
           .createQueryBuilder()
           .update(Project)
-          .set({ representativeImage: representativeImageUrl })
+          .set({
+            representativeImage: representativeImageUrl.replace(
+              'toollit-image-bucket',
+              'toollit-image-bucket-resized'
+            ),
+          })
           .where('id = :postId', { postId })
           .execute();
       };
