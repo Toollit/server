@@ -19,6 +19,9 @@
       "@/*": ["src/*"]
     }
   },
-  "ts-node": { "files": true },
+  "ts-node": {
+    "files": true,
+    "require": ["tsconfig-paths/register"]
+  },
   "exclude": ["node_modules"]
 }
