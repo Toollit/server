@@ -8,14 +8,7 @@ export interface UserData {
   signUpType: 'email' | 'google' | 'github';
   nickname: string;
   loginFailedCount: number;
+  lastLoginAt: Date;
   createdAt: Date;
   updatedAt: Date | null;
-  lastLoginAt: Date;
 }
-type PassportLocalError = Error | null;
-
-type PassportLocalUser = UserData | false;
-
-type PassportLocalInfo = { message: string } | null;
-
-export { PassportLocalError, PassportLocalUser, PassportLocalInfo };

@@ -1,4 +1,4 @@
-import { UserData } from '../entity/types';
+import { UserData } from '@/types/user';
 
 declare global {
   namespace Express {

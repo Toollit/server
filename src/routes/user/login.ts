@@ -5,7 +5,7 @@ import {
   PassportLocalError,
   PassportLocalInfo,
   PassportLocalUser,
-} from '@/entity/types';
+} from '@/types/passport';
 import axios from 'axios';
 import { User } from '@/entity/User';
 import { Profile } from '@/entity/Profile';
