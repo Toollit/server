@@ -27,3 +27,4 @@ EXPOSE 4000
 
 # the command that starts our app
 # CMD [ "pm2-runtime", "npm", "--", "start" ]
+CMD [ "./start.sh" ]
