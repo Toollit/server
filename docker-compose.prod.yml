@@ -4,7 +4,9 @@ services:
     image: seungwoncode/toollit-server-app:latest
     ports:
       - '4000:4000'
-    # command: npm run migration:prod
+    command:
+      - npm run migration:prod
+      - npm start
 
   nginx:
     image: seungwoncode/toollit-server-nginx:latest
