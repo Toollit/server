@@ -26,5 +26,4 @@ RUN cp -r /usr/src/app/src/template /usr/src/app/dist/src
 EXPOSE 4000
 
 # the command that starts our app
-# CMD [ "pm2-runtime", "npm", "--", "start" ]
-CMD [ "./start.sh" ]
+CMD [ "pm2-runtime", "npm", "--", "start" ]
