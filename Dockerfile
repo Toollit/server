@@ -10,9 +10,6 @@ COPY package*.json ./
 # run npm install in local machine
 RUN npm install --legacy-peer-deps
 
-# install PM2
-RUN npm install pm2 -g
-
 # copy the generated modules and all other files to the container
 COPY . .
 
@@ -25,5 +22,5 @@ RUN cp -r /usr/src/app/src/template /usr/src/app/dist/src
 # app is running on port 4000 within the container, so need to expose it
 EXPOSE 4000
 
-# the command that starts our app
-CMD [ "pm2-runtime", "npm", "--", "start" ]
+# the command that db migration and starts our app
+CMD ["/bin/bash", "-c", "npm run migration:prod;npm start"]
