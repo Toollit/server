@@ -23,7 +23,7 @@ if [ $IS_GREEN ];then # 현재 실행중인 app이 green인 경우
   echo "4. blue health check..."
   sleep 3
 
-  REQUEST=$(curl http://blue-container:4002) # blue container로 request
+  REQUEST=$(curl http://127.0.0.1:4002) # blue container로 request
 
   if [ -n "$REQUEST" ]; then # 서비스 가능하면 health check 중지
     echo "health check success"
@@ -52,7 +52,7 @@ else
     echo "4. green health check..."
     sleep 3
 
-    REQUEST=$(curl http://green-container:4001) # green container로 request
+    REQUEST=$(curl http://127.0.0.1:4001) # green container로 request
 
     if [ -n "$REQUEST" ]; then # 서비스 가능하면 health check 중지
       echo "health check success"
