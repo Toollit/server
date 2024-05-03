@@ -1,4 +1,5 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, NextFunction } from 'express';
+import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
 import { isLoggedIn } from '@/middleware/loginCheck';
 import { CLIENT_ERROR_ABNORMAL_ACCESS } from '@/message/error';
@@ -18,7 +19,7 @@ router.post(
   isLoggedIn,
   async (
     req: Request<{}, {}, ContactReqBody>,
-    res: Response,
+    res: CustomResponse,
     next: NextFunction
   ) => {
     const { title, type, content } = req.body;

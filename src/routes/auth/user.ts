@@ -1,8 +1,9 @@
-import express, { Request, Response } from 'express';
+import express, { Request } from 'express';
+import { CustomResponse } from '@/types';
 
 const router = express.Router();
 
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: CustomResponse) => {
   const user = req.user;
   const nickname = user?.nickname;
 

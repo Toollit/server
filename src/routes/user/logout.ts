@@ -1,9 +1,9 @@
-import express from 'express';
-
+import express, { Request, NextFunction } from 'express';
+import { CustomResponse } from '@/types';
 const router = express.Router();
 
 // User logout router
-router.post('/', function (req, res, next) {
+router.post('/', (req: Request, res: CustomResponse, next: NextFunction) => {
   return req.logout(function (err) {
     if (err) {
       return next(err);

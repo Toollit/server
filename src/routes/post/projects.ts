@@ -1,4 +1,5 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, NextFunction } from 'express';
+import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
 import { Project } from '@/entity/Project';
 import { Bookmark } from '@/entity/Bookmark';
@@ -15,7 +16,7 @@ router.get(
   '/',
   async (
     req: Request<{}, {}, {}, ProjectReqQuery>,
-    res: Response,
+    res: CustomResponse,
     next: NextFunction
   ) => {
     const page = Number(req.query.page);

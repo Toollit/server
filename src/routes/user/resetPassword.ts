@@ -1,4 +1,5 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, NextFunction } from 'express';
+import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
 import crypto from 'crypto';
 import { User } from '@/entity/User';
@@ -14,7 +15,7 @@ const router = express.Router();
 router.post(
   '/',
   isLoggedIn,
-  (req: Request, res: Response, next: NextFunction) => {
+  (req: Request, res: CustomResponse, next: NextFunction) => {
     const currentUser = req.user;
     const newPassword = req.body.password;
 

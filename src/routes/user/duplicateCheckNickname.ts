@@ -1,4 +1,5 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, NextFunction } from 'express';
+import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
 import { User } from '@/entity/User';
 import { isLoggedIn } from '@/middleware/loginCheck';
@@ -20,7 +21,7 @@ router.post(
   isLoggedIn,
   async (
     req: Request<{}, {}, NicknameDuplicateCheckReqBody>,
-    res: Response,
+    res: CustomResponse,
     next: NextFunction
   ) => {
     const { nickname } = req.body;

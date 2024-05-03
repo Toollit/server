@@ -1,4 +1,5 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, NextFunction } from 'express';
+import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
 import { User } from '@/entity/User';
 import { Project } from '@/entity/Project';
@@ -30,7 +31,7 @@ interface ProfileReqQuery {
 // Profile page user exist check router
 router.get(
   '/:nickname/existCheck',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: CustomResponse, next: NextFunction) => {
     const nickname = req.params.nickname;
 
     try {
@@ -65,7 +66,7 @@ router.get(
 // Profile page user profile image router
 router.get(
   '/:nickname/profileImage',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: CustomResponse, next: NextFunction) => {
     const profileNickname = req.params.nickname;
 
     try {
@@ -102,7 +103,7 @@ router.get(
   '/:nickname',
   async (
     req: Request<ProfileReqParams, {}, {}, ProfileReqQuery>,
-    res: Response,
+    res: CustomResponse,
     next: NextFunction
   ) => {
     const currentUser = req.user;
@@ -463,7 +464,11 @@ router.get(
   }
 );
 
-const filterRequest = (req: Request, res: Response, next: NextFunction) => {
+const filterRequest = (
+  req: Request,
+  res: CustomResponse,
+  next: NextFunction
+) => {
   const { category } = req.params;
   const { data } = req.body;
 
@@ -491,7 +496,7 @@ router.post(
   '/:category',
   isLoggedIn,
   filterRequest,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: CustomResponse, next: NextFunction) => {
     const currentUser = req.user;
     const { category } = req.params;
     const { data } = req.body;
@@ -888,7 +893,7 @@ router.post(
   isLoggedIn,
   async (
     req: Request<{}, {}, NotificationDeleteReqBody>,
-    res: Response,
+    res: CustomResponse,
     next: NextFunction
   ) => {
     const currentUser = req.user;

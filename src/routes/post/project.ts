@@ -1,4 +1,5 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, NextFunction } from 'express';
+import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
 import { Project } from '@/entity/Project';
 import { User } from '@/entity/User';
@@ -37,7 +38,7 @@ const router = express.Router();
 // Project detail info router
 router.get(
   '/:postId',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: CustomResponse, next: NextFunction) => {
     const postId = Number(req.params.postId);
     const modifyRequest = req.headers.modify;
 
@@ -213,7 +214,7 @@ router.post(
     option: 'single',
     data: { name: 'projectRepresentativeImage' },
   }),
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: CustomResponse, next: NextFunction) => {
     const { representativeImageUrl, content } = handleProjectFormData(req);
 
     if (representativeImageUrl === undefined) {
@@ -343,7 +344,7 @@ router.post(
     option: 'single',
     data: { name: 'projectContentImage' },
   }),
-  (req: Request, res: Response, next: NextFunction) => {
+  (req: Request, res: CustomResponse, next: NextFunction) => {
     const multerS3File = (req as MulterRequest).file;
 
     const contentImageUrl = multerS3File?.location;
@@ -382,7 +383,7 @@ router.post(
     option: 'single',
     data: { name: 'projectRepresentativeImage' },
   }),
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: CustomResponse, next: NextFunction) => {
     const { representativeImageUrl, content } = handleProjectFormData(req);
 
     if (representativeImageUrl === undefined) {
@@ -741,7 +742,7 @@ router.post(
   isLoggedIn,
   async (
     req: Request<{}, {}, PostDeleteReqBody>,
-    res: Response,
+    res: CustomResponse,
     next: NextFunction
   ) => {
     const { postId } = req.body;
@@ -778,7 +779,7 @@ router.post(
 router.post(
   '/join',
   isLoggedIn,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: CustomResponse, next: NextFunction) => {
     const postId = Number(req.body.postId);
     const currentUser = req.user;
 
@@ -902,7 +903,7 @@ router.post(
   isLoggedIn,
   async (
     req: Request<{}, {}, ProjectLeaveReqBody>,
-    res: Response,
+    res: CustomResponse,
     next: NextFunction
   ) => {
     const postId = Number(req.body.postId);
@@ -1041,7 +1042,7 @@ router.post(
       {},
       ProjectJoinApprovalStatusReqBody
     >,
-    res: Response,
+    res: CustomResponse,
     next: NextFunction
   ) => {
     const currentUser = req.user;

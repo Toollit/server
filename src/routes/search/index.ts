@@ -1,4 +1,5 @@
-import express, { NextFunction, Request, Response } from 'express';
+import express, { NextFunction, Request } from 'express';
+import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
 import { Project } from '@/entity/Project';
 import { CLIENT_ERROR_DEFAULT, SERVER_ERROR_DEFAULT } from '@/message/error';
@@ -15,7 +16,7 @@ router.get(
   '/',
   async (
     req: Request<{}, {}, {}, SearchReqQuery>,
-    res: Response,
+    res: CustomResponse,
     next: NextFunction
   ) => {
     const { q } = req.query;

@@ -1,4 +1,5 @@
-import express, { NextFunction, Request, Response } from 'express';
+import express, { NextFunction, Request } from 'express';
+import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
 import { isLoggedIn } from '@/middleware/loginCheck';
 import nodemailer from 'nodemailer';
@@ -21,7 +22,7 @@ const router = express.Router();
 router.post(
   '/',
   isLoggedIn,
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: CustomResponse, next: NextFunction) => {
     const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
     const AWS_S3_TOOLLIT_LOGO_IMAGE_URL = await getParameterStore({
       key: 'AWS_S3_TOOLLIT_LOGO_IMAGE_URL',
@@ -146,7 +147,7 @@ router.post(
   '/confirm',
   async (
     req: Request<{}, {}, ConfirmDeleteAccountReqbody>,
-    res: Response,
+    res: CustomResponse,
     next: NextFunction
   ) => {
     const { email, a1, a2, a3 } = req.body;

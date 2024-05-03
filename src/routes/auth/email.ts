@@ -1,4 +1,5 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, NextFunction } from 'express';
+import { CustomResponse } from '@/types';
 import nodemailer from 'nodemailer';
 import ejs from 'ejs';
 import path from 'path';
@@ -23,7 +24,7 @@ router.post(
   '/issueAuthCode',
   async (
     req: Request<{}, {}, IssueAuthCodeReqBody>,
-    res: Response,
+    res: CustomResponse,
     next: NextFunction
   ) => {
     const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
@@ -137,7 +138,7 @@ router.post(
   '/verify',
   async (
     req: Request<{}, {}, VerifyAuthCodeReqBody>,
-    res: Response,
+    res: CustomResponse,
     next: NextFunction
   ) => {
     const { email, authCode } = req.body;

@@ -1,4 +1,5 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, NextFunction } from 'express';
+import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
 import { Project } from '@/entity/Project';
 import { Report } from '@/entity/Report';
@@ -24,7 +25,7 @@ router.post(
   isLoggedIn,
   async (
     req: Request<{}, {}, ReportReqBody>,
-    res: Response,
+    res: CustomResponse,
     next: NextFunction
   ) => {
     const { postId, postType, reason, url } = req.body;

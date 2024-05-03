@@ -1,4 +1,5 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, NextFunction } from 'express';
+import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
 import { User } from '@/entity/User';
 import { Bookmark } from '@/entity/Bookmark';
@@ -10,7 +11,7 @@ const router = express.Router();
 // Check bookmarks status of all posts router
 router.get(
   '/bookmarksStatus',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: CustomResponse, next: NextFunction) => {
     const currentUser = req.user;
 
     if (!currentUser) {
@@ -80,7 +81,7 @@ router.post(
   isLoggedIn,
   async (
     req: Request<{}, {}, ProjectBookmarkReqBody>,
-    res: Response,
+    res: CustomResponse,
     next: NextFunction
   ) => {
     const postId = Number(req.body.postId);
@@ -156,7 +157,7 @@ router.post(
 // Check bookmark status router
 router.get(
   '/bookmarkStatus/:postId',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: CustomResponse, next: NextFunction) => {
     const postId = Number(req.params.postId);
     const currentUser = req.user;
 

@@ -1,4 +1,5 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, NextFunction } from 'express';
+import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
 import passport from 'passport';
 import {
@@ -14,45 +15,48 @@ import { getParameterStore } from '@/utils/awsParameterStore';
 const router = express.Router();
 
 // Login page. email login router
-router.post('/email', (req: Request, res: Response, next: NextFunction) => {
-  passport.authenticate(
-    'local',
-    (
-      err: PassportLocalError,
-      user: PassportLocalUser,
-      info: PassportLocalInfo
-    ) => {
-      if (err) {
-        return next(err);
-      }
-
-      if (!user) {
-        return res.status(401).json({
-          success: false,
-          message: info?.message,
-        });
-      }
-
-      return req.login(user, async (err) => {
+router.post(
+  '/email',
+  (req: Request, res: CustomResponse, next: NextFunction) => {
+    passport.authenticate(
+      'local',
+      (
+        err: PassportLocalError,
+        user: PassportLocalUser,
+        info: PassportLocalInfo
+      ) => {
         if (err) {
           return next(err);
         }
 
-        if (user) {
-          return res.status(200).json({
-            success: true,
-            message: null,
-            data: {
-              nickname: user.nickname,
-              needResetPassword:
-                info?.message === 'resetPassword' ? true : false,
-            },
+        if (!user) {
+          return res.status(401).json({
+            success: false,
+            message: info ? info.message : null,
           });
         }
-      });
-    }
-  )(req, res, next);
-});
+
+        return req.login(user, async (err) => {
+          if (err) {
+            return next(err);
+          }
+
+          if (user) {
+            return res.status(200).json({
+              success: true,
+              message: null,
+              data: {
+                nickname: user.nickname,
+                needResetPassword:
+                  info?.message === 'resetPassword' ? true : false,
+              },
+            });
+          }
+        });
+      }
+    )(req, res, next);
+  }
+);
 
 // Login page. social login with google
 router.get(
@@ -65,7 +69,7 @@ router.get(
 // Login page. social login with google auth callback
 router.get(
   '/auth/google/callback',
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: CustomResponse, next: NextFunction) => {
     const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
     const SUCCESS_REDIRECT = ORIGIN_URL;
     const FAILURE_REDIRECT = `${ORIGIN_URL}/login?error=true`;
