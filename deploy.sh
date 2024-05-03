@@ -4,7 +4,7 @@ IS_GREEN=$(docker ps --format '{{.Names}}' | grep green-container) # 현재 실�
 IS_NGINX=$(docker ps --format '{{.Names}}' | grep nginx-container) # 현재 실행중인 nginx가 있는지 확인합니다.
 IS_CERTBOT=$(docker ps --format '{{.Names}}' | grep certbot-container) # 현재 실행중인 certbot가 있는지 확인합니다.
 DEFAULT_CONF=" /etc/nginx/nginx.conf"
-NGINX_CONF="./app/nginx/default.conf"
+NGINX_CONF="./nginx/default.conf"
 
 # echo "### Delete all images to maintain ec2 storage space ..."
 # docker rmi -f $(sudo docker images -aq)
