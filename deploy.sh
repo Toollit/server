@@ -20,7 +20,7 @@ if [ $IS_GREEN ];then # 현재 실행중인 app이 green인 경우
   docker compose -f docker-compose.prod.yml up -d blue
 
   echo "3. change nginx proxy_pass container"  
-  sed -i "s|proxy_pass http://.*:4002;|proxy_pass http://blue-container:4002;|" $NGINX_CONF
+  sed -i "s|proxy_pass http://.*:4001;|proxy_pass http://blue-container:4002;|" $NGINX_CONF
 
   while [ 1 = 1 ]; do
   echo "4. blue health check..."
@@ -51,7 +51,7 @@ else
   docker compose -f docker-compose.prod.yml up -d green
 
   echo "3. change nginx proxy_pass container"
-  sed -i "s|proxy_pass http://.*:4001;|proxy_pass http://green-container:4001;|" $NGINX_CONF
+  sed -i "s|proxy_pass http://.*:4002;|proxy_pass http://green-container:4001;|" $NGINX_CONF
 
   while [ 1 = 1 ]; do
     echo "4. green health check..."
