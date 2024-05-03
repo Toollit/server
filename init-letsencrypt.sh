@@ -13,18 +13,18 @@ staging=0 # staging=1 for development, staging=0 for production. Set to 1 if you
 
 
 # Updating docker images if ssl is already issued.
-if [ -d "$data_path" ]; then
-  echo "### To update new docker images. Shutting down docker containers ..."
-  docker compose -f docker-compose.prod.yml down
-  echo
+# if [ -d "$data_path" ]; then
+#   echo "### To update new docker images. Shutting down docker containers ..."
+#   docker compose -f docker-compose.prod.yml down
+#   echo
 
-  echo "### Delete all images to maintain ec2 storage space ..."
-  docker rmi -f $(sudo docker images -aq)
+#   echo "### Delete all images to maintain ec2 storage space ..."
+#   docker rmi -f $(sudo docker images -aq)
 
-  echo "### To update new docker images. Run docker containers ..."
-  docker compose -f docker-compose.prod.yml up -d
-  echo
-fi
+#   echo "### To update new docker images. Run docker containers ..."
+#   docker compose -f docker-compose.prod.yml up -d
+#   echo
+# fi
 
 
 # If a folder exists in data_path during deployment, this script here indefinitely waits for a response so that the script below does not run.
@@ -45,14 +45,14 @@ if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/
 fi
 
 
-echo "### Shutting down docker containers ..."
-docker compose -f docker-compose.prod.yml down
-echo
+# echo "### Shutting down docker containers ..."
+# docker compose -f docker-compose.prod.yml down
+# echo
 
 
-echo "### Run docker containers ..."
-docker compose -f docker-compose.prod.yml up -d
-echo
+# echo "### Run docker containers ..."
+# docker compose -f docker-compose.prod.yml up -d
+# echo
 
 
 echo "### Creating dummy certificate for $domains ..."
