@@ -5,9 +5,31 @@ IS_NGINX=$(docker ps --format '{{.Names}}' | grep nginx-container) # 현재 실�
 IS_CERTBOT=$(docker ps --format '{{.Names}}' | grep certbot-container) # 현재 실행중인 certbot가 있는지 확인합니다.
 DEFAULT_CONF=" /etc/nginx/nginx.conf"
 NGINX_CONF="./nginx/default.conf"
+GREEN_PORT=4001
+BLUE_PORT=4002
 
 # echo "### Delete all images to maintain ec2 storage space ..."
 # docker rmi -f $(sudo docker images -aq)
+
+
+
+if [ -z $IS_NGINX ];then # nginx container가 실행 중이 아닌 경우
+  echo "starting nginx container..."
+  docker compose -f docker-compose.prod.yml up -d nginx
+else
+  echo "nginx container is already running."
+fi
+
+
+
+if [ -z $IS_CERTBOT ];then # certbot container가 실행 중이 아닌 경우
+    echo "starting certbot container..."
+    docker compose -f docker-compose.prod.yml up -d certbot
+else
+  echo "certbot container is already running."
+fi
+
+
 
 if [ $IS_GREEN ];then # 현재 실행중인 app이 green인 경우
 
@@ -20,16 +42,19 @@ if [ $IS_GREEN ];then # 현재 실행중인 app이 green인 경우
   docker compose -f docker-compose.prod.yml up -d blue
 
   while [ 1 = 1 ]; do
-  echo "4. blue health check..."
+  echo "3. blue health check..."
   sleep 3
 
-  REQUEST=$(curl http://127.0.0.1:4002) # blue container로 request
+  REQUEST=$(curl http://127.0.0.1:$BLUE_PORT) # blue container로 request
 
   if [ -n "$REQUEST" ]; then # 서비스 가능하면 health check 중지
     echo "health check success"
     break ;
   fi
   done;
+
+  echo "4. set \$service_url http://127.0.0.1:${BLUE_PORT};" |sudo tee /etc/nginx/conf.d/service-url.inc
+
 
   echo "5. reload nginx"  
   docker exec -it nginx-container service nginx reload
@@ -49,10 +74,10 @@ else
 
 
   while [ 1 = 1 ]; do
-    echo "4. green health check..."
+    echo "3. green health check..."
     sleep 3
 
-    REQUEST=$(curl http://127.0.0.1:4001) # green container로 request
+    REQUEST=$(curl http://127.0.0.1:$GREEN_PORT) # green container로 request
 
     if [ -n "$REQUEST" ]; then # 서비스 가능하면 health check 중지
       echo "health check success"
@@ -60,28 +85,12 @@ else
     fi
   done;
 
+
+  echo "4. set \$service_url http://127.0.0.1:${GREEN_PORT};" |sudo tee /etc/nginx/conf.d/service-url.inc
+
   echo "5. reload nginx" 
   docker exec -it nginx-container service nginx reload
 
   echo "6. blue container down"
   docker compose -f docker-compose.prod.yml stop blue
-fi
-
-
-
-
-if [ -z $IS_NGINX ];then # nginx가 실행 중이 아닌 경우
-  echo "starting nginx container..."
-  docker compose -f docker-compose.prod.yml up -d nginx
-else
-  echo "nginx container is already running."
-fi
-
-
-
-if [ -z $IS_CERTBOT ];then # certbot가 실행 중이 아닌 경우
-    echo "starting certbot container..."
-    docker compose -f docker-compose.prod.yml up -d certbot
-else
-  echo "certbot container is already running."
 fi
