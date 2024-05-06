@@ -5,7 +5,9 @@ IS_NGINX=$(docker ps --format '{{.Names}}' | grep nginx-container) # 현재 실�
 IS_CERTBOT=$(docker ps --format '{{.Names}}' | grep certbot-container) # 현재 실행중인 certbot가 있는지 확인합니다.
 DEFAULT_CONF=" /etc/nginx/nginx.conf"
 NGINX_CONF="./nginx/default.conf"
+GREEN_CONTAINER_NAME=green-container
 GREEN_PORT=4001
+BLUE_CONTAINER_NAME=blue-container
 BLUE_PORT=4002
 
 # echo "### Delete all images to maintain ec2 storage space ..."
@@ -53,7 +55,7 @@ if [ $IS_GREEN ];then # 현재 실행중인 app이 green인 경우
   fi
   done;
 
-  echo "4. set \$service_url http://127.0.0.1:${BLUE_PORT};" |sudo tee /etc/nginx/conf.d/service-url.inc
+  echo "4. set \$service_url http://${BLUE_CONTAINER_NAME}:${BLUE_PORT};" |sudo tee ./nginx/conf.d/service-url.inc
 
 
   echo "5. reload nginx"  
@@ -86,7 +88,7 @@ else
   done;
 
 
-  echo "4. set \$service_url http://127.0.0.1:${GREEN_PORT};" |sudo tee /etc/nginx/conf.d/service-url.inc
+  echo "4. set \$service_url http://127.0.0.1:${GREEN_PORT};" |sudo tee ./nginx/conf.d/service-url.inc
 
   echo "5. reload nginx" 
   docker exec -it nginx-container service nginx reload
