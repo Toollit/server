@@ -1,98 +1,46 @@
 #!/bin/bash
 
-IS_GREEN=$(docker ps --format '{{.Names}}' | grep green-container) # 현재 실행중인 app이 green인지 확인합니다.
-IS_NGINX=$(docker ps --format '{{.Names}}' | grep nginx-container) # 현재 실행중인 nginx가 있는지 확인합니다.
-IS_CERTBOT=$(docker ps --format '{{.Names}}' | grep certbot-container) # 현재 실행중인 certbot가 있는지 확인합니다.
-DEFAULT_CONF=" /etc/nginx/nginx.conf"
-NGINX_CONF="./nginx/default.conf"
-GREEN_CONTAINER_NAME=green-container
-GREEN_PORT=4001
-BLUE_CONTAINER_NAME=blue-container
-BLUE_PORT=4002
+# image registry
+DOCKER_REPO=seungwoncode
 
-# echo "### Delete all images to maintain ec2 storage space ..."
-# docker rmi -f $(sudo docker images -aq)
-
-
-
-if [ -z $IS_NGINX ];then # nginx container가 실행 중이 아닌 경우
-  echo "starting nginx container..."
-  docker compose -f docker-compose.prod.yml up -d nginx
+# current service check
+if docker ps | grep -q blue; then
+    echo "Blue service is active."
+    CURRENT_SERVICE="blue"
+    NEW_SERVICE="green"
 else
-  echo "nginx container is already running."
+    echo "Green service is active."
+    CURRENT_SERVICE="green"
+    NEW_SERVICE="blue"
 fi
 
+# modify nginx settings with new service (before reload)
+NGINX_UPSTREAM="${NEW_SERVICE}_server"
+sed -i "s/proxy_pass http:\/\/.*_server;/proxy_pass http:\/\/$NGINX_UPSTREAM;/" ./nginx/default.conf
+
+# rebuild image with modified configuration and push it to the registry
+docker build -t toollit-server-nginx ./nginx
+docker tag toollit-server-nginx:latest $DOCKER_REPO/toollit-server-nginx:latest
+docker push $DOCKER_REPO/toollit-server-nginx:latest
 
 
-if [ -z $IS_CERTBOT ];then # certbot container가 실행 중이 아닌 경우
-    echo "starting certbot container..."
-    docker compose -f docker-compose.prod.yml up -d certbot
-else
-  echo "certbot container is already running."
+# image updates and new service deployments
+docker pull $DOCKER_REPO/toollit-server-app:latest
+docker pull $DOCKER_REPO/toollit-server-nginx:latest
+docker compose up -d $NEW_SERVICE
+
+# start nginx service if nginx is not present
+if ! docker ps | grep -q nginx; then
+    docker compose up -d nginx
 fi
 
+# latency for service to be stable
+sleep 60
 
+# nginx setup reload and existing service down
+NGINX_CONTAINER=$(docker ps | grep "nginx" | awk '{print $1}')
+docker exec $NGINX_CONTAINER nginx -s reload
+docker compose stop $CURRENT_SERVICE
 
-if [ $IS_GREEN ];then # 현재 실행중인 app이 green인 경우
-
-  echo "### GREEN => BLUE ###"
-
-  echo "1. get blue image"
-  docker compose -f docker-compose.prod.yml pull blue
-
-  echo "2. blue container up"
-  docker compose -f docker-compose.prod.yml up -d blue
-
-  while [ 1 = 1 ]; do
-  echo "3. blue health check..."
-  sleep 3
-
-  REQUEST=$(curl http://127.0.0.1:$BLUE_PORT) # blue container로 request
-
-  if [ -n "$REQUEST" ]; then # 서비스 가능하면 health check 중지
-    echo "health check success"
-    break ;
-  fi
-  done;
-
-  echo "4. set \$service_url http://${BLUE_CONTAINER_NAME}:${BLUE_PORT};" |sudo tee ./nginx/conf.d/service-url.inc
-
-
-  echo "5. reload nginx"  
-  docker exec -it nginx-container service nginx reload
-  
-
-  echo "6. green container down"
-  docker compose -f docker-compose.prod.yml stop green
-else
-  
-  echo "### BLUE => GREEN ###"
-
-  echo "1. get green image"
-  docker compose -f docker-compose.prod.yml pull green
-
-  echo "2. green container up"
-  docker compose -f docker-compose.prod.yml up -d green
-
-
-  while [ 1 = 1 ]; do
-    echo "3. green health check..."
-    sleep 3
-
-    REQUEST=$(curl http://127.0.0.1:$GREEN_PORT) # green container로 request
-
-    if [ -n "$REQUEST" ]; then # 서비스 가능하면 health check 중지
-      echo "health check success"
-      break ;
-    fi
-  done;
-
-
-  echo "4. set \$service_url http://127.0.0.1:${GREEN_PORT};" |sudo tee ./nginx/conf.d/service-url.inc
-
-  echo "5. reload nginx" 
-  docker exec -it nginx-container service nginx reload
-
-  echo "6. blue container down"
-  docker compose -f docker-compose.prod.yml stop blue
-fi
+# delete unused images
+docker image prune -f
