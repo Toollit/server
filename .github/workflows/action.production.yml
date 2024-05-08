@@ -51,7 +51,5 @@ jobs:
             git pull origin production
             git stash drop
             sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-            sudo chmod +x deploy.sh
-            sudo ./deploy.sh
             sudo chmod +x init-letsencrypt.sh
             sudo ./init-letsencrypt.sh

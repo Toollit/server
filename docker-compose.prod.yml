@@ -1,16 +1,22 @@
 version: '3.8'
 services:
-  blue:
-    container_name: blue
-    image: seungwoncode/toollit-server-app:latest
-    ports:
-      - '4001:4000'
+  # blue:
+  #   container_name: blue
+  #   image: seungwoncode/toollit-server-app:latest
+  #   ports:
+  #     - '4001:4000'
 
-  green:
-    container_name: green
+  # green:
+  #   container_name: green
+  #   image: seungwoncode/toollit-server-app:latest
+  #   ports:
+  #     - '4002:4000'
+
+  app:
+    container_name: app
     image: seungwoncode/toollit-server-app:latest
     ports:
-      - '4002:4000'
+      - '4000:4000'
 
   nginx:
     container_name: nginx
