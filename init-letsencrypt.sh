@@ -9,7 +9,7 @@ domains="api.toollit.com"
 rsa_key_size=4096
 data_path="./data/certbot"
 email="seungwon.code@gmail.com" # Adding a valid address is strongly recommended
-staging=1 # staging=1 for development, staging=0 for production. Set to 1 if you're testing your setup to avoid hitting request limits
+staging=0 # staging=1 for development, staging=0 for production. Set to 1 if you're testing your setup to avoid hitting request limits
 
 
 # Updating docker images if ssl is already issued.
