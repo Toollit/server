@@ -1,9 +1,14 @@
 #!/bin/bash
 
-# if ! [ -x "$(command -v docker)" ] || ! [ -x "$(command -v compose)" ]; then
-#   echo 'Error: docker compose is not installed.' >&2
-#   exit 1
-# fi
+if ! docker version; then
+  echo 'Error: docker is not installed.' >&2
+  exit 1
+fi
+
+if ! docker compose version; then
+  echo 'Error: docker compose is not installed.' >&2
+  exit 1
+fi
 
 domains="api.toollit.com"
 rsa_key_size=4096
