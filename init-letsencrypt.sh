@@ -1,14 +1,16 @@
 #!/bin/bash
 
-if ! docker version; then
+if ! docker version >/dev/null 2>&1; then
   echo 'Error: docker is not installed.' >&2
   exit 1
 fi
 
-if ! docker compose version; then
+if ! docker compose version >/dev/null 2>&1; then
   echo 'Error: docker compose is not installed.' >&2
   exit 1
 fi
+
+echo '✅ docker and docker compose are installed.'
 
 domains="api.toollit.com"
 rsa_key_size=4096
