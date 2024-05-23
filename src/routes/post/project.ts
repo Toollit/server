@@ -79,6 +79,7 @@ router.get(
       }
 
       const {
+        id,
         title,
         contentHTML,
         contentMarkdown,
@@ -156,6 +157,7 @@ router.get(
             profileImage: writer?.profile.profileImage,
           },
           content: {
+            id,
             title,
             contentHTML,
             contentMarkdown,
