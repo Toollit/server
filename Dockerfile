@@ -23,4 +23,4 @@ RUN cp -r /usr/src/app/src/template /usr/src/app/dist/src
 EXPOSE 4000
 
 # the command that db migration and starts our app
-CMD ["/bin/bash", "-c", "npm run migration:prod;npm start"]
+CMD ["sh", "-c", "npm run migration:prod;npm start"]
