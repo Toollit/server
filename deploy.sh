@@ -67,5 +67,5 @@ else
   docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
 
   echo "5. green container down"
-  docker compose -f docker-compose.prod.yml green
+  docker compose -f docker-compose.prod.yml down green
 fi
