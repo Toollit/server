@@ -33,7 +33,7 @@ if [ -z $IS_GREEN  ];then # blue가 실행중인 경우
   sed -i "s/proxy_pass http:\/\/.*_server;/proxy_pass http:\/\/$NGINX_UPSTREAM;/" ./nginx/default.conf
 
   echo "4. reload nginx"
-  cp ./nginx/default.conf /etc/nginx/conf.d/default.conf
+  docker cp ./nginx/default.conf nginx:/etc/nginx/conf.d/default.conf
   docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
 
   echo "5. blue container down"
@@ -63,7 +63,7 @@ else
   sed -i "s/proxy_pass http:\/\/.*_server;/proxy_pass http:\/\/$NGINX_UPSTREAM;/" ./nginx/default.conf
 
   echo "4. reload nginx" 
-  cp ./nginx/default.conf /etc/nginx/conf.d/default.conf
+  docker cp ./nginx/default.conf nginx:/etc/nginx/conf.d/default.conf
   docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
 
   echo "5. green container down"
