@@ -34,6 +34,7 @@ if [ -z $IS_GREEN  ];then # blue가 실행중인 경우
 
   echo "4. reload nginx"
   docker cp ./nginx/default.conf nginx:/etc/nginx/conf.d/default.conf
+  sleep 5 # brief delay to ensure the configuration is fully updated
   docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
 
   echo "5. blue container down"
@@ -64,6 +65,7 @@ else
 
   echo "4. reload nginx" 
   docker cp ./nginx/default.conf nginx:/etc/nginx/conf.d/default.conf
+  sleep 5 # brief delay to ensure the configuration is fully updated
   docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
 
   echo "5. green container down"
