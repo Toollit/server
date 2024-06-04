@@ -1,7 +1,7 @@
 #!/bin/bash
 
 IS_GREEN=$(docker ps | grep green) # 현재 실행중인 App이 green인지 확인
-DEFAULT_CONF=" /etc/nginx/nginx.conf"
+DEFAULT_CONF="/etc/nginx/nginx.conf"
 
 
 echo "nginx and certbot start"
