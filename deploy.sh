@@ -29,8 +29,8 @@ if [ -z $IS_GREEN  ];then # blue가 실행중인 경우
   done;
 
   echo "3. update nginx settings with new service"
-  NGINX_UPSTREAM="green_server"
-  sed -i "s/proxy_pass http:\/\/.*_server;/proxy_pass http:\/\/$NGINX_UPSTREAM;/" ./nginx/default.conf
+  NGINX_UPSTREAM="green:4000"
+  sed -i "s/proxy_pass http:\/\/.*:4000;/proxy_pass http:\/\/$NGINX_UPSTREAM;/" ./nginx/default.conf
 
   echo "4. reload nginx"
   docker cp ./nginx/default.conf nginx:/etc/nginx/conf.d/default.conf
@@ -60,8 +60,8 @@ else
   done;
 
   echo "3. update nginx settings with new service"
-  NGINX_UPSTREAM="blue_server"
-  sed -i "s/proxy_pass http:\/\/.*_server;/proxy_pass http:\/\/$NGINX_UPSTREAM;/" ./nginx/default.conf
+  NGINX_UPSTREAM="blue:4000"
+  sed -i "s/proxy_pass http:\/\/.*:4000;/proxy_pass http:\/\/$NGINX_UPSTREAM;/" ./nginx/default.conf
 
   echo "4. reload nginx" 
   docker cp ./nginx/default.conf nginx:/etc/nginx/conf.d/default.conf
