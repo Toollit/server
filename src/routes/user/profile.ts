@@ -30,22 +30,22 @@ interface ProfileReqQuery {
 
 // Profile page user exist check router
 router.get(
-  '/:nickname/existCheck',
+  '/:nickname/registeredCheck',
   async (req: Request, res: CustomResponse, next: NextFunction) => {
     const nickname = req.params.nickname;
 
     try {
-      const existUser = await AppDataSource.getRepository(User)
+      const registeredUser = await AppDataSource.getRepository(User)
         .createQueryBuilder('user')
         .where('user.nickname = :nickname', { nickname })
         .getOne();
 
-      if (!existUser) {
+      if (!registeredUser) {
         return res.status(404).json({
           success: false,
           message: CLIENT_ERROR_NOT_EXIST_USER,
           data: {
-            existUser: false,
+            registeredUser: false,
           },
         });
       }
@@ -54,7 +54,7 @@ router.get(
         success: true,
         message: null,
         data: {
-          existUser: true,
+          registeredUser: true,
         },
       });
     } catch (err) {
