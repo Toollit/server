@@ -14,7 +14,7 @@ import { getParameterStore } from '@/utils/awsParameterStore';
 
 const router = express.Router();
 
-// Login page. email login router
+// sign in page. email sign in router
 router.post(
   '/email',
   (req: Request, res: CustomResponse, next: NextFunction) => {
@@ -58,7 +58,7 @@ router.post(
   }
 );
 
-// Login page. social login with google
+// sign in page. social sign in with google
 router.get(
   '/google',
   passport.authenticate('google', {
@@ -66,16 +66,16 @@ router.get(
   })
 );
 
-// Login page. social login with google auth callback
+// sing in page. social sign in with google auth callback
 router.get(
   '/auth/google/callback',
   async (req: Request, res: CustomResponse, next: NextFunction) => {
     const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
     const SUCCESS_REDIRECT = ORIGIN_URL;
-    const FAILURE_REDIRECT = `${ORIGIN_URL}/login?error=true`;
-    const DUPLICATE_REDIRECT = `${ORIGIN_URL}/login?duplicate=true`;
-    const EMPTY_REDIRECT = `${ORIGIN_URL}/login?hasEmailInfo=false`;
-    const FIRST_TIME_REDIRECT = `${ORIGIN_URL}/login?firstTime=true`;
+    const FAILURE_REDIRECT = `${ORIGIN_URL}/signin?error=true`;
+    const DUPLICATE_REDIRECT = `${ORIGIN_URL}/signin?duplicate=true`;
+    const EMPTY_REDIRECT = `${ORIGIN_URL}/signin?hasEmailInfo=false`;
+    const FIRST_TIME_REDIRECT = `${ORIGIN_URL}/signin?firstTime=true`;
 
     passport.authenticate(
       'google',
@@ -107,12 +107,12 @@ router.get(
             return next(err);
           }
 
-          // first time login user
+          // first time sign in user
           if (info.message === 'firstTime') {
             return res.redirect(FIRST_TIME_REDIRECT);
           }
 
-          // exist user login
+          // exist user sign in
           if (info.message === null) {
             return res.redirect(SUCCESS_REDIRECT);
           }
@@ -122,7 +122,7 @@ router.get(
   }
 );
 
-// Login page. social login with github
+// sign in page. social sign in with github
 router.get('/github', async (req, res, next) => {
   const GITHUB_CLIENT_ID = await getParameterStore({ key: 'GITHUB_CLIENT_ID' });
   const GITHUB_CALLBACK_URL = await getParameterStore({
@@ -134,7 +134,7 @@ router.get('/github', async (req, res, next) => {
   );
 });
 
-// Login page. social login with github auth callback
+// sign in page. social sign in with github auth callback
 router.get('/auth/github/callback', async (req, res, next) => {
   const GITHUB_CLIENT_ID = await getParameterStore({ key: 'GITHUB_CLIENT_ID' });
   const GITHUB_CLIENT_SECRET = await getParameterStore({
@@ -142,10 +142,10 @@ router.get('/auth/github/callback', async (req, res, next) => {
   });
   const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
   const SUCCESS_REDIRECT = ORIGIN_URL;
-  const FAILURE_REDIRECT = `${ORIGIN_URL}/login?error=true`;
-  const DUPLICATE_REDIRECT = `${ORIGIN_URL}/login?duplicate=true`;
-  const EMPTY_REDIRECT = `${ORIGIN_URL}/login?hasEmailInfo=false`;
-  const FIRST_TIME_REDIRECT = `${ORIGIN_URL}/login?firstTime=true`;
+  const FAILURE_REDIRECT = `${ORIGIN_URL}/signin?error=true`;
+  const DUPLICATE_REDIRECT = `${ORIGIN_URL}/signin?duplicate=true`;
+  const EMPTY_REDIRECT = `${ORIGIN_URL}/signin?hasEmailInfo=false`;
+  const FIRST_TIME_REDIRECT = `${ORIGIN_URL}/signin?firstTime=true`;
 
   const userCode = req.query.code;
 
@@ -188,11 +188,11 @@ router.get('/auth/github/callback', async (req, res, next) => {
       const userRepository = AppDataSource.getRepository(User);
       const user = await userRepository.findOne({ where: { email } });
 
-      // User who already signed up with github login and run login logic.
+      // User who already signed up with github sign in and run sign in logic.
       if (user && user.signUpType === 'github') {
         await AppDataSource.createQueryBuilder()
           .update(User)
-          .set({ lastLoginAt: new Date(), updatedAt: null })
+          .set({ lastSigninAt: new Date(), updatedAt: null })
           .where('id = :id', { id: user.id })
           .execute();
 
@@ -229,7 +229,7 @@ router.get('/auth/github/callback', async (req, res, next) => {
           .values({
             email: userInfo.data.email,
             signUpType: 'github',
-            lastLoginAt: new Date(),
+            lastSigninAt: new Date(),
             profile: newProfile.identifiers[0].id,
           })
           .execute();

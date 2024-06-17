@@ -125,8 +125,14 @@ router.get(
           });
         }
 
-        const { email, nickname, signUpType, createdAt, lastLoginAt, profile } =
-          user;
+        const {
+          email,
+          nickname,
+          signUpType,
+          createdAt,
+          lastSigninAt,
+          profile,
+        } = user;
 
         const {
           introduce,
@@ -148,7 +154,7 @@ router.get(
               nickname,
               signUpType,
               createdAt,
-              lastLoginAt,
+              lastSigninAt,
               introduce,
               onOffline,
               place,
@@ -168,7 +174,7 @@ router.get(
             data: {
               nickname,
               createdAt,
-              lastLoginAt,
+              lastSigninAt,
               introduce,
               onOffline,
               place,

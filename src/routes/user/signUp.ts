@@ -60,7 +60,7 @@ router.post(
                 salt: saltString,
                 signUpType,
                 updatedAt: null,
-                lastLoginAt: new Date(),
+                lastSigninAt: new Date(),
                 profile: newProfile.identifiers[0].id,
               })
               .execute();

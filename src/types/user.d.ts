@@ -7,8 +7,8 @@ export interface UserData {
   salt: string;
   signUpType: 'email' | 'google' | 'github';
   nickname: string;
-  loginFailedCount: number;
-  lastLoginAt: Date;
+  signinFailedCount: number;
+  lastSigninAt: Date;
   createdAt: Date;
   updatedAt: Date | null;
 }

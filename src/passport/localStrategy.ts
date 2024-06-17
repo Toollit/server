@@ -48,7 +48,7 @@ export default () =>
         // Do not count login failures for resume testing accounts
         if (email !== 'test@toollit.com') {
           // User who failed 5 or more login attempts
-          if (user.loginFailedCount >= 5) {
+          if (user.signinFailedCount >= 5) {
             return cb(null, false, {
               message: CLIENT_ERROR_LOGIN_LIMIT,
             });
@@ -83,9 +83,9 @@ export default () =>
                   await AppDataSource.createQueryBuilder()
                     .update(User)
                     .set({
-                      loginFailedCount: 0,
+                      signinFailedCount: 0,
                       tempPassword: null,
-                      lastLoginAt: new Date(),
+                      lastSigninAt: new Date(),
                       updatedAt: () => 'updatedAt',
                     })
                     .where('id = :id', { id: user.id })
@@ -99,8 +99,8 @@ export default () =>
                   await AppDataSource.createQueryBuilder()
                     .update(User)
                     .set({
-                      loginFailedCount: 0,
-                      lastLoginAt: new Date(),
+                      signinFailedCount: 0,
+                      lastSigninAt: new Date(),
                       updatedAt: () => 'updatedAt',
                     })
                     .where('id = :id', { id: user.id })
@@ -114,7 +114,7 @@ export default () =>
                 await AppDataSource.createQueryBuilder()
                   .update(User)
                   .set({
-                    loginFailedCount: () => 'loginFailedCount + 1',
+                    signinFailedCount: () => 'signinFailedCount + 1',
                     updatedAt: () => 'updatedAt',
                   })
                   .where('id = :id', { id: user.id })
@@ -125,12 +125,12 @@ export default () =>
                   .where('user.id = :id', { id: user.id })
                   .getOne();
 
-                const loginFailedCount = loginTryUser?.loginFailedCount;
+                const signinFailedCount = loginTryUser?.signinFailedCount;
 
                 return cb(null, false, {
                   message: CLIENT_ERROR_LOGIN_FAILED_COUNT.replace(
-                    '{loginFailedCount}',
-                    String(loginFailedCount)
+                    '{signinFailedCount}',
+                    String(signinFailedCount)
                   ),
                 });
               }

@@ -153,7 +153,7 @@ router.get(
         data: {
           writer: {
             nickname: user.nickname,
-            lastLoginAt: user.lastLoginAt,
+            lastSigninAt: user.lastSigninAt,
             profileImage: writer?.profile.profileImage,
           },
           content: {

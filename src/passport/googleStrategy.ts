@@ -42,7 +42,7 @@ export default async () => {
           if (user && user.signUpType === 'google') {
             const isUpdated = await AppDataSource.createQueryBuilder()
               .update(User)
-              .set({ lastLoginAt: new Date(), updatedAt: null })
+              .set({ lastSigninAt: new Date(), updatedAt: null })
               .where('id = :id', { id: user.id })
               .execute();
 
@@ -75,7 +75,7 @@ export default async () => {
               .values({
                 email,
                 signUpType: 'google',
-                lastLoginAt: new Date(),
+                lastSigninAt: new Date(),
                 profile: newProfile.identifiers[0].id,
               })
               .execute();

@@ -41,10 +41,10 @@ export class User {
   nickname: string;
 
   @Column({ default: 0 })
-  loginFailedCount: number;
+  signinFailedCount: number;
 
   @Column({ type: 'timestamp' })
-  lastLoginAt: Date;
+  lastSigninAt: Date;
 
   @CreateDateColumn()
   createdAt: Date;

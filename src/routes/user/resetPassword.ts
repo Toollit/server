@@ -65,7 +65,7 @@ router.post(
                     salt: saltString,
                     password: hashedString,
                     tempPassword: null,
-                    loginFailedCount: 0,
+                    signinFailedCount: 0,
                   })
                   .where('id = :id', { id: currentUser.id })
                   .execute();
