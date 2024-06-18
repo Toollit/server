@@ -13,7 +13,7 @@ const router = express.Router();
 router.post(
   '/',
   async (req: Request, res: CustomResponse, next: NextFunction) => {
-    const { email, password, signUpType } = req.body;
+    const { email, password, signupType } = req.body;
 
     const queryRunner = AppDataSource.createQueryRunner();
 
@@ -21,7 +21,7 @@ router.post(
       await queryRunner.connect();
       await queryRunner.startTransaction();
 
-      if (!email || !password || !signUpType) {
+      if (!email || !password || !signupType) {
         throw new Error('The information required for sign up is missing');
       }
 
@@ -58,7 +58,7 @@ router.post(
                 email,
                 password: hashedString,
                 salt: saltString,
-                signUpType,
+                signupType,
                 updatedAt: null,
                 lastSigninAt: new Date(),
                 profile: newProfile.identifiers[0].id,

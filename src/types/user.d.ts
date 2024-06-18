@@ -5,7 +5,7 @@ export interface UserData {
   password: string;
   tempPassword: string;
   salt: string;
-  signUpType: 'email' | 'google' | 'github';
+  signupType: 'email' | 'google' | 'github';
   nickname: string;
   signinFailedCount: number;
   lastSigninAt: Date;

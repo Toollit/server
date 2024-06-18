@@ -32,7 +32,7 @@ export default () =>
         }
 
         // User who has signed up by social login
-        if (user.signUpType !== 'email') {
+        if (user.signupType !== 'email') {
           return cb(null, false, {
             message: CLIENT_ERROR_EXIST_SIGNUP_SOCIAL_LOGIN,
           });

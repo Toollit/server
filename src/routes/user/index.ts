@@ -7,7 +7,7 @@ import logout from './logout';
 import profile from './profile';
 import pwInquiry from './pwInquiry';
 import resetPassword from './resetPassword';
-import signUp from './signUp';
+import signup from './signup';
 
 const router = express.Router();
 
@@ -19,6 +19,6 @@ router.use('/logout', logout);
 router.use('/profile', profile);
 router.use('/pwInquiry', pwInquiry);
 router.use('/resetPassword', resetPassword);
-router.use('/signUp', signUp);
+router.use('/signup', signup);
 
 export default router;

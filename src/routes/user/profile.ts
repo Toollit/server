@@ -128,7 +128,7 @@ router.get(
         const {
           email,
           nickname,
-          signUpType,
+          signupType,
           createdAt,
           lastSigninAt,
           profile,
@@ -152,7 +152,7 @@ router.get(
             data: {
               email,
               nickname,
-              signUpType,
+              signupType,
               createdAt,
               lastSigninAt,
               introduce,

@@ -43,7 +43,7 @@ router.post(
         });
       }
 
-      if (user.signUpType !== 'email') {
+      if (user.signupType !== 'email') {
         return res.status(400).json({
           success: false,
           message: CLIENT_ERROR_EXIST_SIGNUP_SOCIAL_LOGIN,

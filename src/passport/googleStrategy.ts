@@ -39,7 +39,7 @@ export default async () => {
           const user = await userRepository.findOne({ where: { email } });
 
           // User who already signed up with google login and run login logic.
-          if (user && user.signUpType === 'google') {
+          if (user && user.signupType === 'google') {
             const isUpdated = await AppDataSource.createQueryBuilder()
               .update(User)
               .set({ lastSigninAt: new Date(), updatedAt: null })
@@ -52,7 +52,7 @@ export default async () => {
           }
 
           // There is different registration information for the same email address.
-          if (user && user.signUpType !== 'google') {
+          if (user && user.signupType !== 'google') {
             return done(null, undefined, { message: 'duplicate' });
           }
 
@@ -74,7 +74,7 @@ export default async () => {
               .into(User)
               .values({
                 email,
-                signUpType: 'google',
+                signupType: 'google',
                 lastSigninAt: new Date(),
                 profile: newProfile.identifiers[0].id,
               })

@@ -189,7 +189,7 @@ router.get('/auth/github/callback', async (req, res, next) => {
       const user = await userRepository.findOne({ where: { email } });
 
       // User who already signed up with github sign in and run sign in logic.
-      if (user && user.signUpType === 'github') {
+      if (user && user.signupType === 'github') {
         await AppDataSource.createQueryBuilder()
           .update(User)
           .set({ lastSigninAt: new Date(), updatedAt: null })
@@ -206,7 +206,7 @@ router.get('/auth/github/callback', async (req, res, next) => {
       }
 
       // There is different registration information for the same email address.
-      if (user && user.signUpType !== 'github') {
+      if (user && user.signupType !== 'github') {
         return res.redirect(DUPLICATE_REDIRECT);
       }
 
@@ -228,7 +228,7 @@ router.get('/auth/github/callback', async (req, res, next) => {
           .into(User)
           .values({
             email: userInfo.data.email,
-            signUpType: 'github',
+            signupType: 'github',
             lastSigninAt: new Date(),
             profile: newProfile.identifiers[0].id,
           })

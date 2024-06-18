@@ -35,7 +35,7 @@ export class User {
   salt: string;
 
   @Column()
-  signUpType: 'google' | 'github' | 'email';
+  signupType: 'google' | 'github' | 'email';
 
   @Column({ length: 20, nullable: true })
   nickname: string;
