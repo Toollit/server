@@ -1,7 +1,7 @@
 import express, { NextFunction, Request } from 'express';
 import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
-import { isLoggedIn } from '@/middleware/loginCheck';
+import { isSignedIn } from '@/middleware/signinCheck';
 import nodemailer from 'nodemailer';
 import path from 'path';
 import { v4 as uuidV4 } from 'uuid';
@@ -21,7 +21,7 @@ const router = express.Router();
 // Sending delete user account confirmation email router
 router.post(
   '/',
-  isLoggedIn,
+  isSignedIn,
   async (req: Request, res: CustomResponse, next: NextFunction) => {
     const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
     const AWS_S3_TOOLLIT_LOGO_IMAGE_URL = await getParameterStore({

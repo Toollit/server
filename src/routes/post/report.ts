@@ -3,7 +3,7 @@ import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
 import { Project } from '@/entity/Project';
 import { Report } from '@/entity/Report';
-import { isLoggedIn } from '@/middleware/loginCheck';
+import { isSignedIn } from '@/middleware/signinCheck';
 import {
   CLIENT_ERROR_DEFAULT,
   CLIENT_ERROR_EXIST_REPORT,
@@ -22,7 +22,7 @@ interface ReportReqBody {
 // Report problematic post router
 router.post(
   '/',
-  isLoggedIn,
+  isSignedIn,
   async (
     req: Request<{}, {}, ReportReqBody>,
     res: CustomResponse,

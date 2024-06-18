@@ -5,7 +5,7 @@ import { User } from '@/entity/User';
 import { Project } from '@/entity/Project';
 import { Profile } from '@/entity/Profile';
 import { uploadS3 } from '@/middleware/uploadS3';
-import { isLoggedIn } from '@/middleware/loginCheck';
+import { isSignedIn } from '@/middleware/signinCheck';
 import { Bookmark } from '@/entity/Bookmark';
 import {
   CLIENT_ERROR_ABNORMAL_ACCESS,
@@ -500,7 +500,7 @@ interface MulterRequest extends Request {
 // Profile page. profile info update router
 router.post(
   '/:category',
-  isLoggedIn,
+  isSignedIn,
   filterRequest,
   async (req: Request, res: CustomResponse, next: NextFunction) => {
     const currentUser = req.user;
@@ -896,7 +896,7 @@ interface NotificationDeleteReqBody {
 
 router.post(
   '/notification/delete',
-  isLoggedIn,
+  isSignedIn,
   async (
     req: Request<{}, {}, NotificationDeleteReqBody>,
     res: CustomResponse,

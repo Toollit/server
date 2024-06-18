@@ -8,7 +8,7 @@ import { Hashtag } from '@/entity/Hashtag';
 import { MemberType } from '@/entity/MemberType';
 import { uploadS3 } from '@/middleware/uploadS3';
 import { Bookmark } from '@/entity/Bookmark';
-import { isLoggedIn } from '@/middleware/loginCheck';
+import { isSignedIn } from '@/middleware/signinCheck';
 import { ProjectMember } from '@/entity/ProjectMember';
 import { Notification } from '@/entity/Notification';
 import {
@@ -210,7 +210,7 @@ interface ProjectCreateContent {
 // Project create router. FormData format and the json format cannot be sent as requests at the same time. so image file and content data are received in the FormData format.
 router.post(
   '/create',
-  isLoggedIn,
+  isSignedIn,
   uploadS3({
     path: 'projectRepresentativeImage',
     option: 'single',
@@ -340,7 +340,7 @@ router.post(
 // Attach images to project content router
 router.post(
   '/content/uploadImage',
-  isLoggedIn,
+  isSignedIn,
   uploadS3({
     path: 'projectContentImage',
     option: 'single',
@@ -379,7 +379,7 @@ interface ProjectUpdateContent {
 // Update project detail info router. FormData format and the json format cannot be sent as requests at the same time. so image file and content data are received in the FormData format.
 router.post(
   '/update',
-  isLoggedIn,
+  isSignedIn,
   uploadS3({
     path: 'projectRepresentativeImage',
     option: 'single',
@@ -741,7 +741,7 @@ interface PostDeleteReqBody {
 // Delete project router
 router.post(
   '/delete',
-  isLoggedIn,
+  isSignedIn,
   async (
     req: Request<{}, {}, PostDeleteReqBody>,
     res: CustomResponse,
@@ -780,7 +780,7 @@ router.post(
 // Project join request router
 router.post(
   '/join',
-  isLoggedIn,
+  isSignedIn,
   async (req: Request, res: CustomResponse, next: NextFunction) => {
     const postId = Number(req.body.postId);
     const currentUser = req.user;
@@ -902,7 +902,7 @@ interface ProjectLeaveReqBody {
 // Project leave request router
 router.post(
   '/leave',
-  isLoggedIn,
+  isSignedIn,
   async (
     req: Request<{}, {}, ProjectLeaveReqBody>,
     res: CustomResponse,
@@ -1037,7 +1037,7 @@ interface ProjectJoinApprovalStatusReqBody {
 // Project join request notifications approve or reject control router
 router.post(
   `/join/:approvalStatus`,
-  isLoggedIn,
+  isSignedIn,
   async (
     req: Request<
       { approvalStatus: 'approve' | 'reject' },

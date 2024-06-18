@@ -1,7 +1,7 @@
 import express, { Request, NextFunction } from 'express';
 import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
-import { isLoggedIn } from '@/middleware/loginCheck';
+import { isSignedIn } from '@/middleware/signinCheck';
 import { CLIENT_ERROR_ABNORMAL_ACCESS } from '@/message/error';
 import { Contact } from '@/entity/Contact';
 
@@ -16,7 +16,7 @@ interface ContactReqBody {
 // Contact router
 router.post(
   '/',
-  isLoggedIn,
+  isSignedIn,
   async (
     req: Request<{}, {}, ContactReqBody>,
     res: CustomResponse,

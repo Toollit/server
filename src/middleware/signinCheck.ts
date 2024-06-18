@@ -4,12 +4,12 @@ import {
   CLIENT_ERROR_LOGIN_REQUIRED,
 } from '@/message/error';
 
-/** login check middleware */
+/** signed in check middleware */
 
 /**
- * Only logged-in user can access
+ * Only signed in user can access
  * */
-const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
+const isSignedIn = (req: Request, res: Response, next: NextFunction) => {
   if (req.isAuthenticated()) {
     return next();
   } else {
@@ -21,9 +21,9 @@ const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
 };
 
 /**
- * Only non-logged users can access it.
+ * Only non signed users can access
  * */
-const isNotLoggedIn = (req: Request, res: Response, next: NextFunction) => {
+const isNotSignedIn = (req: Request, res: Response, next: NextFunction) => {
   if (!req.isAuthenticated()) {
     return next();
   } else {
@@ -34,4 +34,4 @@ const isNotLoggedIn = (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export { isLoggedIn, isNotLoggedIn };
+export { isSignedIn, isNotSignedIn };

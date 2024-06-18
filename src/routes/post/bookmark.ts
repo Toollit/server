@@ -3,7 +3,7 @@ import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
 import { User } from '@/entity/User';
 import { Bookmark } from '@/entity/Bookmark';
-import { isLoggedIn } from '@/middleware/loginCheck';
+import { isSignedIn } from '@/middleware/signinCheck';
 import { CLIENT_ERROR_LOGIN_REQUIRED } from '@/message/error';
 
 const router = express.Router();
@@ -78,7 +78,7 @@ interface ProjectBookmarkReqBody {
 // Bookmark add or delete router
 router.post(
   '/toggle',
-  isLoggedIn,
+  isSignedIn,
   async (
     req: Request<{}, {}, ProjectBookmarkReqBody>,
     res: CustomResponse,

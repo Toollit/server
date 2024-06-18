@@ -3,7 +3,7 @@ import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
 import crypto from 'crypto';
 import { User } from '@/entity/User';
-import { isLoggedIn } from '@/middleware/loginCheck';
+import { isSignedIn } from '@/middleware/signinCheck';
 import {
   CLIENT_ERROR_ABNORMAL_ACCESS,
   CLIENT_ERROR_SAME_PASSWORD_IMPOSSIBLE,
@@ -14,7 +14,7 @@ const router = express.Router();
 // Reset password page password reset router
 router.post(
   '/',
-  isLoggedIn,
+  isSignedIn,
   (req: Request, res: CustomResponse, next: NextFunction) => {
     const currentUser = req.user;
     const newPassword = req.body.password;

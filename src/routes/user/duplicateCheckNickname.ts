@@ -2,7 +2,7 @@ import express, { Request, NextFunction } from 'express';
 import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
 import { User } from '@/entity/User';
-import { isLoggedIn } from '@/middleware/loginCheck';
+import { isSignedIn } from '@/middleware/signinCheck';
 import {
   CLIENT_ERROR_NICKNAME_ALREADY_EXIST,
   CLIENT_ERROR_NICKNAME_LENGTH_TWO_TO_TWENTY,
@@ -18,7 +18,7 @@ interface NicknameDuplicateCheckReqBody {
 // User nickname duplicate check router
 router.post(
   '/',
-  isLoggedIn,
+  isSignedIn,
   async (
     req: Request<{}, {}, NicknameDuplicateCheckReqBody>,
     res: CustomResponse,

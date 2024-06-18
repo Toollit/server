@@ -4,7 +4,7 @@ import { AppDataSource } from '@/config/data-source';
 import crypto from 'crypto';
 import { User } from '@/entity/User';
 import { Profile } from '@/entity/Profile';
-import { isLoggedIn } from '@/middleware/loginCheck';
+import { isSignedIn } from '@/middleware/signinCheck';
 import { CLIENT_ERROR_DEFAULT } from '@/message/error';
 
 const router = express.Router();
@@ -102,7 +102,7 @@ router.post(
 // Social login user nickname setting router
 router.post(
   '/settings/update/nickname',
-  isLoggedIn,
+  isSignedIn,
   async (req: Request, res: CustomResponse, next: NextFunction) => {
     const { nickname } = req.body;
     const currentUser = req.user;
