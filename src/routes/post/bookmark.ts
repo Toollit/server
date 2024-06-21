@@ -12,14 +12,14 @@ const router = express.Router();
 router.get(
   '/bookmarksStatus',
   async (req: Request, res: CustomResponse, next: NextFunction) => {
-    const currentUser = req.user;
+    const loggedInUser = req.user;
 
-    if (!currentUser) {
+    if (!loggedInUser) {
       return res.status(200).json({
         success: true,
         message: null,
         data: {
-          bookmarks: null,
+          bookmarkIds: [],
         },
       });
     }
@@ -28,33 +28,23 @@ router.get(
 
     try {
       const user = await userRepository.findOne({
-        where: { id: currentUser.id },
+        where: { id: loggedInUser.id },
         relations: { bookmarks: true },
       });
 
-      const bookmarks = user?.bookmarks;
-
-      if (!bookmarks) {
-        return res.status(200).json({
-          success: true,
-          message: null,
-          data: {
-            bookmarks: null,
-          },
-        });
+      if (!user) {
+        throw new Error('user not found');
       }
 
+      const bookmarks = user.bookmarks;
       const hasBookmark = bookmarks.length >= 1;
-
       const bookmarkIds = bookmarks.map((bookmark) => bookmark.projectId);
 
       if (hasBookmark) {
         return res.status(200).json({
           success: true,
           message: null,
-          data: {
-            bookmarks: bookmarkIds,
-          },
+          data: { bookmarkIds },
         });
       }
 
@@ -62,7 +52,7 @@ router.get(
         success: true,
         message: null,
         data: {
-          bookmarks: [],
+          bookmarkIds: [],
         },
       });
     } catch (err) {
