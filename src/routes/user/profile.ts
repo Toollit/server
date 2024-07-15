@@ -280,6 +280,7 @@ router.get(
               memberTypes: orderedMemberTypes,
               memberCount,
               recruitCount: project.recruitCount,
+              representativeImage: project.representativeImage,
             };
           })
         );
@@ -394,6 +395,7 @@ router.get(
               memberTypes: orderedMemberTypes,
               memberCount,
               recruitCount: project.recruitCount,
+              representativeImage: project.representativeImage,
             };
           })
         );
