@@ -6,16 +6,16 @@ import { Bookmark } from '@/entity/Bookmark';
 
 const router = express.Router();
 
-interface ProjectReqQuery {
+interface ProjectOverviewsReqQuery {
   page: string;
   order: 'new' | 'popularity';
 }
 
-// Look up all projects with using pagination router
+// Look up all project overviews with using pagination router
 router.get(
   '/',
   async (
-    req: Request<{}, {}, {}, ProjectReqQuery>,
+    req: Request<{}, {}, {}, ProjectOverviewsReqQuery>,
     res: CustomResponse,
     next: NextFunction
   ) => {
@@ -103,7 +103,7 @@ router.get(
         success: true,
         message: null,
         data: {
-          projects: processedData,
+          projectOverviews: processedData,
           totalPage,
         },
       });

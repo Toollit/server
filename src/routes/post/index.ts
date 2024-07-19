@@ -1,13 +1,13 @@
 import express from 'express';
 import bookmarkRouter from './bookmark';
-import projectsRouter from './projects';
+import projectOverviewsRouter from './projectOverviews';
 import projectRouter from './project';
 import reportRouter from './report';
 
 const router = express.Router();
 
 router.use('/bookmark', bookmarkRouter);
-router.use('/projects', projectsRouter);
+router.use('/projectOverviews', projectOverviewsRouter);
 router.use('/project', projectRouter);
 router.use('/report', reportRouter);
 
