@@ -1,7 +1,7 @@
 import express from 'express';
 import contact from './contact';
 import deleteAccount from './deleteAccount';
-import duplicateCheckNickname from './duplicateCheckNickname';
+import duplicateNicknameCheck from './duplicateNicknameCheck';
 import signin from './signin';
 import logout from './logout';
 import profile from './profile';
@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.use('/contact', contact);
 router.use('/deleteAccount', deleteAccount);
-router.use('/duplicateCheckNickname', duplicateCheckNickname);
+router.use('/duplicateNicknameCheck', duplicateNicknameCheck);
 router.use('/signin', signin);
 router.use('/logout', logout);
 router.use('/profile', profile);

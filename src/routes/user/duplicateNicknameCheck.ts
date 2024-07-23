@@ -11,20 +11,21 @@ import {
 
 const router = express.Router();
 
-interface NicknameDuplicateCheckReqBody {
+interface NicknameDuplicateCheckReqQuery {
+  [key: string]: string;
   nickname: string;
 }
 
 // User nickname duplicate check router
-router.post(
+router.get(
   '/',
   isSignedIn,
   async (
-    req: Request<{}, {}, NicknameDuplicateCheckReqBody>,
+    req: Request<{}, {}, {}, NicknameDuplicateCheckReqQuery>,
     res: CustomResponse,
     next: NextFunction
   ) => {
-    const { nickname } = req.body;
+    const { nickname } = req.query;
 
     const onlyEnglishNumber = /^[a-zA-Z0-9]+$/;
 
