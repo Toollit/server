@@ -18,7 +18,7 @@ router.use('/signin', signin);
 router.use('/logout', logout);
 router.use('/profile', profile);
 router.use('/pwInquiry', pwInquiry);
-router.use('/resetPassword', resetPassword);
+router.use('/reset-password', resetPassword);
 router.use('/signup', signup);
 
 export default router;
