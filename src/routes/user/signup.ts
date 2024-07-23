@@ -99,9 +99,9 @@ router.post(
   }
 );
 
-// Social login user nickname setting router
+// Nickname initialize router
 router.post(
-  '/settings/update/nickname',
+  '/nickname-initialize',
   isSignedIn,
   async (req: Request, res: CustomResponse, next: NextFunction) => {
     const { nickname } = req.body;
