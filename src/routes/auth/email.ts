@@ -15,15 +15,15 @@ import { redisClient } from '@/utils/redisClient';
 
 const router = express.Router();
 
-interface IssueAuthCodeReqBody {
+interface EmailAuthCodeReqBody {
   email: string;
 }
 
-// Issue authentication code upon sign up
+// Issue authentication code upon email sign up
 router.post(
-  '/issueAuthCode',
+  '/auth-code',
   async (
-    req: Request<{}, {}, IssueAuthCodeReqBody>,
+    req: Request<{}, {}, EmailAuthCodeReqBody>,
     res: CustomResponse,
     next: NextFunction
   ) => {
@@ -44,13 +44,13 @@ router.post(
     const userRepository = AppDataSource.getRepository(User);
 
     try {
-      const isExistedEmail = await userRepository.findOne({
+      const isRegisteredEmail = await userRepository.findOne({
         where: {
           email: userEmail,
         },
       });
 
-      if (isExistedEmail) {
+      if (isRegisteredEmail) {
         return res.status(409).json({
           success: false,
           message: CLIENT_ERROR_EXIST_EMAIL,
