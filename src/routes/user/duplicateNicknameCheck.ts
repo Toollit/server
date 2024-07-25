@@ -11,7 +11,7 @@ import {
 
 const router = express.Router();
 
-interface NicknameDuplicateCheckReqQuery {
+interface DuplicateNicknameCheckReqQuery {
   [key: string]: string;
   nickname: string;
 }
@@ -21,7 +21,7 @@ router.get(
   '/',
   isSignedIn,
   async (
-    req: Request<{}, {}, {}, NicknameDuplicateCheckReqQuery>,
+    req: Request<{}, {}, {}, DuplicateNicknameCheckReqQuery>,
     res: CustomResponse,
     next: NextFunction
   ) => {

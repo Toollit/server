@@ -13,11 +13,11 @@ const router = express.Router();
 
 router.use('/contact', contact);
 router.use('/deleteAccount', deleteAccount);
-router.use('/duplicateNicknameCheck', duplicateNicknameCheck);
+router.use('/duplicate-nickname-check', duplicateNicknameCheck);
 router.use('/signin', signin);
 router.use('/logout', logout);
 router.use('/profile', profile);
-router.use('/pwInquiry', pwInquiry);
+router.use('/pw-inquiry', pwInquiry);
 router.use('/reset-password', resetPassword);
 router.use('/signup', signup);
 

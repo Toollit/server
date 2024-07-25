@@ -7,7 +7,7 @@ import reportRouter from './report';
 const router = express.Router();
 
 router.use('/bookmark', bookmarkRouter);
-router.use('/projectOverviews', projectOverviewsRouter);
+router.use('/project-overviews', projectOverviewsRouter);
 router.use('/project', projectRouter);
 router.use('/report', reportRouter);
 
