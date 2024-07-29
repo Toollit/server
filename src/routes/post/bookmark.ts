@@ -146,7 +146,7 @@ router.post(
 
 // Check bookmark status router
 router.get(
-  '/bookmarkStatus/:postId',
+  '/status/:postId',
   async (req: Request, res: CustomResponse, next: NextFunction) => {
     const postId = Number(req.params.postId);
     const currentUser = req.user;
@@ -156,7 +156,7 @@ router.get(
         success: true,
         message: null,
         data: {
-          bookmark: false,
+          bookmarkStatus: false,
         },
       });
     }
@@ -176,7 +176,7 @@ router.get(
           success: true,
           message: null,
           data: {
-            bookmark: true,
+            bookmarkStatus: true,
           },
         });
       }
@@ -185,7 +185,7 @@ router.get(
         success: true,
         message: null,
         data: {
-          bookmark: false,
+          bookmarkStatus: false,
         },
       });
     } catch (err) {
