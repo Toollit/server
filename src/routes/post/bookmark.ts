@@ -10,7 +10,7 @@ const router = express.Router();
 
 // Check bookmarks status of all posts router
 router.get(
-  '/bookmarksStatus',
+  '/bookmarkIds',
   async (req: Request, res: CustomResponse, next: NextFunction) => {
     const loggedInUser = req.user;
 
