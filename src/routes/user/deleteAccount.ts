@@ -43,11 +43,11 @@ router.post(
       });
     }
     const email = currentUser.email;
-    const a1 = uuidV4();
-    const a2 = uuidV4();
-    const a3 = uuidV4();
+    const authCode1 = uuidV4();
+    const authCode2 = uuidV4();
+    const authCode3 = uuidV4();
 
-    const authCodeQuery = `?email=${email}&a1=${a1}&a2=${a2}&a3=${a3}`;
+    const authCodeQuery = `?email=${email}&authCode1=${authCode1}&authCode2=${authCode2}&authCode3=${authCode3}`;
     const deleteAccountConfirmPage = '/deleteAccount/confirm';
     const deleteAccountConfirmURL =
       ORIGIN_URL + deleteAccountConfirmPage + authCodeQuery;
@@ -63,7 +63,7 @@ router.post(
       if (isExistDeleteAccountRequest) {
         await AppDataSource.createQueryBuilder()
           .update(DeleteAccountRequest)
-          .set({ email, a1, a2, a3 })
+          .set({ email, authCode1, authCode2, authCode3 })
           .where('email = :email', { email })
           .execute();
       }
@@ -72,7 +72,7 @@ router.post(
         await AppDataSource.createQueryBuilder()
           .insert()
           .into(DeleteAccountRequest)
-          .values({ email, a1, a2, a3 })
+          .values({ email, authCode1, authCode2, authCode3 })
           .execute();
       }
     } catch (err) {
@@ -137,9 +137,9 @@ router.post(
 
 interface ConfirmDeleteAccountReqbody {
   email?: string;
-  a1?: string;
-  a2?: string;
-  a3?: string;
+  authCode1?: string;
+  authCode2?: string;
+  authCode3?: string;
 }
 
 // Confirm delete account router
@@ -150,7 +150,7 @@ router.post(
     res: CustomResponse,
     next: NextFunction
   ) => {
-    const { email, a1, a2, a3 } = req.body;
+    const { email, authCode1, authCode2, authCode3 } = req.body;
 
     const queryRunner = AppDataSource.createQueryRunner();
 
@@ -159,7 +159,7 @@ router.post(
       await queryRunner.startTransaction();
 
       // Check the request has all the required values for authentication.
-      if (!email || !a1 || !a2 || !a3) {
+      if (!email || !authCode1 || !authCode2 || !authCode3) {
         await queryRunner.commitTransaction();
 
         return res.status(400).json({
@@ -173,9 +173,9 @@ router.post(
         .getRepository(DeleteAccountRequest)
         .createQueryBuilder()
         .where('email = :email', { email })
-        .andWhere('a1 = :a1', { a1 })
-        .andWhere('a2 = :a2', { a2 })
-        .andWhere('a3 = :a3', { a3 })
+        .andWhere('authCode1 = :authCode1', { authCode1 })
+        .andWhere('authCode2 = :authCode2', { authCode2 })
+        .andWhere('authCode3 = :authCode3', { authCode3 })
         .getOne();
 
       // Request with invalid auth code.

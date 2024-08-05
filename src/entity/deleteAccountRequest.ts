@@ -15,13 +15,13 @@ export class DeleteAccountRequest {
   email: string;
 
   @Column()
-  a1: string;
+  authCode1: string;
 
   @Column()
-  a2: string;
+  authCode2: string;
 
   @Column()
-  a3: string;
+  authCode3: string;
 
   @CreateDateColumn()
   createdAt: Date;
