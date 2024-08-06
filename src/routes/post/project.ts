@@ -1,4 +1,4 @@
-import express, { Request, NextFunction } from 'express';
+import express, { Request, NextFunction, Response } from 'express';
 import { CustomResponse } from '@/types';
 import { AppDataSource } from '@/config/data-source';
 import { Project } from '@/entity/Project';
@@ -7,7 +7,6 @@ import { ProjectContentImage } from '@/entity/ProjectContentImage';
 import { Hashtag } from '@/entity/Hashtag';
 import { MemberType } from '@/entity/MemberType';
 import { uploadS3 } from '@/middleware/uploadS3';
-import { Bookmark } from '@/entity/Bookmark';
 import { isSignedIn } from '@/middleware/signinCheck';
 import { ProjectMember } from '@/entity/ProjectMember';
 import { Notification } from '@/entity/Notification';
@@ -43,7 +42,6 @@ router.get(
     const modifyRequest = req.headers.modify;
 
     const projectRepository = AppDataSource.getRepository(Project);
-    const userRepository = AppDataSource.getRepository(User);
 
     try {
       // Increasing the number of views each time a post is viewed
@@ -86,18 +84,12 @@ router.get(
         views,
         createdAt,
         updatedAt,
-        user,
         hashtags,
         memberTypes,
         recruitCount,
         representativeImage,
         members,
       } = project;
-
-      const writer = await userRepository.findOne({
-        where: { id: user.id },
-        relations: { profile: true },
-      });
 
       const processedHashtagsData = hashtags.map((hashtag) => hashtag.tagName);
 
@@ -129,50 +121,22 @@ router.get(
         );
       });
 
-      const getMembersDetailInfos = members.map((member) => {
-        const user = userRepository.findOne({
-          where: { id: member.memberId },
-          relations: { profile: true },
-        });
-
-        return user;
-      });
-
-      const memberDetailInfos = await Promise.all(getMembersDetailInfos);
-
-      const memberProfiles = memberDetailInfos.map((user) => {
-        return {
-          nickname: user?.nickname,
-          profileImage: user?.profile.profileImage,
-        };
-      });
-
       return res.status(200).json({
         success: true,
         message: null,
         data: {
-          writer: {
-            nickname: user.nickname,
-            lastSigninAt: user.lastSigninAt,
-            profileImage: writer?.profile.profileImage,
-          },
-          content: {
-            id,
-            title,
-            contentHTML,
-            contentMarkdown,
-            views,
-            createdAt,
-            updatedAt,
-            hashtags: processedHashtagsData,
-            memberTypes: processedMemberTypesData,
-            memberCount: members.length,
-            recruitCount,
-            representativeImage,
-          },
-          member: {
-            profiles: memberProfiles,
-          },
+          id,
+          title,
+          contentHTML,
+          contentMarkdown,
+          views,
+          createdAt,
+          updatedAt,
+          hashtags: processedHashtagsData,
+          memberTypes: processedMemberTypesData,
+          memberCount: members.length,
+          recruitCount,
+          representativeImage,
         },
       });
     } catch (err) {
