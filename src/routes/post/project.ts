@@ -145,6 +145,49 @@ router.get(
   }
 );
 
+router.get(
+  '/:postId/writer',
+  async (req: Request, res: Response, next: NextFunction) => {
+    const postId = Number(req.params.postId);
+
+    const projectRepository = AppDataSource.getRepository(Project);
+    const userRepository = AppDataSource.getRepository(User);
+
+    const project = await projectRepository.findOne({
+      where: { id: postId },
+      relations: { user: true },
+    });
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: CLIENT_ERROR_NOT_FOUND,
+      });
+    }
+
+    const { user } = project;
+
+    const writer = await userRepository.findOne({
+      where: { id: user.id },
+      relations: { profile: true },
+    });
+
+    const nickname = writer?.nickname;
+    const lastSigninAt = writer?.lastSigninAt;
+    const profileImage = writer?.profile.profileImage;
+
+    return res.status(200).json({
+      success: true,
+      message: null,
+      data: {
+        nickname,
+        lastSigninAt,
+        profileImage,
+      },
+    });
+  }
+);
+
 const handleProjectFormData = (req: Request) => {
   // If isStringImageData is true, it is the s3 image url or "defaultImage" string. If it is false, the newly delivered image file data is received by putting the file object in the req through the uploadS3 middleware.
   const isStringImageData = Boolean(req.body['projectRepresentativeImage']);
