@@ -264,7 +264,7 @@ router.get(
             const projectBookmarkedTotalCount =
               await AppDataSource.getRepository(Bookmark)
                 .createQueryBuilder('bookmark')
-                .where('bookmark.projectId = projectId', {
+                .where('bookmark.projectId = :projectId', {
                   projectId: project.id,
                 })
                 .getCount();
