@@ -28,6 +28,63 @@ interface ProfileReqQuery {
   count?: number;
 }
 
+router.get(
+  '/notifications',
+  async (req: Request, res: CustomResponse, next: NextFunction) => {
+    const currentUser = req.user;
+
+    if (!currentUser) {
+      return res.status(400).json({
+        success: false,
+        message: CLIENT_ERROR_ABNORMAL_ACCESS,
+      });
+    }
+
+    const notifications = await AppDataSource.getRepository(Notification)
+      .createQueryBuilder('notification')
+      .where('notification.userId = :userId', { userId: currentUser.id })
+      .orderBy('notification.createdAt', 'DESC')
+      .getMany();
+
+    const processedData = await Promise.all(
+      notifications.map(async (notification) => {
+        const { type, content } = notification;
+        const { projectId, notificationCreatorId } = JSON.parse(content);
+
+        const project = await AppDataSource.getRepository(Project)
+          .createQueryBuilder('project')
+          .where('project.id = :projectId', { projectId })
+          .getOne();
+
+        const notificationCreator = await AppDataSource.getRepository(User)
+          .createQueryBuilder('user')
+          .where('user.id = :userId', { userId: notificationCreatorId })
+          .getOne();
+
+        return {
+          type,
+          id: notification.id,
+          projectId: project?.id,
+          projectTitle: project ? project.title : '삭제된 게시글 입니다.',
+          createdAt: notification.createdAt,
+          notificationCreator: notificationCreator
+            ? notificationCreator.nickname
+            : '탈퇴한 사용자',
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: null,
+      data: {
+        notifications: processedData,
+        total: notifications.length,
+      },
+    });
+  }
+);
+
 // Profile page user exist check router
 router.get(
   '/:nickname/registeredCheck',
@@ -406,63 +463,6 @@ router.get(
           data: {
             bookmarks: processedData,
             total: bookmarkTotalCount,
-          },
-        });
-      }
-
-      if (tab === 'viewNotifications') {
-        const user = await AppDataSource.getRepository(User)
-          .createQueryBuilder('user')
-          .where('user.nickname = :nickname', { nickname: profileNickname })
-          .getOne();
-
-        if (!user) {
-          return res.status(404).json({
-            success: false,
-            message: CLIENT_ERROR_NOT_EXIST_USER,
-          });
-        }
-
-        const notifications = await AppDataSource.getRepository(Notification)
-          .createQueryBuilder('notification')
-          .where('notification.userId = :userId', { userId: user.id })
-          .orderBy('notification.createdAt', 'DESC')
-          .getMany();
-
-        const processedData = await Promise.all(
-          notifications.map(async (notification) => {
-            const { type, content } = notification;
-            const { projectId, notificationCreatorId } = JSON.parse(content);
-
-            const project = await AppDataSource.getRepository(Project)
-              .createQueryBuilder('project')
-              .where('project.id = :projectId', { projectId })
-              .getOne();
-
-            const notificationCreator = await AppDataSource.getRepository(User)
-              .createQueryBuilder('user')
-              .where('user.id = :userId', { userId: notificationCreatorId })
-              .getOne();
-
-            return {
-              type,
-              id: notification.id,
-              projectId: project?.id,
-              projectTitle: project ? project.title : '삭제된 게시글 입니다.',
-              createdAt: notification.createdAt,
-              notificationCreator: notificationCreator
-                ? notificationCreator.nickname
-                : '탈퇴한 사용자',
-            };
-          })
-        );
-
-        return res.status(200).json({
-          success: true,
-          message: null,
-          data: {
-            notifications: processedData,
-            total: notifications.length,
           },
         });
       }
