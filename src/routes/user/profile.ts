@@ -28,6 +28,133 @@ interface ProfileReqQuery {
   count?: number;
 }
 
+interface ProfileBookmarksReqQuery {
+  nickname: string;
+  count: string;
+}
+
+router.get(
+  '/bookmarks',
+  async (
+    req: Request<{}, {}, {}, ProfileBookmarksReqQuery>,
+    res: CustomResponse,
+    next: NextFunction
+  ) => {
+    const nickname = req.query.nickname;
+    const count = Number(req.query.count);
+
+    const user = await AppDataSource.getRepository(User)
+      .createQueryBuilder('user')
+      .where('user.nickname = :nickname', { nickname })
+      .getOne();
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: CLIENT_ERROR_NOT_EXIST_USER,
+      });
+    }
+
+    const bookmarkTotalCount = await AppDataSource.getRepository(Bookmark)
+      .createQueryBuilder('bookmark')
+      .where('bookmark.userId = :userId', { userId: user.id })
+      .getCount();
+
+    const bookmarks = await AppDataSource.getRepository(Bookmark)
+      .createQueryBuilder('bookmark')
+      .where('bookmark.userId = :userId', { userId: user.id })
+      .leftJoinAndSelect('bookmark.project', 'project')
+      .leftJoinAndSelect('project.hashtags', 'hashtags')
+      .leftJoinAndSelect('project.memberTypes', 'memberTypes')
+      .leftJoinAndSelect('project.members', 'members')
+      .orderBy('bookmark.id', 'DESC')
+      .skip(count ? count - 5 : 0)
+      .take(5)
+      .getMany();
+
+    const bookmarkProjects = bookmarks.map((v) => {
+      return v.project;
+    });
+
+    if (bookmarkProjects.length < 1) {
+      return res.status(200).json({
+        success: true,
+        message: null,
+        data: {
+          bookmarkProjects, // bookmarkProjects is empty array [] if bookmarkProjects length is under 1.
+          total: bookmarkTotalCount,
+        },
+      });
+    }
+
+    const processedData = await Promise.all(
+      bookmarkProjects.map(async (project) => {
+        const extractTagNames = project.hashtags.map(
+          (hashtag) => hashtag.tagName
+        );
+
+        const extractMemberTypes = project.memberTypes.map(
+          (memberType) => memberType.type
+        );
+
+        // Order of developer, designer, pm, anyone
+        const orderedMemberTypes = extractMemberTypes?.sort(function (a, b) {
+          return (
+            (a === 'developer'
+              ? -3
+              : a === 'designer'
+              ? -2
+              : a === 'pm'
+              ? -1
+              : a === 'anyone'
+              ? 0
+              : 1) -
+            (b === 'developer'
+              ? -3
+              : b === 'designer'
+              ? -2
+              : b === 'pm'
+              ? -1
+              : b === 'anyone'
+              ? 0
+              : 1)
+          );
+        });
+
+        const bookmarks = await AppDataSource.getRepository(Bookmark)
+          .createQueryBuilder('bookmark')
+          .where('bookmark.projectId = :projectId', {
+            projectId: project.id,
+          })
+          .getCount();
+
+        const memberCount = project.members.length - 1; // Exclude project writer
+
+        return {
+          id: project.id,
+          title: project.title,
+          views: project.views,
+          bookmarkCount: bookmarks,
+          hashtags: extractTagNames,
+          memberTypes: orderedMemberTypes,
+          memberCount,
+          recruitCount: project.recruitCount,
+          representativeImage: project.representativeImage,
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: null,
+      data: {
+        bookmarks: processedData,
+        total: bookmarkTotalCount,
+      },
+    });
+  }
+);
+
 router.get(
   '/notifications',
   async (req: Request, res: CustomResponse, next: NextFunction) => {
@@ -348,121 +475,6 @@ router.get(
           data: {
             projects: processedData,
             total: projectTotalCount,
-          },
-        });
-      }
-
-      if (tab === 'viewBookmarks') {
-        const user = await AppDataSource.getRepository(User)
-          .createQueryBuilder('user')
-          .where('user.nickname = :nickname', { nickname: profileNickname })
-          .getOne();
-
-        if (!user) {
-          return res.status(404).json({
-            success: false,
-            message: CLIENT_ERROR_NOT_EXIST_USER,
-          });
-        }
-
-        const bookmarkTotalCount = await AppDataSource.getRepository(Bookmark)
-          .createQueryBuilder('bookmark')
-          .where('bookmark.userId = :userId', { userId: user.id })
-          .getCount();
-
-        const bookmarks = await AppDataSource.getRepository(Bookmark)
-          .createQueryBuilder('bookmark')
-          .where('bookmark.userId = :userId', { userId: user.id })
-          .leftJoinAndSelect('bookmark.project', 'project')
-          .leftJoinAndSelect('project.hashtags', 'hashtags')
-          .leftJoinAndSelect('project.memberTypes', 'memberTypes')
-          .leftJoinAndSelect('project.members', 'members')
-          .orderBy('bookmark.id', 'DESC')
-          .skip(count ? count - 5 : 0)
-          .take(5)
-          .getMany();
-
-        const bookmarkProjects = bookmarks.map((v) => {
-          return v.project;
-        });
-
-        if (bookmarkProjects.length < 1) {
-          return res.status(200).json({
-            success: true,
-            message: null,
-            data: {
-              bookmarkProjects, // bookmarkProjects is empty array [] if bookmarkProjects length is under 1.
-              total: bookmarkTotalCount,
-            },
-          });
-        }
-
-        const processedData = await Promise.all(
-          bookmarkProjects.map(async (project) => {
-            const extractTagNames = project.hashtags.map(
-              (hashtag) => hashtag.tagName
-            );
-
-            const extractMemberTypes = project.memberTypes.map(
-              (memberType) => memberType.type
-            );
-
-            // Order of developer, designer, pm, anyone
-            const orderedMemberTypes = extractMemberTypes?.sort(function (
-              a,
-              b
-            ) {
-              return (
-                (a === 'developer'
-                  ? -3
-                  : a === 'designer'
-                  ? -2
-                  : a === 'pm'
-                  ? -1
-                  : a === 'anyone'
-                  ? 0
-                  : 1) -
-                (b === 'developer'
-                  ? -3
-                  : b === 'designer'
-                  ? -2
-                  : b === 'pm'
-                  ? -1
-                  : b === 'anyone'
-                  ? 0
-                  : 1)
-              );
-            });
-
-            const bookmarks = await AppDataSource.getRepository(Bookmark)
-              .createQueryBuilder('bookmark')
-              .where('bookmark.projectId = :projectId', {
-                projectId: project.id,
-              })
-              .getCount();
-
-            const memberCount = project.members.length - 1; // Exclude project writer
-
-            return {
-              id: project.id,
-              title: project.title,
-              views: project.views,
-              bookmarkCount: bookmarks,
-              hashtags: extractTagNames,
-              memberTypes: orderedMemberTypes,
-              memberCount,
-              recruitCount: project.recruitCount,
-              representativeImage: project.representativeImage,
-            };
-          })
-        );
-
-        return res.status(200).json({
-          success: true,
-          message: null,
-          data: {
-            bookmarks: processedData,
-            total: bookmarkTotalCount,
           },
         });
       }
