@@ -24,9 +24,92 @@ interface ProfileReqParams {
 }
 
 interface ProfileReqQuery {
-  tab: 'viewProfile' | 'viewProjects' | 'viewBookmarks' | 'viewNotifications';
-  count?: number;
+  nickname: string;
 }
+
+router.get(
+  '/',
+  async (
+    req: Request<ProfileReqParams, {}, {}, ProfileReqQuery>,
+    res: CustomResponse,
+    next: NextFunction
+  ) => {
+    const profileNickname = req.query.nickname;
+    const currentUser = req.user;
+
+    try {
+      const user = await AppDataSource.getRepository(User)
+        .createQueryBuilder('user')
+        .where('user.nickname = :nickname', { nickname: profileNickname })
+        .leftJoinAndSelect('user.profile', 'profile')
+        .getOne();
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: CLIENT_ERROR_NOT_EXIST_USER,
+        });
+      }
+
+      const { email, nickname, signupType, createdAt, lastSigninAt, profile } =
+        user;
+
+      const {
+        introduce,
+        onOffline,
+        place,
+        contactTime,
+        interests,
+        career,
+        skills,
+      } = profile;
+
+      // Look up user's own profile
+      if (currentUser?.nickname === nickname) {
+        return res.status(200).json({
+          success: true,
+          message: null,
+          data: {
+            email,
+            nickname,
+            signupType,
+            createdAt,
+            lastSigninAt,
+            introduce,
+            onOffline,
+            place,
+            contactTime,
+            interests,
+            career,
+            skills,
+          },
+        });
+      }
+
+      // Look up other user's profile
+      if (currentUser?.nickname !== nickname) {
+        return res.status(200).json({
+          success: true,
+          message: null,
+          data: {
+            nickname,
+            createdAt,
+            lastSigninAt,
+            introduce,
+            onOffline,
+            place,
+            contactTime,
+            interests,
+            career,
+            skills,
+          },
+        });
+      }
+    } catch (err) {
+      return next(err);
+    }
+  }
+);
 
 interface ProfileProjectsReqQuery {
   nickname: string;
@@ -400,100 +483,6 @@ router.get(
         message: null,
         data: { profileImage: url },
       });
-    } catch (err) {
-      return next(err);
-    }
-  }
-);
-
-// Profile page profile info, projects, bookmarks, alarms router
-router.get(
-  '/:nickname',
-  async (
-    req: Request<ProfileReqParams, {}, {}, ProfileReqQuery>,
-    res: CustomResponse,
-    next: NextFunction
-  ) => {
-    const currentUser = req.user;
-    const profileNickname = req.params.nickname;
-    const { tab, count } = req.query;
-
-    try {
-      if (tab === 'viewProfile') {
-        const user = await AppDataSource.getRepository(User)
-          .createQueryBuilder('user')
-          .where('user.nickname = :nickname', { nickname: profileNickname })
-          .leftJoinAndSelect('user.profile', 'profile')
-          .getOne();
-
-        if (!user) {
-          return res.status(404).json({
-            success: false,
-            message: CLIENT_ERROR_NOT_EXIST_USER,
-          });
-        }
-
-        const {
-          email,
-          nickname,
-          signupType,
-          createdAt,
-          lastSigninAt,
-          profile,
-        } = user;
-
-        const {
-          introduce,
-          onOffline,
-          place,
-          contactTime,
-          interests,
-          career,
-          skills,
-        } = profile;
-
-        // Look up user's own profile
-        if (currentUser?.nickname === nickname) {
-          return res.status(200).json({
-            success: true,
-            message: null,
-            data: {
-              email,
-              nickname,
-              signupType,
-              createdAt,
-              lastSigninAt,
-              introduce,
-              onOffline,
-              place,
-              contactTime,
-              interests,
-              career,
-              skills,
-            },
-          });
-        }
-
-        // Look up other user's profile
-        if (currentUser?.nickname !== nickname) {
-          return res.status(200).json({
-            success: true,
-            message: null,
-            data: {
-              nickname,
-              createdAt,
-              lastSigninAt,
-              introduce,
-              onOffline,
-              place,
-              contactTime,
-              interests,
-              career,
-              skills,
-            },
-          });
-        }
-      }
     } catch (err) {
       return next(err);
     }
