@@ -28,6 +28,130 @@ interface ProfileReqQuery {
   count?: number;
 }
 
+interface ProfileProjectsReqQuery {
+  nickname: string;
+  count: string;
+}
+
+router.get(
+  '/projects',
+  async (
+    req: Request<{}, {}, {}, ProfileProjectsReqQuery>,
+    res: CustomResponse,
+    next: NextFunction
+  ) => {
+    const nickname = req.query.nickname;
+    const count = Number(req.query.count);
+
+    const user = await AppDataSource.getRepository(User)
+      .createQueryBuilder('user')
+      .where('user.nickname = :nickname', { nickname })
+      .getOne();
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: CLIENT_ERROR_NOT_EXIST_USER,
+      });
+    }
+
+    const projectTotalCount = await AppDataSource.getRepository(Project)
+      .createQueryBuilder('project')
+      .where('project.user = :userId', { userId: user.id })
+      .getCount();
+
+    const projects = await AppDataSource.getRepository(Project)
+      .createQueryBuilder('project')
+      .where('project.user = :userId', { userId: user.id })
+      .leftJoinAndSelect('project.memberTypes', 'memberTypes')
+      .leftJoinAndSelect('project.hashtags', 'hashtags')
+      .leftJoinAndSelect('project.members', 'members')
+      .orderBy('project.id', 'DESC')
+      .skip(count ? count - 5 : 0)
+      .take(5)
+      .getMany();
+
+    if (projects.length < 1) {
+      return res.status(200).json({
+        success: true,
+        message: null,
+        data: {
+          projects, // If projects length is under 1. The projects value is an empty array.
+          total: projectTotalCount,
+        },
+      });
+    }
+
+    const processedData = await Promise.all(
+      projects.map(async (project) => {
+        const extractTagNames = project.hashtags.map(
+          (hashtag) => hashtag.tagName
+        );
+
+        const extractMemberTypes = project.memberTypes.map(
+          (memberType) => memberType.type
+        );
+
+        // Order of developer, designer, pm, anyone
+        const orderedMemberTypes = extractMemberTypes.sort(function (a, b) {
+          return (
+            (a === 'developer'
+              ? -3
+              : a === 'designer'
+              ? -2
+              : a === 'pm'
+              ? -1
+              : a === 'anyone'
+              ? 0
+              : 1) -
+            (b === 'developer'
+              ? -3
+              : b === 'designer'
+              ? -2
+              : b === 'pm'
+              ? -1
+              : b === 'anyone'
+              ? 0
+              : 1)
+          );
+        });
+
+        const projectBookmarkedTotalCount = await AppDataSource.getRepository(
+          Bookmark
+        )
+          .createQueryBuilder('bookmark')
+          .where('bookmark.projectId = :projectId', {
+            projectId: project.id,
+          })
+          .getCount();
+
+        const memberCount = project.members.length - 1; // Exclude project writer
+
+        return {
+          id: project.id,
+          title: project.title,
+          views: project.views,
+          bookmarkCount: projectBookmarkedTotalCount,
+          hashtags: extractTagNames,
+          memberTypes: orderedMemberTypes,
+          memberCount,
+          recruitCount: project.recruitCount,
+          representativeImage: project.representativeImage,
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: null,
+      data: {
+        projects: processedData,
+        total: projectTotalCount,
+      },
+    });
+  }
+);
+
 interface ProfileBookmarksReqQuery {
   nickname: string;
   count: string;
@@ -369,114 +493,6 @@ router.get(
             },
           });
         }
-      }
-
-      if (tab === 'viewProjects') {
-        const user = await AppDataSource.getRepository(User)
-          .createQueryBuilder('user')
-          .where('user.nickname = :nickname', { nickname: profileNickname })
-          .getOne();
-
-        if (!user) {
-          return res.status(404).json({
-            success: false,
-            message: CLIENT_ERROR_NOT_EXIST_USER,
-          });
-        }
-
-        const projectTotalCount = await AppDataSource.getRepository(Project)
-          .createQueryBuilder('project')
-          .where('project.user = :userId', { userId: user.id })
-          .getCount();
-
-        const projects = await AppDataSource.getRepository(Project)
-          .createQueryBuilder('project')
-          .where('project.user = :userId', { userId: user.id })
-          .leftJoinAndSelect('project.memberTypes', 'memberTypes')
-          .leftJoinAndSelect('project.hashtags', 'hashtags')
-          .leftJoinAndSelect('project.members', 'members')
-          .orderBy('project.id', 'DESC')
-          .skip(count ? count - 5 : 0)
-          .take(5)
-          .getMany();
-
-        if (projects.length < 1) {
-          return res.status(200).json({
-            success: true,
-            message: null,
-            data: {
-              projects, // If projects length is under 1. The projects value is an empty array.
-              total: projectTotalCount,
-            },
-          });
-        }
-
-        const processedData = await Promise.all(
-          projects.map(async (project) => {
-            const extractTagNames = project.hashtags.map(
-              (hashtag) => hashtag.tagName
-            );
-
-            const extractMemberTypes = project.memberTypes.map(
-              (memberType) => memberType.type
-            );
-
-            // Order of developer, designer, pm, anyone
-            const orderedMemberTypes = extractMemberTypes.sort(function (a, b) {
-              return (
-                (a === 'developer'
-                  ? -3
-                  : a === 'designer'
-                  ? -2
-                  : a === 'pm'
-                  ? -1
-                  : a === 'anyone'
-                  ? 0
-                  : 1) -
-                (b === 'developer'
-                  ? -3
-                  : b === 'designer'
-                  ? -2
-                  : b === 'pm'
-                  ? -1
-                  : b === 'anyone'
-                  ? 0
-                  : 1)
-              );
-            });
-
-            const projectBookmarkedTotalCount =
-              await AppDataSource.getRepository(Bookmark)
-                .createQueryBuilder('bookmark')
-                .where('bookmark.projectId = :projectId', {
-                  projectId: project.id,
-                })
-                .getCount();
-
-            const memberCount = project.members.length - 1; // Exclude project writer
-
-            return {
-              id: project.id,
-              title: project.title,
-              views: project.views,
-              bookmarkCount: projectBookmarkedTotalCount,
-              hashtags: extractTagNames,
-              memberTypes: orderedMemberTypes,
-              memberCount,
-              recruitCount: project.recruitCount,
-              representativeImage: project.representativeImage,
-            };
-          })
-        );
-
-        return res.status(200).json({
-          success: true,
-          message: null,
-          data: {
-            projects: processedData,
-            total: projectTotalCount,
-          },
-        });
       }
     } catch (err) {
       return next(err);
