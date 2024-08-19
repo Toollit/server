@@ -7,15 +7,31 @@ import { getParameterStore } from '@/utils/awsParameterStore';
 const upload = async (path: string) => {
   const AWS_S3_ACCESS_KEY_ID = await getParameterStore({
     key: 'AWS_S3_ACCESS_KEY_ID',
+  }).catch((err) => {
+    throw new Error(
+      `Error during aws getParameterStore AWS_S3_ACCESS_KEY_ID data fetch: ${err}`
+    );
   });
   const AWS_S3_SECRET_ACCESS_KEY = await getParameterStore({
     key: 'AWS_S3_SECRET_ACCESS_KEY',
+  }).catch((err) => {
+    throw new Error(
+      `Error during aws getParameterStore AWS_S3_SECRET_ACCESS_KEY data fetch: ${err}`
+    );
   });
   const AWS_S3_BUCKET_NAME = await getParameterStore({
     key: 'AWS_S3_BUCKET_NAME',
+  }).catch((err) => {
+    throw new Error(
+      `Error during aws getParameterStore AWS_S3_BUCKET_NAME data fetch: ${err}`
+    );
   });
   const AWS_S3_BUCKET_REGION = await getParameterStore({
     key: 'AWS_S3_BUCKET_REGION',
+  }).catch((err) => {
+    throw new Error(
+      `Error during aws getParameterStore AWS_S3_BUCKET_REGION data fetch: ${err}`
+    );
   });
 
   const s3 = new S3Client({
@@ -112,19 +128,34 @@ const isFieldsType = (
 export const uploadS3 = ({ path, option, data }: Upload) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     if (option === 'single' && isSingleType(data)) {
-      return (await upload(path)).single(data.name)(req, res, next);
+      try {
+        return (await upload(path)).single(data.name)(req, res, next);
+      } catch (err) {
+        console.error('Error during single upload:', err);
+        next(err);
+      }
     }
 
     if (option === 'array' && isArrayType(data)) {
-      return (await upload(path)).array(data.name, data.maxCount)(
-        req,
-        res,
-        next
-      );
+      try {
+        return (await upload(path)).array(data.name, data.maxCount)(
+          req,
+          res,
+          next
+        );
+      } catch (err) {
+        console.error('Error during array upload:', err);
+        next(err);
+      }
     }
 
     if (option === 'fields' && isFieldsType(data)) {
-      return (await upload(path)).fields(data)(req, res, next);
+      try {
+        return (await upload(path)).fields(data)(req, res, next);
+      } catch (err) {
+        console.error('Error during fields upload:', err);
+        next(err);
+      }
     }
   };
 };

@@ -6,12 +6,26 @@ import { Profile } from '@/entity/Profile';
 import { getParameterStore } from '@/utils/awsParameterStore';
 
 export default async () => {
-  const GOOGLE_CLIENT_ID = await getParameterStore({ key: 'GOOGLE_CLIENT_ID' });
+  const GOOGLE_CLIENT_ID = await getParameterStore({
+    key: 'GOOGLE_CLIENT_ID',
+  }).catch((err) => {
+    throw new Error(
+      `Error during aws getParameterStore GOOGLE_CLIENT_ID data fetch: ${err}`
+    );
+  });
   const GOOGLE_CLIENT_SECRET = await getParameterStore({
     key: 'GOOGLE_CLIENT_SECRET',
+  }).catch((err) => {
+    throw new Error(
+      `Error during aws getParameterStore GOOGLE_CLIENT_SECRET data fetch: ${err}`
+    );
   });
   const GOOGLE_CALLBACK_URL = await getParameterStore({
     key: 'GOOGLE_CALLBACK_URL',
+  }).catch((err) => {
+    throw new Error(
+      `Error during aws getParameterStore GOOGLE_CALLBACK_URL data fetch: ${err}`
+    );
   });
 
   passport.use(

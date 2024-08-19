@@ -23,13 +23,15 @@ const app = async () => {
   const isDev = process.env.NODE_ENV === 'development';
   const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' }).catch(
     (err) => {
-      throw new Error(`aws getParameterStore ORIGIN_URL fetch error: ${err}`);
+      throw new Error(
+        `Error during aws getParameterStore ORIGIN_URL data fetch: ${err}`
+      );
     }
   );
   const COOKIE_SECRET = await getParameterStore({ key: 'COOKIE_SECRET' }).catch(
     (err) => {
       throw new Error(
-        `aws getParameterStore COOKIE_SECRET fetch error: ${err}`
+        `Error during aws getParameterStore COOKIE_SECRET data fetch: ${err}`
       );
     }
   );
@@ -60,8 +62,8 @@ const app = async () => {
     .then(() => {
       console.log('Data Source has been initialized!');
     })
-    .catch((error) =>
-      console.error('Error during Data Source initialization:', error)
+    .catch((err) =>
+      console.error('Error during Data Source initialization:', err)
     );
 
   if (!isDev) {

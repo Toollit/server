@@ -70,7 +70,13 @@ router.get(
 router.get(
   '/auth/google/callback',
   async (req: Request, res: CustomResponse, next: NextFunction) => {
-    const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
+    const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' }).catch(
+      (err) => {
+        throw new Error(
+          `Error during aws getParameterStore ORIGIN_URL data fetch: ${err}`
+        );
+      }
+    );
     const SUCCESS_REDIRECT = ORIGIN_URL;
     const FAILURE_REDIRECT = `${ORIGIN_URL}/signin?error=true`;
     const DUPLICATE_REDIRECT = `${ORIGIN_URL}/signin?duplicate=true`;
@@ -124,9 +130,19 @@ router.get(
 
 // sign in page. social sign in with github
 router.get('/github', async (req, res, next) => {
-  const GITHUB_CLIENT_ID = await getParameterStore({ key: 'GITHUB_CLIENT_ID' });
+  const GITHUB_CLIENT_ID = await getParameterStore({
+    key: 'GITHUB_CLIENT_ID',
+  }).catch((err) => {
+    throw new Error(
+      `Error during aws getParameterStore GITHUB_CLIENT_ID data fetch: ${err}`
+    );
+  });
   const GITHUB_CALLBACK_URL = await getParameterStore({
     key: 'GITHUB_CALLBACK_URL',
+  }).catch((err) => {
+    throw new Error(
+      `Error during aws getParameterStore GITHUB_CALLBACK_URL data fetch: ${err}`
+    );
   });
 
   return res.redirect(
@@ -136,11 +152,27 @@ router.get('/github', async (req, res, next) => {
 
 // sign in page. social sign in with github auth callback
 router.get('/auth/github/callback', async (req, res, next) => {
-  const GITHUB_CLIENT_ID = await getParameterStore({ key: 'GITHUB_CLIENT_ID' });
+  const GITHUB_CLIENT_ID = await getParameterStore({
+    key: 'GITHUB_CLIENT_ID',
+  }).catch((err) => {
+    throw new Error(
+      `Error during aws getParameterStore GITHUB_CLIENT_ID data fetch: ${err}`
+    );
+  });
   const GITHUB_CLIENT_SECRET = await getParameterStore({
     key: 'GITHUB_CLIENT_SECRET',
+  }).catch((err) => {
+    throw new Error(
+      `Error during aws getParameterStore GITHUB_CLIENT_SECRET data fetch: ${err}`
+    );
   });
-  const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
+  const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' }).catch(
+    (err) => {
+      throw new Error(
+        `Error during aws getParameterStore ORIGIN_URL data fetch: ${err}`
+      );
+    }
+  );
   const SUCCESS_REDIRECT = ORIGIN_URL;
   const FAILURE_REDIRECT = `${ORIGIN_URL}/signin?error=true`;
   const DUPLICATE_REDIRECT = `${ORIGIN_URL}/signin?duplicate=true`;

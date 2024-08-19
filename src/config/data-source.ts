@@ -9,10 +9,34 @@ export let AppDataSource: Readonly<DataSource>;
 
 export const dataSource = (async () => {
   try {
-    const DB_ENDPOINT = await getParameterStore({ key: 'DB_ENDPOINT' });
-    const DB_USERNAME = await getParameterStore({ key: 'DB_USERNAME' });
-    const DB_PASSWORD = await getParameterStore({ key: 'DB_PASSWORD' });
-    const DB_DATABASE = await getParameterStore({ key: 'DB_DATABASE' });
+    const DB_ENDPOINT = await getParameterStore({ key: 'DB_ENDPOINT' }).catch(
+      (err) => {
+        throw new Error(
+          `Error during aws getParameterStore DB_ENDPOINT data fetch: ${err}`
+        );
+      }
+    );
+    const DB_USERNAME = await getParameterStore({ key: 'DB_USERNAME' }).catch(
+      (err) => {
+        throw new Error(
+          `Error during aws getParameterStore DB_USERNAME data fetch: ${err}`
+        );
+      }
+    );
+    const DB_PASSWORD = await getParameterStore({ key: 'DB_PASSWORD' }).catch(
+      (err) => {
+        throw new Error(
+          `Error during aws getParameterStore DB_PASSWORD data fetch: ${err}`
+        );
+      }
+    );
+    const DB_DATABASE = await getParameterStore({ key: 'DB_DATABASE' }).catch(
+      (err) => {
+        throw new Error(
+          `Error during aws getParameterStore DB_DATABASE data fetch: ${err}`
+        );
+      }
+    );
 
     const source = new DataSource({
       type: 'mysql',

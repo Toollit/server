@@ -23,15 +23,33 @@ router.post(
   '/',
   isSignedIn,
   async (req: Request, res: CustomResponse, next: NextFunction) => {
-    const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' });
+    const ORIGIN_URL = await getParameterStore({ key: 'ORIGIN_URL' }).catch(
+      (err) => {
+        throw new Error(
+          `Error during aws getParameterStore ORIGIN_URL data fetch: ${err}`
+        );
+      }
+    );
     const AWS_S3_TOOLLIT_LOGO_IMAGE_URL = await getParameterStore({
       key: 'AWS_S3_TOOLLIT_LOGO_IMAGE_URL',
+    }).catch((err) => {
+      throw new Error(
+        `Error during aws getParameterStore AWS_S3_TOOLLIT_LOGO_IMAGE_URL data fetch: ${err}`
+      );
     });
     const HIWORKS_EMAIL_USER = await getParameterStore({
       key: 'HIWORKS_EMAIL_USER',
+    }).catch((err) => {
+      throw new Error(
+        `Error during aws getParameterStore HIWORKS_EMAIL_USER data fetch: ${err}`
+      );
     });
     const HIWORKS_EMAIL_PASS = await getParameterStore({
       key: 'HIWORKS_EMAIL_PASS',
+    }).catch((err) => {
+      throw new Error(
+        `Error during aws getParameterStore HIWORKS_EMAIL_PASS data fetch: ${err}`
+      );
     });
 
     const currentUser = req.user;
