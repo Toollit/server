@@ -5,16 +5,37 @@ import multer from 'multer';
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-const formDataParsingMiddleware =
-  (formDataKey: string) =>
-  (req: Request, res: Response, next: NextFunction) => {
-    console.log('test1');
+interface FormDataParsingMiddleware {
+  (formDataKey: string): (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => void;
+}
+interface ImageConvertMiddleware {
+  (width: number, height: number, format?: keyof FormatEnum): (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => void;
+}
+
+interface ImageConverter {
+  (
+    formDataKey: string,
+    width: number,
+    height: number,
+    format?: keyof FormatEnum
+  ): ((req: Request, res: Response, next: NextFunction) => void)[];
+}
+
+const formDataParsingMiddleware: FormDataParsingMiddleware =
+  (formDataKey) => (req, res, next) => {
     return upload.single(formDataKey)(req, res, next);
   };
 
-const imageConvertMiddleware =
-  (width: number, height: number, format?: keyof FormatEnum) =>
-  async (req: Request, res: Response, next: NextFunction) => {
+const imageConvertMiddleware: ImageConvertMiddleware =
+  (width, height, format) => async (req, res, next) => {
     try {
       if (!req.file) {
         return next();
@@ -37,11 +58,11 @@ const imageConvertMiddleware =
     }
   };
 
-export const imageConverter = (
-  formDataKey: string,
-  width: number,
-  height: number,
-  format?: keyof FormatEnum
+export const imageConverter: ImageConverter = (
+  formDataKey,
+  width,
+  height,
+  format
 ) => {
   return [
     formDataParsingMiddleware(formDataKey),
