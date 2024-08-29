@@ -43,8 +43,8 @@ const imageConvertMiddleware: ImageConvertMiddleware =
 
       const fileBuffer = req.file?.buffer;
       const imageBuffer = await sharp(fileBuffer)
-        .resize(width, height)
-        .toFormat(format ?? 'webp')
+        .resize(width, height, { withoutEnlargement: true })
+        .toFormat(format ?? 'webp', { quality: 100 })
         .toBuffer();
 
       // Save the converted image to a req object
