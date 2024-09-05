@@ -269,7 +269,7 @@ router.post(
   '/create',
   isSignedIn,
   uploadS3({
-    path: 'image',
+    path: 'projectRepresentativeImage',
     option: 'single',
     data: { name: 'image' },
   }),
