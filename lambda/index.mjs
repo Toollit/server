@@ -77,9 +77,27 @@ export const handler = async (event, context) => {
     return;
   }
 
-  // set project representative image width and height. Resize will set the height automatically to maintain aspect ratio.
-  const width = 324;
-  const height = 130;
+  // Set resizing image width and height. If the height is null or undefined, resize automatically while maintaining the ratio according to the width.
+  let width;
+  let height;
+
+  // Project representative image size settings
+  if (dstKey.includes('projectRepresentativeImage/')) {
+    width = 324;
+    height = 130;
+  }
+
+  // Project content image size settings
+  if (dstKey.includes('projectContentImage/')) {
+    width = 666;
+    height = null;
+  }
+
+  // Profile image size settings
+  if (dstKey.includes('profileImage/')) {
+    width = 150;
+    height = 150;
+  }
 
   // Use the sharp module to resize the image and save in a buffer.
   try {
@@ -94,14 +112,14 @@ export const handler = async (event, context) => {
 
   // Upload the thumbnail image to the destination bucket
   try {
-    const destparams = {
+    const destParams = {
       Bucket: dstBucket,
       Key: dstKey,
       Body: output_buffer,
       ContentType: 'image/webp',
     };
 
-    const putResult = await s3.send(new PutObjectCommand(destparams));
+    const putResult = await s3.send(new PutObjectCommand(destParams));
   } catch (error) {
     console.log(error);
     return;
