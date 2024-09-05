@@ -21,14 +21,22 @@ export const handler = async (event, context) => {
     util.inspect(event, { depth: 5 })
   );
 
+  // const srcBucket = 'toollit-image-dev-bucket';
   const srcBucket = 'toollit-image-bucket';
 
   // Object key may have spaces or unicode non-ASCII characters
+  // srcKey value ex) profileImage/9E35E0D8F039B5.jpeg
   const srcKey = decodeURIComponent(
     event.Records[0].s3.object.key.replace(/\+/g, ' ')
   );
+
+  const replaceS3ObjectKey = (fileName) => {
+    // Convert .jpg, .jpeg, .png extensions to .webp with regular expressions
+    return fileName.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+  };
+
   const dstBucket = srcBucket + '-resized';
-  const dstKey = srcKey;
+  const dstKey = replaceS3ObjectKey(srcKey);
 
   // Infer the image type from the file suffix
   const typeMatch = srcKey.match(/\.([^.]*)$/);
@@ -39,7 +47,12 @@ export const handler = async (event, context) => {
 
   // Check that the image type is supported
   const imageType = typeMatch[1].toLowerCase();
-  if (imageType != 'jpg' && imageType != 'png') {
+  if (
+    imageType != 'jpg' &&
+    imageType != 'jpeg' &&
+    imageType != 'png' &&
+    imageType != 'webp'
+  ) {
     console.log(`Unsupported image type: ${imageType}`);
     return;
   }
@@ -71,7 +84,8 @@ export const handler = async (event, context) => {
   // Use the sharp module to resize the image and save in a buffer.
   try {
     var output_buffer = await sharp(content_buffer)
-      .resize(width, height)
+      .resize(width, height, { withoutEnlargement: true })
+      .toFormat('webp', { quality: 100 })
       .toBuffer();
   } catch (error) {
     console.log(error);
@@ -84,7 +98,7 @@ export const handler = async (event, context) => {
       Bucket: dstBucket,
       Key: dstKey,
       Body: output_buffer,
-      ContentType: 'image',
+      ContentType: 'image/webp',
     };
 
     const putResult = await s3.send(new PutObjectCommand(destparams));
