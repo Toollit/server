@@ -126,13 +126,6 @@ export const handler = async (event, context) => {
   }
 
   console.log(
-    'Successfully resized ' +
-      srcBucket +
-      '/' +
-      srcKey +
-      ' and uploaded to ' +
-      dstBucket +
-      '/' +
-      dstKey
+    `Successfully resized the image and changed the file extension to webp and uploaded it to the resized bucket. ${srcBucket}/${srcKey} => ${dstBucket}/${dstKey}`
   );
 };
