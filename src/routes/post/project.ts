@@ -269,9 +269,9 @@ router.post(
   '/create',
   isSignedIn,
   uploadS3({
-    path: 'projectRepresentativeImage',
+    path: 'image',
     option: 'single',
-    data: { name: 'projectRepresentativeImage' },
+    data: { name: 'image' },
   }),
   async (req: Request, res: CustomResponse, next: NextFunction) => {
     const { representativeImageUrl, content } = handleProjectFormData(req);
@@ -279,6 +279,19 @@ router.post(
     if (representativeImageUrl === undefined) {
       return next(new Error('Something wrong with representative image url'));
     }
+
+    // Image formatting and resizing are done with lambda, so you need to change the image s3 address.
+    let imageUrl;
+    const convertFormat = representativeImageUrl.replace(
+      /\.(jpg|jpeg|png)$/i,
+      '.webp'
+    );
+    const changeDestinationBucket = convertFormat.replace(
+      'toollit-image-bucket',
+      'toollit-image-bucket-resized'
+    );
+
+    imageUrl = changeDestinationBucket;
 
     const currentUser = req.user;
 
@@ -321,10 +334,7 @@ router.post(
       newProject.contentMarkdown = contentMarkdown;
       newProject.user = writer;
       newProject.recruitCount = recruitCount;
-      newProject.representativeImage = representativeImageUrl.replace(
-        'toollit-image-bucket',
-        'toollit-image-bucket-resized'
-      );
+      newProject.representativeImage = imageUrl;
 
       const projectRepository = queryRunner.manager.getRepository(Project);
 
