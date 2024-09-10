@@ -269,7 +269,7 @@ router.post(
   '/create',
   isSignedIn,
   uploadS3({
-    path: 'projectRepresentativeImage',
+    category: 'projectRepresentativeImage',
     option: 'single',
     data: { name: 'image' },
   }),
@@ -409,7 +409,7 @@ router.post(
   '/content/uploadImage',
   isSignedIn,
   uploadS3({
-    path: 'projectContentImage',
+    category: 'projectContentImage',
     option: 'single',
     data: { name: 'projectContentImage' },
   }),
@@ -448,7 +448,7 @@ router.post(
   '/update',
   isSignedIn,
   uploadS3({
-    path: 'projectRepresentativeImage',
+    category: 'projectRepresentativeImage',
     option: 'single',
     data: { name: 'projectRepresentativeImage' },
   }),

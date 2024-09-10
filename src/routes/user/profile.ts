@@ -518,7 +518,7 @@ const filterRequest = (
   }
 
   uploadS3({
-    path: 'profileImage',
+    category: 'profileImage',
     option: 'single',
     data: { name: 'profileImage' },
   })(req, res, next);
