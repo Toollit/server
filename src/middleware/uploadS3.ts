@@ -4,7 +4,7 @@ import multerS3 from 'multer-s3';
 import { S3Client } from '@aws-sdk/client-s3';
 import { getParameterStore } from '@/utils/awsParameterStore';
 
-const upload = async (path: string) => {
+const upload = async (category: string) => {
   const AWS_S3_ACCESS_KEY_ID = await getParameterStore({
     key: 'AWS_S3_ACCESS_KEY_ID',
   }).catch((err) => {
@@ -77,7 +77,7 @@ const upload = async (path: string) => {
           extname = '.webp';
         }
 
-        const imageUrl = `${path}/${userId}/${newFileName}${extname}`;
+        const imageUrl = `${category}/${userId}/${newFileName}${extname}`;
 
         cb(null, imageUrl);
       },
@@ -101,7 +101,7 @@ interface FieldsType {
 }
 
 interface Upload {
-  path: string;
+  category: string;
   option: 'single' | 'array' | 'fields';
   data: SingleType | ArrayType | ReadonlyArray<FieldsType>;
 }
@@ -129,11 +129,11 @@ const isFieldsType = (
   return Array.isArray(data);
 };
 
-export const uploadS3 = ({ path, option, data }: Upload) => {
+export const uploadS3 = ({ category, option, data }: Upload) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     if (option === 'single' && isSingleType(data)) {
       try {
-        return (await upload(path)).single(data.name)(req, res, next);
+        return (await upload(category)).single(data.name)(req, res, next);
       } catch (err) {
         console.error('Error during single upload:', err);
         next(err);
@@ -142,7 +142,7 @@ export const uploadS3 = ({ path, option, data }: Upload) => {
 
     if (option === 'array' && isArrayType(data)) {
       try {
-        return (await upload(path)).array(data.name, data.maxCount)(
+        return (await upload(category)).array(data.name, data.maxCount)(
           req,
           res,
           next
@@ -155,7 +155,7 @@ export const uploadS3 = ({ path, option, data }: Upload) => {
 
     if (option === 'fields' && isFieldsType(data)) {
       try {
-        return (await upload(path)).fields(data)(req, res, next);
+        return (await upload(category)).fields(data)(req, res, next);
       } catch (err) {
         console.error('Error during fields upload:', err);
         next(err);
