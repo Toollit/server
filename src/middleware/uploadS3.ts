@@ -62,7 +62,7 @@ const upload = async (path: string) => {
         let extname: string | null = null;
 
         if (file.mimetype === 'image/jpeg') {
-          extname = '.jpg';
+          extname = '.jpeg';
         }
 
         if (file.mimetype === 'image/jpg') {
@@ -71,6 +71,10 @@ const upload = async (path: string) => {
 
         if (file.mimetype === 'image/png') {
           extname = '.png';
+        }
+
+        if (file.mimetype === 'image/png') {
+          extname = '.webp';
         }
 
         const imageUrl = `${path}/${userId}/${newFileName}${extname}`;
