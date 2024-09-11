@@ -8,6 +8,7 @@ import { uploadS3 } from '@/middleware/uploadS3';
 import { isSignedIn } from '@/middleware/signinCheck';
 import { Bookmark } from '@/entity/Bookmark';
 import { Notification } from '@/entity/Notification';
+import { getParameterStore } from '@/utils/awsParameterStore';
 import {
   CLIENT_ERROR_ABNORMAL_ACCESS,
   CLIENT_ERROR_INTRODUCE_LENGTH_LIMIT,
@@ -548,10 +549,11 @@ router.post(
     try {
       // Update profile image
       if (category === 'profileImage') {
-        const multerS3File = (req as MulterRequest).file;
+        const profileImageUrl = (req as MulterRequest).file?.location;
+        const isImageUpdated = req.file;
 
         // Delete profile image
-        if (multerS3File === undefined) {
+        if (!isImageUpdated) {
           const existUser = await AppDataSource.getRepository(User)
             .createQueryBuilder('user')
             .where('user.id = :id', { id: currentUser.id })
@@ -571,8 +573,27 @@ router.post(
         }
 
         // Update profile image
-        if (multerS3File) {
-          const newProfileImageUrl = multerS3File.location;
+        if (isImageUpdated) {
+          const newProfileImageUrl = profileImageUrl;
+
+          // Image formatting and resizing are done with lambda, so you need to change the image s3 url address.
+          // Lambda converts all image formats into webp.
+          let imageUrl;
+
+          const convertedFormatImageUrl = newProfileImageUrl.replace(
+            /\.(jpg|jpeg|png)$/i,
+            '.webp'
+          );
+
+          const AWS_S3_BUCKET_NAME = await getParameterStore({
+            key: 'AWS_S3_BUCKET_NAME',
+          });
+
+          const changedDestinationBucket = convertedFormatImageUrl.replace(
+            AWS_S3_BUCKET_NAME,
+            `${AWS_S3_BUCKET_NAME}-resized`
+          );
+          imageUrl = changedDestinationBucket;
 
           const existUser = await AppDataSource.getRepository(User)
             .createQueryBuilder('user')
@@ -582,16 +603,14 @@ router.post(
 
           await AppDataSource.createQueryBuilder()
             .update(Profile)
-            .set({ profileImage: newProfileImageUrl })
+            .set({ profileImage: imageUrl })
             .where('id = :profileId', { profileId: existUser?.profile.id })
             .execute();
 
           return res.status(201).json({
             success: true,
             message: null,
-            data: {
-              url: multerS3File.location,
-            },
+            data: { url: imageUrl },
           });
         }
       }
