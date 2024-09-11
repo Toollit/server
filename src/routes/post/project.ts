@@ -239,22 +239,6 @@ router.get(
   }
 );
 
-const handleProjectFormData = (req: Request) => {
-  // If isStringImageData is true, it is the s3 image url or "defaultImage" string. If it is false, the newly delivered image file data is received by putting the file object in the req through the uploadS3 middleware.
-  const isStringImageData = Boolean(req.body['projectRepresentativeImage']);
-  const imageData: string = req.body['projectRepresentativeImage'];
-
-  const jsonDataFieldName = 'data';
-
-  const S3ImgUrl = (req as MulterRequest).file?.location;
-
-  const representativeImageUrl = isStringImageData ? imageData : S3ImgUrl;
-
-  const content = JSON.parse(req.body[jsonDataFieldName]);
-
-  return { representativeImageUrl, content };
-};
-
 interface ProjectCreateContent {
   title: string;
   contentHTML: string;
@@ -275,7 +259,11 @@ router.post(
     data: { name: 'image' },
   }),
   async (req: Request, res: CustomResponse, next: NextFunction) => {
-    const { representativeImageUrl, content } = handleProjectFormData(req);
+    const jsonDataFieldName = 'data';
+
+    const representativeImageUrl = (req as MulterRequest).file?.location;
+
+    const content = JSON.parse(req.body[jsonDataFieldName]);
 
     if (representativeImageUrl === undefined) {
       return next(new Error('Something wrong with representative image url'));
