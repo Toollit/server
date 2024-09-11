@@ -73,7 +73,7 @@ const upload = async (category: string) => {
           extname = '.png';
         }
 
-        if (file.mimetype === 'image/png') {
+        if (file.mimetype === 'image/webp') {
           extname = '.webp';
         }
 
