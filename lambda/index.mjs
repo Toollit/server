@@ -21,8 +21,11 @@ export const handler = async (event, context) => {
     util.inspect(event, { depth: 5 })
   );
 
-  // const srcBucket = 'toollit-image-dev-bucket';
-  const srcBucket = 'toollit-image-bucket';
+  // For dev environment
+  const srcBucket = 'toollit-image-dev-bucket';
+
+  // For prod environment
+  // const srcBucket = 'toollit-image-bucket';
 
   // Object key may have spaces or unicode non-ASCII characters
   // srcKey value ex) profileImage/9E35E0D8F039B5.jpeg

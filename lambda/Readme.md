@@ -15,3 +15,8 @@ $ npm install --platform=linux --arch=x64
 ```
 $ zip -r function.zip .
 ```
+
+## Reference
+
+https://docs.aws.amazon.com/ko_kr/lambda/latest/dg/with-s3-tutorial.html#with-s3-example-prereqs
+https://oliveyoung.tech/blog/2023-05-19/aws-lambda-resize/
