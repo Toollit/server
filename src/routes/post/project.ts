@@ -457,14 +457,14 @@ router.post(
   uploadS3({
     category: 'projectRepresentativeImage',
     option: 'single',
-    data: { name: 'projectRepresentativeImage' },
+    data: { name: 'image' },
   }),
   async (req: Request, res: CustomResponse, next: NextFunction) => {
-    const { representativeImageUrl, content } = handleProjectFormData(req);
+    const jsonDataFieldName = 'data';
 
-    if (representativeImageUrl === undefined) {
-      return next(new Error('Something wrong with representative image url'));
-    }
+    const content = JSON.parse(
+      req.body[jsonDataFieldName]
+    ) as ProjectUpdateContent;
 
     const {
       postId: modifiedPostId,
@@ -475,7 +475,7 @@ router.post(
       hashtags: modifiedHashtags,
       memberTypes: modifiedMemberTypes,
       recruitCount: modifiedRecruitCount,
-    } = content as ProjectUpdateContent;
+    } = content;
 
     const postId = Number(modifiedPostId);
 
@@ -756,29 +756,43 @@ router.post(
       };
 
       const updateProjectRepresentativeImage = async () => {
-        const existRepresentativeImage = existProject.representativeImage;
+        const isImageUpdated = req.file;
 
-        const isEqualData = (existData: string, newData: string) => {
-          if (existData !== newData) {
-            return false;
-          }
-
-          return true;
-        };
-
-        if (isEqualData(existRepresentativeImage, representativeImageUrl)) {
+        if (!isImageUpdated) {
           return null;
         }
+
+        const representativeImageUrl = (req as MulterRequest).file?.location;
+
+        if (representativeImageUrl === undefined) {
+          return next(
+            new Error('Something wrong with representative image url')
+          );
+        }
+
+        // Image formatting and resizing are done with lambda, so you need to change the image s3 url address.
+        // Lambda converts all image formats into webp.
+        let imageUrl;
+
+        const convertedFormatImageUrl = representativeImageUrl.replace(
+          /\.(jpg|jpeg|png)$/i,
+          '.webp'
+        );
+
+        const AWS_S3_BUCKET_NAME = await getParameterStore({
+          key: 'AWS_S3_BUCKET_NAME',
+        });
+
+        const changedDestinationBucket = convertedFormatImageUrl.replace(
+          AWS_S3_BUCKET_NAME,
+          `${AWS_S3_BUCKET_NAME}-resized`
+        );
+        imageUrl = changedDestinationBucket;
 
         await queryRunner.manager
           .createQueryBuilder()
           .update(Project)
-          .set({
-            representativeImage: representativeImageUrl.replace(
-              'toollit-image-bucket',
-              'toollit-image-bucket-resized'
-            ),
-          })
+          .set({ representativeImage: imageUrl })
           .where('id = :postId', { postId })
           .execute();
       };
