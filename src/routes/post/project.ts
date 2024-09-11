@@ -10,6 +10,7 @@ import { uploadS3 } from '@/middleware/uploadS3';
 import { isSignedIn } from '@/middleware/signinCheck';
 import { ProjectMember } from '@/entity/ProjectMember';
 import { Notification } from '@/entity/Notification';
+import { getParameterStore } from '@/utils/awsParameterStore';
 import {
   CLIENT_ERROR_ABNORMAL_ACCESS,
   CLIENT_ERROR_LOGIN_REQUIRED,
@@ -280,18 +281,25 @@ router.post(
       return next(new Error('Something wrong with representative image url'));
     }
 
-    // Image formatting and resizing are done with lambda, so you need to change the image s3 address.
+    // Image formatting and resizing are done with lambda, so you need to change the image s3 url address.
+    // Lambda converts all image formats into webp.
     let imageUrl;
-    const convertFormat = representativeImageUrl.replace(
+
+    const convertedFormatImageUrl = representativeImageUrl.replace(
       /\.(jpg|jpeg|png)$/i,
       '.webp'
     );
-    const changeDestinationBucket = convertFormat.replace(
-      'toollit-image-bucket',
-      'toollit-image-bucket-resized'
+
+    const AWS_S3_BUCKET_NAME = await getParameterStore({
+      key: 'AWS_S3_BUCKET_NAME',
+    });
+
+    const changedDestinationBucket = convertedFormatImageUrl.replace(
+      AWS_S3_BUCKET_NAME,
+      `${AWS_S3_BUCKET_NAME}-resized`
     );
 
-    imageUrl = changeDestinationBucket;
+    imageUrl = changedDestinationBucket;
 
     const currentUser = req.user;
 
@@ -313,7 +321,6 @@ router.post(
     } = content as ProjectCreateContent;
 
     const queryRunner = AppDataSource.createQueryRunner();
-
     try {
       await queryRunner.connect();
       await queryRunner.startTransaction();
