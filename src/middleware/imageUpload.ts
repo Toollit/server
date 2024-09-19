@@ -59,10 +59,14 @@ const s3 = async () => {
 };
 
 interface ImageUpload {
-  (path: string, option: 'single' | 'array' | 'fields', data: any): any;
+  (category: string, option: 'single' | 'array' | 'fields'): (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => void;
 }
 
-export const imageUpload: ImageUpload = (path, option) => {
+export const imageUpload: ImageUpload = (category, option) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { AWS_S3_BUCKET_NAME, AWS_S3_BUCKET_REGION } = await getKeys();
@@ -84,7 +88,7 @@ export const imageUpload: ImageUpload = (path, option) => {
 
       const extname = req.file.mimetype.split('/')[1]; // 'ex) webp';
 
-      const imageUrl = `${path}/${userId}/${newFileName}.${extname}`;
+      const imageUrl = `${category}/${userId}/${newFileName}.${extname}`;
 
       const command = new PutObjectCommand({
         Bucket: AWS_S3_BUCKET_NAME,
