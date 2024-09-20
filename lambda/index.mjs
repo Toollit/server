@@ -1,20 +1,21 @@
-// dependencies
 import {
   S3Client,
   GetObjectCommand,
   PutObjectCommand,
 } from '@aws-sdk/client-s3';
-
 import { Readable } from 'stream';
-
 import sharp from 'sharp';
 import util from 'util';
 
-// create S3 client
-const s3 = new S3Client({ region: 'ap-northeast-2' });
-
-// define the handler function
+/**
+ * Define the handler function.
+ * This handler function detects a change event in the s3 bucket and convert the image.
+ * 🚨 The address of the srcBucket must be selected and compressed and distributed according to the dev or prod environment.
+ */
 export const handler = async (event, context) => {
+  // create S3 client
+  const s3 = new S3Client({ region: 'ap-northeast-2' });
+
   // Read options from the event parameter and get the source bucket
   console.log(
     'Reading options from event:\n',
@@ -22,10 +23,10 @@ export const handler = async (event, context) => {
   );
 
   // For dev environment
-  const srcBucket = 'toollit-image-dev-bucket';
+  // const srcBucket = 'toollit-image-dev-bucket';
 
   // For prod environment
-  // const srcBucket = 'toollit-image-bucket';
+  const srcBucket = 'toollit-image-bucket';
 
   // Object key may have spaces or unicode non-ASCII characters
   // srcKey value ex) profileImage/9E35E0D8F039B5.jpeg
