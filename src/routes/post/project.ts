@@ -11,6 +11,7 @@ import { isSignedIn } from '@/middleware/signinCheck';
 import { ProjectMember } from '@/entity/ProjectMember';
 import { Notification } from '@/entity/Notification';
 import { getParameterStore } from '@/utils/awsParameterStore';
+import { lambdaManualImageConvert } from '@/utils/lambdaManualImageConvert';
 import {
   CLIENT_ERROR_ABNORMAL_ACCESS,
   CLIENT_ERROR_LOGIN_REQUIRED,
@@ -266,8 +267,10 @@ router.post(
     const content = JSON.parse(req.body[jsonDataFieldName]);
 
     if (representativeImageUrl === undefined) {
-      return next(new Error('Something wrong with representative image url'));
+      return next('Something wrong with representative image url');
     }
+
+    await lambdaManualImageConvert(representativeImageUrl);
 
     // Image formatting and resizing are done with lambda, so you need to change the image s3 url address.
     // Lambda converts all image formats into webp.
