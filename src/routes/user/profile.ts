@@ -9,6 +9,7 @@ import { isSignedIn } from '@/middleware/signinCheck';
 import { Bookmark } from '@/entity/Bookmark';
 import { Notification } from '@/entity/Notification';
 import { getParameterStore } from '@/utils/awsParameterStore';
+import { lambdaManualImageConvert } from '@/utils/lambdaManualImageConvert';
 import {
   CLIENT_ERROR_ABNORMAL_ACCESS,
   CLIENT_ERROR_INTRODUCE_LENGTH_LIMIT,
@@ -575,6 +576,8 @@ router.post(
         // Update profile image
         if (isImageUpdated) {
           const newProfileImageUrl = profileImageUrl;
+
+          await lambdaManualImageConvert(newProfileImageUrl);
 
           // Image formatting and resizing are done with lambda, so you need to change the image s3 url address.
           // Lambda converts all image formats into webp.
