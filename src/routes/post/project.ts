@@ -756,10 +756,10 @@ router.post(
         const representativeImageUrl = (req as MulterRequest).file?.location;
 
         if (representativeImageUrl === undefined) {
-          return next(
-            new Error('Something wrong with representative image url')
-          );
+          return next('Something wrong with representative image url');
         }
+
+        await lambdaManualImageConvert(representativeImageUrl);
 
         // Image formatting and resizing are done with lambda, so you need to change the image s3 url address.
         // Lambda converts all image formats into webp.
