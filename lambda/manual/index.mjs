@@ -143,4 +143,6 @@ export const handler = async (event, context) => {
     `Successfully resized the image and changed the file extension to webp and uploaded it to the resized bucket. ${srcBucket}/${srcKey} => ${dstBucket}/${dstKey}`
   );
   console.log(`result image url: ${dstObjectKeyUrl}`);
+
+  return dstObjectKeyUrl;
 };
