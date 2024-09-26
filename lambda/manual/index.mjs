@@ -13,14 +13,16 @@ import util from 'util';
  * 🚨 The address of the srcBucket must be selected and compressed and distributed according to the dev or prod environment.
  */
 export const handler = async (event, context) => {
-  // ex) s3ObjectKey value is "https://toollit-image-dev-bucket.s3.ap-northeast-2.amazonaws.com/projectRepresentativeImage/14/1727097953040.jpeg"
-  const s3ObjectKey = event.s3ObjectKey; // Source image path received from s3
+  // Source image path received from lambdaManualImageConvert function
+  const s3ObjectKeyFullUrl = event.s3ObjectKey;
 
-  // Create S3 client
   const s3 = new S3Client({ region: 'ap-northeast-2' });
 
-  // ex) objectKey value is "projectRepresentativeImage/14/1727097953040.jpeg"
-  const objectKey = s3ObjectKey.split('amazonaws.com/')[1];
+  // ex) "https://toollit-image-dev-bucket.s3.ap-northeast-2.amazonaws.com/
+  const srcBucketBaseUrl = s3ObjectKeyFullUrl.match(/^https:\/\/[^/]+\/?/)[0];
+
+  // ex) "projectRepresentativeImage/14/1727097953040.jpeg"
+  const objectKey = s3ObjectKeyFullUrl.replace(srcBucketBaseUrl, '');
 
   // Read options from the event parameter and get the source bucket
   console.log(
@@ -34,21 +36,20 @@ export const handler = async (event, context) => {
   // For prod environment
   // const srcBucket = 'toollit-image-bucket';
 
-  // Object key may have spaces or unicode non-ASCII characters
-  // srcKey value ex) profileImage/9E35E0D8F039B5.jpeg
-  // const srcKey = decodeURIComponent(
-  //   event.Records[0].s3.object.key.replace(/\+/g, ' ')
-  // );
-
   const srcKey = decodeURIComponent(objectKey.replace(/\+/g, ' '));
 
-  const replaceS3ObjectKey = (fileName) => {
-    // Convert .jpg, .jpeg, .png extensions to .webp with regular expressions
-    return fileName.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+  // Convert .jpg, .jpeg, .png extensions to .webp with regular expressions
+  const convertObjectKeyExtensions = (objectKey) => {
+    return objectKey.replace(/\.(jpg|jpeg|png)$/i, '.webp');
   };
 
   const dstBucket = srcBucket + '-resized';
-  const dstKey = replaceS3ObjectKey(srcKey);
+
+  const dstKey = convertObjectKeyExtensions(srcKey);
+
+  const dstBucketBaseUrl = srcBucketBaseUrl.replace(srcBucket, dstBucket);
+
+  const dstObjectKeyUrl = dstBucketBaseUrl + dstKey;
 
   // Infer the image type from the file suffix
   const typeMatch = srcKey.match(/\.([^.]*)$/);
@@ -123,6 +124,7 @@ export const handler = async (event, context) => {
   }
 
   // Upload the thumbnail image to the destination bucket
+  // The dstKey should not start with a slash.
   try {
     const destParams = {
       Bucket: dstBucket,
@@ -132,12 +134,13 @@ export const handler = async (event, context) => {
     };
 
     const putResult = await s3.send(new PutObjectCommand(destParams));
-  } catch (error) {
-    console.log(error);
+  } catch (err) {
+    console.log(err);
     return;
   }
 
   console.log(
     `Successfully resized the image and changed the file extension to webp and uploaded it to the resized bucket. ${srcBucket}/${srcKey} => ${dstBucket}/${dstKey}`
   );
+  console.log(`result image url: ${dstObjectKeyUrl}`);
 };
