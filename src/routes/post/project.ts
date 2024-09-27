@@ -270,27 +270,9 @@ router.post(
       return next('Something wrong with representative image url');
     }
 
-    await lambdaManualImageConvert(representativeImageUrl);
-
-    // Image formatting and resizing are done with lambda, so you need to change the image s3 url address.
-    // Lambda converts all image formats into webp.
-    let imageUrl;
-
-    const convertedFormatImageUrl = representativeImageUrl.replace(
-      /\.(jpg|jpeg|png)$/i,
-      '.webp'
+    const convertedImageUrl = await lambdaManualImageConvert(
+      representativeImageUrl
     );
-
-    const AWS_S3_BUCKET_NAME = await getParameterStore({
-      key: 'AWS_S3_BUCKET_NAME',
-    });
-
-    const changedDestinationBucket = convertedFormatImageUrl.replace(
-      AWS_S3_BUCKET_NAME,
-      `${AWS_S3_BUCKET_NAME}-resized`
-    );
-
-    imageUrl = changedDestinationBucket;
 
     const currentUser = req.user;
 
@@ -332,7 +314,7 @@ router.post(
       newProject.contentMarkdown = contentMarkdown;
       newProject.user = writer;
       newProject.recruitCount = recruitCount;
-      newProject.representativeImage = imageUrl;
+      newProject.representativeImage = convertedImageUrl;
 
       const projectRepository = queryRunner.manager.getRepository(Project);
 
