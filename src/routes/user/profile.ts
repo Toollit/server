@@ -577,26 +577,9 @@ router.post(
         if (isImageUpdated) {
           const newProfileImageUrl = profileImageUrl;
 
-          await lambdaManualImageConvert(newProfileImageUrl);
-
-          // Image formatting and resizing are done with lambda, so you need to change the image s3 url address.
-          // Lambda converts all image formats into webp.
-          let imageUrl;
-
-          const convertedFormatImageUrl = newProfileImageUrl.replace(
-            /\.(jpg|jpeg|png)$/i,
-            '.webp'
+          const convertedImageUrl = await lambdaManualImageConvert(
+            newProfileImageUrl
           );
-
-          const AWS_S3_BUCKET_NAME = await getParameterStore({
-            key: 'AWS_S3_BUCKET_NAME',
-          });
-
-          const changedDestinationBucket = convertedFormatImageUrl.replace(
-            AWS_S3_BUCKET_NAME,
-            `${AWS_S3_BUCKET_NAME}-resized`
-          );
-          imageUrl = changedDestinationBucket;
 
           const existUser = await AppDataSource.getRepository(User)
             .createQueryBuilder('user')
@@ -606,14 +589,14 @@ router.post(
 
           await AppDataSource.createQueryBuilder()
             .update(Profile)
-            .set({ profileImage: imageUrl })
+            .set({ profileImage: convertedImageUrl })
             .where('id = :profileId', { profileId: existUser?.profile.id })
             .execute();
 
           return res.status(201).json({
             success: true,
             message: null,
-            data: { url: imageUrl },
+            data: { url: convertedImageUrl },
           });
         }
       }
